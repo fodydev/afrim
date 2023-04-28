@@ -1,61 +1,118 @@
-use std::collections::HashMap;
-use std::{fs, cell::RefCell, rc::Weak, rc::Rc};
+//! # Clafrica Lib
+//!
+//! `clafrica-lib` is a collection of utilities to make handling
+//!  of clafrica code more convenient.
+//!
+//! Example
+//! ```
+//! use clafrica_lib::{bst, utils};
+//!
+//! // Build a BST
+//! let root = bst::Node::new();
+//! root.insert(vec!['a', 'f'], "ɑ".to_owned());
+//! root.insert(vec!['a', 'f', '1'], "ɑ̀".to_owned());
+//!
+//! // Bulk insert of data in the BST
+//! let data = vec![["af11", "ɑ̀ɑ̀"], ["?.", "ʔ"]];
+//! utils::build_map(data);
+//!
+//! // or
+//! let data = utils::load_data("../tmp/data.txt");
+//! let data = data.iter()
+//!                .map(|e| [e[0].as_str(), e[1].as_str()])
+//!                .collect();
+//!
+//! utils::build_map(data);
+//!
+//! // Traverse the tree
+//! let node = root.goto('a').and_then(|e| e.goto('f'));
+//! assert_eq!(node.unwrap().take(), Some("ɑ".to_owned()));
+//! ```
 
-#[derive(Debug)]
-pub struct Node<'a> {
-    neighbors: RefCell<HashMap<char, Rc<Node<'a>>>>,
-    out: RefCell<Option<String>>
-}
+pub mod bst {
+    use std::collections::HashMap;
+    use std::{cell::RefCell, rc::Rc};
 
-impl<'a> Node<'a> {
-    pub fn new() -> Self {
-        Node {
-            neighbors: HashMap::new().into(),
-            out: None.into()
+    #[derive(Debug)]
+    pub struct Node<'a> {
+        neighbors: RefCell<HashMap<char, Rc<Node<'a>>>>,
+        value: RefCell<Option<String>>,
+    }
+
+    impl<'a> Default for Node<'a> {
+        fn default() -> Self {
+            Self::new()
         }
     }
 
-    pub fn insert(&self, path: Vec<char>, out: String) {
-        if let Some(character) = path.clone().first() {
-            let new_node = Rc::new(Self::new());
+    impl<'a> Node<'a> {
+        /// Initialize a new node.
+        pub fn new() -> Self {
+            Self {
+                neighbors: HashMap::new().into(),
+                value: None.into(),
+            }
+        }
 
-            self.neighbors.borrow()
-                .get(character).unwrap_or(&new_node)
-                .insert(path.into_iter().skip(1).collect(), out);
+        /// Insert a path in the BST.
+        pub fn insert(&self, path: Vec<char>, value: String) {
+            if let Some(character) = path.clone().first() {
+                let new_node = Rc::new(Self::new());
 
-            self.neighbors.borrow_mut().entry(*character).or_insert(new_node);
-        } else {
-            *self.out.borrow_mut() = Some(out);
-        };
-    }
+                self.neighbors
+                    .borrow()
+                    .get(character)
+                    .unwrap_or(&new_node)
+                    .insert(path.into_iter().skip(1).collect(), value);
 
-    pub fn get(&self, character: char) -> Option<Rc<Self>> {
-        self.neighbors.borrow().get(&character).map(Rc::clone)
-    }
+                self.neighbors
+                    .borrow_mut()
+                    .entry(*character)
+                    .or_insert(new_node);
+            } else {
+                *self.value.borrow_mut() = Some(value);
+            };
+        }
 
-    pub fn take(&self) -> Option<String> {
-        self.out.borrow().as_ref().map(ToOwned::to_owned)
+        /// Move from one node to another
+        pub fn goto(&self, character: char) -> Option<Rc<Self>> {
+            self.neighbors.borrow().get(&character).map(Rc::clone)
+        }
+
+        /// Extract the value from a node .
+        pub fn take(&self) -> Option<String> {
+            self.value.borrow().as_ref().map(ToOwned::to_owned)
+        }
     }
 }
 
-pub fn load_data(file_path: &str) -> Vec<Vec<String>> {
-    let data = fs::read_to_string(file_path).unwrap();
-    data.split('\n')
-        .map(|line| line.split_whitespace()
-            .filter(|token| !token.is_empty())
-            .map(ToOwned::to_owned)
-            .collect())
-        .collect()
-}
+pub mod utils {
+    use crate::bst;
+    use std::fs;
 
-pub fn build_map(data: Vec<[&str; 2]>) -> Node {
-    let root = Node::new();
+    /// Load the clafrica code from a plain text file.
+    pub fn load_data(file_path: &str) -> Vec<Vec<String>> {
+        let data = fs::read_to_string(file_path).unwrap();
+        data.split('\n')
+            .map(|line| {
+                line.split_whitespace()
+                    .filter(|token| !token.is_empty())
+                    .map(ToOwned::to_owned)
+                    .collect()
+            })
+            .collect()
+    }
 
-    data.iter().for_each(|e| {
-        root.insert(e[0].chars().collect(), e[1].to_owned());
-    });
+    /// Build a BST from the clafrica code.
+    pub fn build_map(data: Vec<[&str; 2]>) -> bst::Node {
+        let root = bst::Node::new();
 
-    root
+        data.iter().for_each(|e| {
+            root.insert(e[0].chars().collect(), e[1].to_owned());
+        });
+
+        root
+    }
 }
 
 #[cfg(test)]
@@ -68,40 +125,46 @@ mod tests {
 
     #[test]
     fn test_load_data() {
-        use crate::load_data;
+        use crate::utils;
 
         generate_data_file();
-
-        load_data("../tmp/data.txt").iter().for_each(|pair| assert_eq!(pair.len(), 2));
+        utils::load_data("../tmp/data.txt")
+            .iter()
+            .for_each(|pair| assert_eq!(pair.len(), 2));
     }
 
     #[test]
     fn test_build_map() {
-        use crate::build_map;
-        use crate::load_data;
+        use crate::utils;
 
         let data = vec![["af11", "ɑ̀ɑ̀"], ["?.", "ʔ"]];
-        build_map(data);
+        utils::build_map(data);
 
-        let data = load_data("../tmp/data.txt");
-        build_map(data.iter().map(|e| [e[0].as_str(), e[1].as_str()]).collect());
+        generate_data_file();
+
+        let data = utils::load_data("../tmp/data.txt");
+        utils::build_map(
+            data.iter()
+                .map(|e| [e[0].as_str(), e[1].as_str()])
+                .collect(),
+        );
     }
 
     #[test]
     fn test_node() {
-        use crate::Node;
+        use crate::bst;
 
-        let root = Node::new();
-        root.insert(vec!['a','f'], "ɑ".to_owned());
-        root.insert(vec!['a','f','1'], "ɑ̀".to_owned());
+        let root = bst::Node::new();
+        root.insert(vec!['a', 'f'], "ɑ".to_owned());
+        root.insert(vec!['a', 'f', '1'], "ɑ̀".to_owned());
 
-        assert!(root.get('a').is_some());
-        assert!(root.get('b').is_none());
+        assert!(root.goto('a').is_some());
+        assert!(root.goto('b').is_none());
 
-        let node = root.get('a').and_then(|e| e.get('f'));
+        let node = root.goto('a').and_then(|e| e.goto('f'));
         assert_eq!(node.as_ref().unwrap().take(), Some("ɑ".to_owned()));
 
-        let node = node.and_then(|e| e.get('1'));
-        assert_eq!(node.unwrap().take(), Some("ɑ̀".to_owned()));
+        let node = node.and_then(|e| e.goto('1'));
+        assert_eq!(node.as_ref().unwrap().take(), Some("ɑ̀".to_owned()));
     }
 }

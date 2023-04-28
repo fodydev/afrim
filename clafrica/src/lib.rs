@@ -1,8 +1,8 @@
-use clafrica_lib::Node;
+use clafrica_lib::bst;
 
 struct Cursor<'a> {
     stack: Vec<&'a str>,
-    node: &'a Node<'a>,
+    node: &'a bst::Node<'a>,
 }
 
 fn run() {
