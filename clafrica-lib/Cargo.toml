@@ -1,0 +1,11 @@
+[package]
+name = "clafrica-lib"
+version = "0.1.0"
+edition = "2021"
+description = "This library contains a set of tools to make handling of clafrica code more convenient."
+repository = "https://github.com/pythonbrad/clafrica-lib"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

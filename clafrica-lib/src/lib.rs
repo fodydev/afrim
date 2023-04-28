@@ -1,26 +1,21 @@
 use std::collections::HashMap;
 use std::{fs, cell::RefCell, rc::Weak, rc::Rc};
 
-struct Cursor<'a> {
-    stack: Vec<&'a str>,
-    node: &'a Node<'a>,
-}
-
 #[derive(Debug)]
-struct Node<'a> {
+pub struct Node<'a> {
     neighbors: RefCell<HashMap<char, Rc<Node<'a>>>>,
     out: RefCell<Option<String>>
 }
 
 impl<'a> Node<'a> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Node {
             neighbors: HashMap::new().into(),
             out: None.into()
         }
     }
 
-    fn insert(&self, path: Vec<char>, out: String) {
+    pub fn insert(&self, path: Vec<char>, out: String) {
         if let Some(character) = path.clone().first() {
             let new_node = Rc::new(Self::new());
 
@@ -34,21 +29,17 @@ impl<'a> Node<'a> {
         };
     }
 
-    fn get(&self, character: char) -> Option<Rc<Self>> {
+    pub fn get(&self, character: char) -> Option<Rc<Self>> {
         self.neighbors.borrow().get(&character).map(Rc::clone)
     }
 
-    fn take(&self) -> Option<String> {
+    pub fn take(&self) -> Option<String> {
         self.out.borrow().as_ref().map(ToOwned::to_owned)
     }
 }
 
-fn run() {
-    unimplemented!();
-}
-
-fn load_data() -> Vec<Vec<String>> {
-    let data = fs::read_to_string("data/clafrica_codes.txt").unwrap();
+pub fn load_data(file_path: &str) -> Vec<Vec<String>> {
+    let data = fs::read_to_string(file_path).unwrap();
     data.split('\n')
         .map(|line| line.split_whitespace()
             .filter(|token| !token.is_empty())
@@ -57,7 +48,7 @@ fn load_data() -> Vec<Vec<String>> {
         .collect()
 }
 
-fn build_map(data: Vec<[&str; 2]>) -> Node {
+pub fn build_map(data: Vec<[&str; 2]>) -> Node {
     let root = Node::new();
 
     data.iter().for_each(|e| {
@@ -69,11 +60,19 @@ fn build_map(data: Vec<[&str; 2]>) -> Node {
 
 #[cfg(test)]
 mod tests {
+    fn generate_data_file() {
+        use std::fs;
+        let data = "af11\t  \t  \t     ɑ̀ɑ̀\naf1\t  \t  \tɑ̀";
+        fs::write("../tmp/data.txt", data).unwrap();
+    }
+
     #[test]
     fn test_load_data() {
         use crate::load_data;
 
-        load_data().iter().for_each(|pair| assert_eq!(pair.len(), 2));
+        generate_data_file();
+
+        load_data("../tmp/data.txt").iter().for_each(|pair| assert_eq!(pair.len(), 2));
     }
 
     #[test]
@@ -84,7 +83,7 @@ mod tests {
         let data = vec![["af11", "ɑ̀ɑ̀"], ["?.", "ʔ"]];
         build_map(data);
 
-        let data = load_data();
+        let data = load_data("../tmp/data.txt");
         build_map(data.iter().map(|e| [e[0].as_str(), e[1].as_str()]).collect());
     }
 
