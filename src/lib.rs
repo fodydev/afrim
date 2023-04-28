@@ -20,13 +20,13 @@ impl<'a> Node<'a> {
         }
     }
 
-    fn insert(&self, code: Vec<char>, out: String) {
-        if let Some(character) = code.clone().first() {
+    fn insert(&self, path: Vec<char>, out: String) {
+        if let Some(character) = path.clone().first() {
             let new_node = Rc::new(Self::new());
 
             self.neighbors.borrow()
                 .get(character).unwrap_or(&new_node)
-                .insert(code.into_iter().skip(1).collect(), out);
+                .insert(path.into_iter().skip(1).collect(), out);
 
             self.neighbors.borrow_mut().entry(*character).or_insert(new_node);
         } else {
