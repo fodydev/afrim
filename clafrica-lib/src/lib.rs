@@ -16,8 +16,9 @@
 //! let data = vec![["af11", "ɑ̀ɑ̀"], ["?.", "ʔ"]];
 //! utils::build_map(data);
 //!
-//! // or
-//! let data = utils::load_data("../tmp/data.txt").unwrap();
+//! // or directly from a file
+//! let data = utils::load_data("data/sample.txt")
+//!                   .expect("Failed to load the clafrica code file");
 //! let data = data.iter()
 //!                .map(|e| [e[0].as_str(), e[1].as_str()])
 //!                .collect();
@@ -119,18 +120,11 @@ pub mod utils {
 
 #[cfg(test)]
 mod tests {
-    fn generate_data_file() {
-        use std::fs;
-        let data = "af11\t  \t  \t     ɑ̀ɑ̀\naf1\t  \t  \tɑ̀";
-        fs::write("../tmp/data.txt", data).unwrap();
-    }
-
     #[test]
     fn test_load_data() {
         use crate::utils;
 
-        generate_data_file();
-        utils::load_data("../tmp/data.txt")
+        utils::load_data("data/sample.txt")
             .unwrap()
             .iter()
             .for_each(|pair| assert_eq!(pair.len(), 2));
@@ -143,9 +137,7 @@ mod tests {
         let data = vec![["af11", "ɑ̀ɑ̀"], ["?.", "ʔ"]];
         utils::build_map(data);
 
-        generate_data_file();
-
-        let data = utils::load_data("../tmp/data.txt").unwrap();
+        let data = utils::load_data("data/sample.txt").unwrap();
         utils::build_map(
             data.iter()
                 .map(|e| [e[0].as_str(), e[1].as_str()])
