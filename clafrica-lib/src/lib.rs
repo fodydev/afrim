@@ -17,7 +17,7 @@
 //! utils::build_map(data);
 //!
 //! // or
-//! let data = utils::load_data("../tmp/data.txt");
+//! let data = utils::load_data("../tmp/data.txt").unwrap();
 //! let data = data.iter()
 //!                .map(|e| [e[0].as_str(), e[1].as_str()])
 //!                .collect();
@@ -88,19 +88,21 @@ pub mod bst {
 
 pub mod utils {
     use crate::bst;
-    use std::fs;
+    use std::{fs, io};
 
     /// Load the clafrica code from a plain text file.
-    pub fn load_data(file_path: &str) -> Vec<Vec<String>> {
-        let data = fs::read_to_string(file_path).unwrap();
-        data.split('\n')
+    pub fn load_data(file_path: &str) -> Result<Vec<Vec<String>>, io::Error> {
+        let data = fs::read_to_string(file_path)?;
+        let data = data
+            .split('\n')
             .map(|line| {
                 line.split_whitespace()
                     .filter(|token| !token.is_empty())
                     .map(ToOwned::to_owned)
                     .collect()
             })
-            .collect()
+            .collect();
+        Ok(data)
     }
 
     /// Build a BST from the clafrica code.
@@ -129,6 +131,7 @@ mod tests {
 
         generate_data_file();
         utils::load_data("../tmp/data.txt")
+            .unwrap()
             .iter()
             .for_each(|pair| assert_eq!(pair.len(), 2));
     }
@@ -142,7 +145,7 @@ mod tests {
 
         generate_data_file();
 
-        let data = utils::load_data("../tmp/data.txt");
+        let data = utils::load_data("../tmp/data.txt").unwrap();
         utils::build_map(
             data.iter()
                 .map(|e| [e[0].as_str(), e[1].as_str()])
