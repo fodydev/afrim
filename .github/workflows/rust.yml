@@ -1,0 +1,59 @@
+name: Rust
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, release-*]
+  pull_request:
+    branches: [main, release-*]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  clippy_workspace:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Add clippy
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          profile: minimal
+          default: true
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets -- -D warnings
+
+  rust_fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Add rustfmt
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          profile: minimal
+          default: true
+          components: rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - run: |
+          cargo fmt -- --check
+
+  rust_build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --all-features --verbose
+
+  run_tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+      - run: |
+          cargo test --all-features --lib --bins --tests --verbose
+          cargo test --benches
