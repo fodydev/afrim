@@ -1,0 +1,53 @@
+name: Coverage
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, release-*]
+  pull_request:
+    branches: [main, release-*]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup component add llvm-tools-preview
+      - name: Install grcov
+        uses: actions-rs/install@v0.1
+        with:
+          crate: grcov
+          version: latest
+          use-tool-cache: true
+      - name: build
+        env:
+          RUSTFLAGS: -Cinstrument-coverage
+        run: cargo build --verbose
+      - name: test
+        env:
+          RUSTFLAGS: -Cinstrument-coverage
+          LLVM_PROFILE_FILE: clafrica-%p-%m.profraw
+        run: cargo test --all-features --verbose
+      - name: Run grcov
+        run: |
+          mkdir coverage
+          grcov . \
+            --binary-path ./target/debug/ \
+            -s . \
+            -t lcov \
+            --branch \
+            --ignore-not-existing \
+            --ignore "/*" \
+            --excl-line "#\\[derive\\(" \
+            -o ./coverage/lcov.info
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
