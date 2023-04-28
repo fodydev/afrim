@@ -3,18 +3,18 @@ use std::{fs, cell::RefCell, rc::Weak, rc::Rc};
 
 struct Cursor<'a> {
     stack: Vec<&'a str>,
-    path: &'a Path<'a>,
+    node: &'a Node<'a>,
 }
 
 #[derive(Debug)]
-struct Path<'a> {
-    neighbors: RefCell<HashMap<char, Rc<Path<'a>>>>,
+struct Node<'a> {
+    neighbors: RefCell<HashMap<char, Rc<Node<'a>>>>,
     out: RefCell<Option<String>>
 }
 
-impl<'a> Path<'a> {
+impl<'a> Node<'a> {
     fn new() -> Self {
-        Path {
+        Node {
             neighbors: HashMap::new().into(),
             out: None.into()
         }
@@ -22,13 +22,13 @@ impl<'a> Path<'a> {
 
     fn insert(&self, code: Vec<char>, out: String) {
         if let Some(character) = code.clone().first() {
-            let new_path = Rc::new(Self::new());
+            let new_node = Rc::new(Self::new());
 
             self.neighbors.borrow()
-                .get(character).unwrap_or(&new_path)
+                .get(character).unwrap_or(&new_node)
                 .insert(code.into_iter().skip(1).collect(), out);
 
-            self.neighbors.borrow_mut().entry(*character).or_insert(new_path);
+            self.neighbors.borrow_mut().entry(*character).or_insert(new_node);
         } else {
             *self.out.borrow_mut() = Some(out);
         };
@@ -57,8 +57,8 @@ fn load_data() -> Vec<Vec<String>> {
         .collect()
 }
 
-fn build_map(data: Vec<[&str; 2]>) -> Path {
-    let root = Path::new();
+fn build_map(data: Vec<[&str; 2]>) -> Node {
+    let root = Node::new();
 
     data.iter().for_each(|e| {
         root.insert(e[0].chars().collect(), e[1].to_owned());
@@ -89,20 +89,20 @@ mod tests {
     }
 
     #[test]
-    fn test_path() {
-        use crate::Path;
+    fn test_node() {
+        use crate::Node;
 
-        let root = Path::new();
+        let root = Node::new();
         root.insert(vec!['a','f'], "ɑ".to_owned());
         root.insert(vec!['a','f','1'], "ɑ̀".to_owned());
 
         assert!(root.get('a').is_some());
         assert!(root.get('b').is_none());
 
-        let path = root.get('a').and_then(|e| e.get('f'));
-        assert_eq!(path.as_ref().unwrap().take(), Some("ɑ".to_owned()));
+        let node = root.get('a').and_then(|e| e.get('f'));
+        assert_eq!(node.as_ref().unwrap().take(), Some("ɑ".to_owned()));
 
-        let path = path.and_then(|e| e.get('1'));
-        assert_eq!(path.unwrap().take(), Some("ɑ̀".to_owned()));
+        let node = node.and_then(|e| e.get('1'));
+        assert_eq!(node.unwrap().take(), Some("ɑ̀".to_owned()));
     }
 }
