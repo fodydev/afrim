@@ -1,9 +1,9 @@
 [package]
 name = "clafrica-lib"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "This library contains a set of tools to make handling of clafrica code more convenient."
-repository = "https://github.com/pythonbrad/clafrica-lib"
+repository = "https://github.com/pythonbrad/clafrica"
 license = "MIT"
 authors = ["Fomegne <fomegnemeudje@outlook.com>"]
 
