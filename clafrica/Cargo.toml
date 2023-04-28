@@ -1,11 +1,11 @@
 [package]
 name = "clafrica"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "This application allows you to type most of the characters in the african alphabet in any text field."
 repository = "https://github.com/pythonbrad/clafrica"
 license = "MIT"
-readme = "../../README.md"
+readme = "../README.md"
 authors = ["Fomegne <fomegnemeudje@outlook.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
