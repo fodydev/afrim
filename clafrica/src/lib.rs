@@ -2,7 +2,7 @@ use clafrica_lib::bst;
 
 struct Cursor<'a> {
     stack: Vec<&'a str>,
-    node: &'a bst::Node<'a>,
+    node: &'a bst::Node,
 }
 
 fn run() {
