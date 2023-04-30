@@ -8,7 +8,7 @@
 //! use clafrica_lib::{bst, utils};
 //!
 //! // Build a BST
-//! let root = bst::Node::new();
+//! let root = bst::Node::default();
 //! root.insert(vec!['a', 'f'], "ɑ".to_owned());
 //! root.insert(vec!['a', 'f', '1'], "ɑ̀".to_owned());
 //!
@@ -37,20 +37,22 @@ pub mod bst {
     #[derive(Debug)]
     pub struct Node<'a> {
         neighbors: RefCell<HashMap<char, Rc<Node<'a>>>>,
+        depth: i32,
         value: RefCell<Option<String>>,
     }
 
     impl<'a> Default for Node<'a> {
         fn default() -> Self {
-            Self::new()
+            Self::new(0)
         }
     }
 
-    impl<'a> Node<'a> {
+    impl Node<'_> {
         /// Initialize a new node.
-        pub fn new() -> Self {
+        pub fn new(depth: i32) -> Self {
             Self {
                 neighbors: HashMap::new().into(),
+                depth,
                 value: None.into(),
             }
         }
@@ -58,7 +60,7 @@ pub mod bst {
         /// Insert a path in the BST.
         pub fn insert(&self, path: Vec<char>, value: String) {
             if let Some(character) = path.clone().first() {
-                let new_node = Rc::new(Self::new());
+                let new_node = Rc::new(Self::new(self.depth + 1));
 
                 self.neighbors
                     .borrow()
@@ -84,6 +86,11 @@ pub mod bst {
         pub fn take(&self) -> Option<String> {
             self.value.borrow().as_ref().map(ToOwned::to_owned)
         }
+
+        /// Return true is the node is at the initial depth
+        pub fn is_root(&self) -> bool {
+            self.depth == 0
+        }
     }
 }
 
@@ -108,7 +115,7 @@ pub mod utils {
 
     /// Build a BST from the clafrica code.
     pub fn build_map(data: Vec<[&str; 2]>) -> bst::Node {
-        let root = bst::Node::new();
+        let root = bst::Node::default();
 
         data.iter().for_each(|e| {
             root.insert(e[0].chars().collect(), e[1].to_owned());
@@ -149,11 +156,15 @@ mod tests {
     fn test_node() {
         use crate::bst;
 
-        let root = bst::Node::new();
+        let root = bst::Node::default();
+
+        assert!(root.is_root());
+
         root.insert(vec!['a', 'f'], "ɑ".to_owned());
         root.insert(vec!['a', 'f', '1'], "ɑ̀".to_owned());
 
         assert!(root.goto('a').is_some());
+        assert!(!root.goto('a').unwrap().is_root());
         assert!(root.goto('b').is_none());
 
         let node = root.goto('a').and_then(|e| e.goto('f'));
