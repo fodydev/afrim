@@ -35,19 +35,19 @@ pub mod bst {
     use std::{cell::RefCell, rc::Rc};
 
     #[derive(Debug)]
-    pub struct Node<'a> {
-        neighbors: RefCell<HashMap<char, Rc<Node<'a>>>>,
+    pub struct Node {
+        neighbors: RefCell<HashMap<char, Rc<Node>>>,
         depth: i32,
         value: RefCell<Option<String>>,
     }
 
-    impl<'a> Default for Node<'a> {
+    impl Default for Node {
         fn default() -> Self {
             Self::new(0)
         }
     }
 
-    impl Node<'_> {
+    impl Node {
         /// Initialize a new node.
         pub fn new(depth: i32) -> Self {
             Self {
