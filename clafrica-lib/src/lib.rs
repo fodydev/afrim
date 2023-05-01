@@ -28,16 +28,23 @@
 //! // Traverse the tree
 //! let node = root.goto('a').and_then(|e| e.goto('f'));
 //! assert_eq!(node.unwrap().take(), Some("ɑ".to_owned()));
+//!
+//! // Test our cursor
+//! let mut cursor = bst::Cursor::new(root, 10);
+//! let code = "af1";
+//! code.chars().for_each(|c| {cursor.hit(c);});
+//! assert_eq!(cursor.state(), (Some("ɑ̀".to_owned()), 3));
+//! assert_eq!(cursor.undo(), Some("ɑ̀".to_owned()));
 //! ```
 
 pub mod bst {
-    use std::collections::HashMap;
+    use std::collections::{HashMap, VecDeque};
     use std::{cell::RefCell, rc::Rc};
 
     #[derive(Debug)]
     pub struct Node {
         neighbors: RefCell<HashMap<char, Rc<Node>>>,
-        depth: i32,
+        pub depth: usize,
         value: RefCell<Option<String>>,
     }
 
@@ -49,7 +56,7 @@ pub mod bst {
 
     impl Node {
         /// Initialize a new node.
-        pub fn new(depth: i32) -> Self {
+        pub fn new(depth: usize) -> Self {
             Self {
                 neighbors: HashMap::new().into(),
                 depth,
@@ -90,6 +97,68 @@ pub mod bst {
         /// Return true is the node is at the initial depth
         pub fn is_root(&self) -> bool {
             self.depth == 0
+        }
+    }
+
+    pub struct Cursor {
+        buffer: VecDeque<Rc<Node>>,
+        root: Rc<Node>,
+    }
+
+    impl Cursor {
+        /// Initialize the cursor
+        pub fn new(root: Node, capacity: usize) -> Self {
+            Self {
+                buffer: VecDeque::with_capacity(capacity),
+                root: Rc::new(root),
+            }
+        }
+        /// Enter a character and return his corresponding out
+        pub fn hit(&mut self, character: char) -> Option<String> {
+            let root = Rc::clone(&self.root);
+            let node = self
+                .buffer
+                .iter()
+                .last()
+                .unwrap_or(&root)
+                .goto(character)
+                .or_else(|| root.goto(character))
+                .unwrap_or(root);
+
+            let out = node.take();
+
+            if self.buffer.len() == self.buffer.capacity() {
+                self.buffer.pop_front();
+            }
+            self.buffer.push_back(node);
+
+            out
+        }
+
+        /// Remove the previous enter and return his corresponding out
+        pub fn undo(&mut self) -> Option<String> {
+            let node = self.buffer.pop_back();
+
+            node.and_then(|node| node.take())
+        }
+
+        /// Return the current state of the cursor
+        pub fn state(&self) -> (Option<String>, usize) {
+            self.buffer
+                .iter()
+                .last()
+                .map(|n| (n.take(), n.depth))
+                .unwrap_or_default()
+        }
+
+        /// Return the current path of the cursor
+        pub fn to_path(&self) -> Vec<Option<String>> {
+            self.buffer.iter().map(|node| node.take()).collect()
+        }
+
+        /// Clear the memory of the cursor
+        pub fn clear(&mut self) {
+            self.buffer.clear();
         }
     }
 }
@@ -172,5 +241,82 @@ mod tests {
 
         let node = node.and_then(|e| e.goto('1'));
         assert_eq!(node.as_ref().unwrap().take(), Some("ɑ̀".to_owned()));
+    }
+
+    #[test]
+    fn test_cursor() {
+        use crate::bst;
+        use crate::utils;
+
+        macro_rules! hit {
+            ( $cursor:ident $( $c:expr ),* ) => (
+                $( $cursor.hit($c); )*
+            );
+        }
+
+        macro_rules! undo {
+            ( $cursor:ident $occ:expr ) => {
+                (0..$occ).into_iter().for_each(|_| {
+                    $cursor.undo();
+                });
+            };
+        }
+
+        let data = utils::load_data("data/sample.txt").unwrap();
+        let root = utils::build_map(
+            data.iter()
+                .map(|e| [e[0].as_str(), e[1].as_str()])
+                .collect(),
+        );
+
+        let mut cursor = bst::Cursor::new(root, 10);
+
+        assert_eq!(cursor.state(), (None, 0));
+
+        hit!(cursor '2', 'i', 'a', 'f');
+        assert_eq!(
+            cursor.to_path(),
+            vec![None, None, Some("íá".to_owned()), Some("íɑ́".to_owned())]
+        );
+
+        assert_eq!(cursor.state(), (Some("íɑ́".to_owned()), 4));
+
+        undo!(cursor 1);
+        assert_eq!(cursor.to_path(), vec![None, None, Some("íá".to_owned())]);
+
+        undo!(cursor 1);
+        cursor.hit('e');
+        assert_eq!(cursor.to_path(), vec![None, None, Some("íé".to_owned())]);
+
+        undo!(cursor 2);
+        hit!(cursor 'o', 'o');
+        assert_eq!(cursor.to_path(), vec![None, None, Some("óó".to_owned())]);
+
+        undo!(cursor 3);
+        assert_eq!(cursor.to_path(), vec![]);
+
+        hit!(cursor '2', '2', 'u', 'a');
+        assert_eq!(
+            cursor.to_path(),
+            vec![None, None, None, Some("úá".to_owned())]
+        );
+
+        hit!(
+            cursor
+            'a', 'a', '2', 'a', 'e', 'a', '2', 'f', 'a',
+            '2', '2', '2', 'i', 'a', '2', '2', '_', 'f',
+            '2', 'a', '2', 'a', '_'
+        );
+        assert_eq!(
+            cursor
+                .to_path()
+                .into_iter()
+                .filter_map(|e| e)
+                .collect::<Vec<_>>(),
+            vec!["íá", "á̠"]
+        );
+
+        cursor.clear();
+        assert_eq!(cursor.to_path(), vec![]);
     }
 }
