@@ -308,11 +308,7 @@ mod tests {
             '2', 'a', '2', 'a', '_'
         );
         assert_eq!(
-            cursor
-                .to_path()
-                .into_iter()
-                .flatten()
-                .collect::<Vec<_>>(),
+            cursor.to_path().into_iter().flatten().collect::<Vec<_>>(),
             vec!["íá", "á̠"]
         );
 
