@@ -5,14 +5,14 @@
 //!
 //! Example
 //! ```
-//! use clafrica_lib::{bst, utils};
+//! use clafrica_lib::{text_buffer, utils};
 //!
-//! // Build a BST
-//! let root = bst::Node::default();
+//! // Build a TextBuffer
+//! let root = text_buffer::Node::default();
 //! root.insert(vec!['a', 'f'], "ɑ".to_owned());
 //! root.insert(vec!['a', 'f', '1'], "ɑ̀".to_owned());
 //!
-//! // Bulk insert of data in the BST
+//! // Bulk insert of data in the TextBuffer
 //! let data = vec![["af11", "ɑ̀ɑ̀"], ["?.", "ʔ"]];
 //! utils::build_map(data);
 //!
@@ -30,14 +30,14 @@
 //! assert_eq!(node.unwrap().take(), Some("ɑ".to_owned()));
 //!
 //! // Test our cursor
-//! let mut cursor = bst::Cursor::new(root, 10);
+//! let mut cursor = text_buffer::Cursor::new(root, 10);
 //! let code = "af1";
 //! code.chars().for_each(|c| {cursor.hit(c);});
 //! assert_eq!(cursor.state(), (Some("ɑ̀".to_owned()), 3));
 //! assert_eq!(cursor.undo(), Some("ɑ̀".to_owned()));
 //! ```
 
-pub mod bst {
+pub mod text_buffer {
     use std::collections::{HashMap, VecDeque};
     use std::{cell::RefCell, rc::Rc};
 
@@ -64,7 +64,7 @@ pub mod bst {
             }
         }
 
-        /// Insert a path in the BST.
+        /// Insert a path in the TextBuffer.
         pub fn insert(&self, path: Vec<char>, value: String) {
             if let Some(character) = path.clone().first() {
                 let new_node = Rc::new(Self::new(self.depth + 1));
@@ -164,7 +164,7 @@ pub mod bst {
 }
 
 pub mod utils {
-    use crate::bst;
+    use crate::text_buffer;
     use std::{fs, io};
 
     /// Load the clafrica code from a plain text file.
@@ -182,9 +182,9 @@ pub mod utils {
         Ok(data)
     }
 
-    /// Build a BST from the clafrica code.
-    pub fn build_map(data: Vec<[&str; 2]>) -> bst::Node {
-        let root = bst::Node::default();
+    /// Build a TextBuffer from the clafrica code.
+    pub fn build_map(data: Vec<[&str; 2]>) -> text_buffer::Node {
+        let root = text_buffer::Node::default();
 
         data.iter().for_each(|e| {
             root.insert(e[0].chars().collect(), e[1].to_owned());
@@ -223,9 +223,9 @@ mod tests {
 
     #[test]
     fn test_node() {
-        use crate::bst;
+        use crate::text_buffer;
 
-        let root = bst::Node::default();
+        let root = text_buffer::Node::default();
 
         assert!(root.is_root());
 
@@ -245,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_cursor() {
-        use crate::bst;
+        use crate::text_buffer;
         use crate::utils;
 
         macro_rules! hit {
@@ -269,7 +269,7 @@ mod tests {
                 .collect(),
         );
 
-        let mut cursor = bst::Cursor::new(root, 10);
+        let mut cursor = text_buffer::Cursor::new(root, 10);
 
         assert_eq!(cursor.state(), (None, 0));
 
@@ -308,11 +308,7 @@ mod tests {
             '2', 'a', '2', 'a', '_'
         );
         assert_eq!(
-            cursor
-                .to_path()
-                .into_iter()
-                .filter_map(|e| e)
-                .collect::<Vec<_>>(),
+            cursor.to_path().into_iter().flatten().collect::<Vec<_>>(),
             vec!["íá", "á̠"]
         );
 
