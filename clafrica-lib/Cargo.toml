@@ -5,7 +5,7 @@ edition = "2021"
 description = "This library contains a set of tools to make handling of clafrica code more convenient."
 repository = "https://github.com/pythonbrad/clafrica"
 license = "MIT"
-authors = ["Fomegne <fomegnemeudje@outlook.com>"]
+authors = ["Fomegne Brady <fomegnemeudje@outlook.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

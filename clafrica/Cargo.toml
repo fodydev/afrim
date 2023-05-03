@@ -6,7 +6,7 @@ description = "This application allows you to type most of the characters in the
 repository = "https://github.com/pythonbrad/clafrica"
 license = "MIT"
 readme = "../README.md"
-authors = ["Fomegne <fomegnemeudje@outlook.com>"]
+authors = ["Fomegne Brady <fomegnemeudje@outlook.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
