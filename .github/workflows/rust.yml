@@ -11,49 +11,41 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  clippy_workspace:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Add clippy
-        uses: actions-rs/toolchain@v1.0.6
-        with:
-          profile: minimal
-          default: true
-          components: clippy
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --all-targets -- -D warnings
+  build:
+    runs-on: ${{matrix.os}}
+    env:
+      DISPLAY: ':99'
+    strategy:
+      fail-fast: false
+      matrix: 
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+        - os: ubuntu-latest
+          headless: Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        - os: ubuntu-latest
+          dependencies: sudo apt-get install libxtst-dev libevdev-dev libxdo-dev  --assume-yes
 
-  rust_fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Add rustfmt
-        uses: actions-rs/toolchain@v1.0.6
-        with:
-          profile: minimal
-          default: true
-          components: rustfmt
-      - uses: Swatinem/rust-cache@v2
-      - run: |
+
+      - name: Add components
+        run: rustup component add clippy rustfmt
+      - name: Dependencies
+        run: ${{matrix.dependencies}}
+      - name: Setup headless environment
+        run: ${{matrix.headless}}
+
+      - name: Rustfmt
+        run: |
           cargo fmt -- --check
 
-  rust_build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo build --all-features --verbose
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      
+      - name: Build
+        run: cargo build --all-features --verbose
 
-  run_tests:
-    name: Run tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2
-      - run: |
+      - name: Run tests
+        run: |
           cargo test --all-features --lib --bins --tests --verbose
           cargo test --benches
