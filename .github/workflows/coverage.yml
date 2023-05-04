@@ -13,13 +13,10 @@ env:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    env:
-      DISPLAY: ':99'
     steps:
       - uses: actions/checkout@v3
       - name: Dependencies
         run: |
-          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
           sudo apt-get install libxtst-dev libevdev-dev libxdo-dev --assume-yes
       - uses: actions-rs/toolchain@v1
         with:
@@ -51,6 +48,7 @@ jobs:
             --branch \
             --ignore-not-existing \
             --ignore "/*" \
+            --ignore "clafrica/src/{lib,main}.rs" \
             --excl-line "#\\[derive\\(" \
             -o ./coverage/lcov.info
       - name: Coveralls
