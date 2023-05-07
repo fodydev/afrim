@@ -33,7 +33,7 @@
 //! let mut cursor = text_buffer::Cursor::new(root, 10);
 //! let code = "af1";
 //! code.chars().for_each(|c| {cursor.hit(c);});
-//! assert_eq!(cursor.state(), (Some("ɑ̀".to_owned()), 3));
+//! assert_eq!(cursor.state(), (Some("ɑ̀".to_owned()), 3, '1'));
 //! assert_eq!(cursor.undo(), Some("ɑ̀".to_owned()));
 //! ```
 
@@ -45,21 +45,23 @@ pub mod text_buffer {
     pub struct Node {
         neighbors: RefCell<HashMap<char, Rc<Node>>>,
         pub depth: usize,
+        pub key: char,
         value: RefCell<Option<String>>,
     }
 
     impl Default for Node {
         fn default() -> Self {
-            Self::new(0)
+            Self::new('\0', 0)
         }
     }
 
     impl Node {
         /// Initialize a new node.
-        pub fn new(depth: usize) -> Self {
+        pub fn new(key: char, depth: usize) -> Self {
             Self {
                 neighbors: HashMap::new().into(),
                 depth,
+                key,
                 value: None.into(),
             }
         }
@@ -67,7 +69,7 @@ pub mod text_buffer {
         /// Insert a path in the TextBuffer.
         pub fn insert(&self, path: Vec<char>, value: String) {
             if let Some(character) = path.clone().first() {
-                let new_node = Rc::new(Self::new(self.depth + 1));
+                let new_node = Rc::new(Self::new(*character, self.depth + 1));
 
                 self.neighbors
                     .borrow()
@@ -115,15 +117,14 @@ pub mod text_buffer {
         }
         /// Enter a character and return his corresponding out
         pub fn hit(&mut self, character: char) -> Option<String> {
-            let root = Rc::clone(&self.root);
             let node = self
                 .buffer
                 .iter()
                 .last()
-                .unwrap_or(&root)
+                .unwrap_or(&self.root)
                 .goto(character)
-                .or_else(|| root.goto(character))
-                .unwrap_or(root);
+                .or_else(|| self.root.goto(character))
+                .unwrap_or(Rc::new(Node::new(character, 0)));
 
             let out = node.take();
 
@@ -143,17 +144,17 @@ pub mod text_buffer {
         }
 
         /// Return the current state of the cursor
-        pub fn state(&self) -> (Option<String>, usize) {
+        pub fn state(&self) -> (Option<String>, usize, char) {
             self.buffer
                 .iter()
                 .last()
-                .map(|n| (n.take(), n.depth))
+                .map(|n| (n.take(), n.depth, n.key))
                 .unwrap_or_default()
         }
 
         /// Return the current path of the cursor
-        pub fn to_path(&self) -> Vec<Option<String>> {
-            self.buffer.iter().map(|node| node.take()).collect()
+        pub fn to_path(&self) -> Vec<char> {
+            self.buffer.iter().map(|node| node.key).collect()
         }
 
         /// Clear the memory of the cursor
@@ -269,37 +270,31 @@ mod tests {
                 .collect(),
         );
 
-        let mut cursor = text_buffer::Cursor::new(root, 10);
+        let mut cursor = text_buffer::Cursor::new(root, 5);
 
-        assert_eq!(cursor.state(), (None, 0));
+        assert_eq!(cursor.state(), (None, 0, '\0'));
 
         hit!(cursor '2', 'i', 'a', 'f');
-        assert_eq!(
-            cursor.to_path(),
-            vec![None, None, Some("íá".to_owned()), Some("íɑ́".to_owned())]
-        );
+        assert_eq!(cursor.to_path(), vec!['2', 'i', 'a', 'f']);
 
-        assert_eq!(cursor.state(), (Some("íɑ́".to_owned()), 4));
+        assert_eq!(cursor.state(), (Some("íɑ́".to_owned()), 4, 'f'));
 
         undo!(cursor 1);
-        assert_eq!(cursor.to_path(), vec![None, None, Some("íá".to_owned())]);
+        assert_eq!(cursor.to_path(), vec!['2', 'i', 'a']);
 
         undo!(cursor 1);
         cursor.hit('e');
-        assert_eq!(cursor.to_path(), vec![None, None, Some("íé".to_owned())]);
+        assert_eq!(cursor.to_path(), vec!['2', 'i', 'e']);
 
         undo!(cursor 2);
         hit!(cursor 'o', 'o');
-        assert_eq!(cursor.to_path(), vec![None, None, Some("óó".to_owned())]);
+        assert_eq!(cursor.to_path(), vec!['2', 'o', 'o']);
 
         undo!(cursor 3);
         assert_eq!(cursor.to_path(), vec![]);
 
         hit!(cursor '2', '2', 'u', 'a');
-        assert_eq!(
-            cursor.to_path(),
-            vec![None, None, None, Some("úá".to_owned())]
-        );
+        assert_eq!(cursor.to_path(), vec!['2', '2', 'u', 'a']);
 
         hit!(
             cursor
@@ -307,10 +302,7 @@ mod tests {
             '2', '2', '2', 'i', 'a', '2', '2', '_', 'f',
             '2', 'a', '2', 'a', '_'
         );
-        assert_eq!(
-            cursor.to_path().into_iter().flatten().collect::<Vec<_>>(),
-            vec!["íá", "á̠"]
-        );
+        assert_eq!(cursor.to_path(), vec!['2', 'a', '2', 'a', '_']);
 
         cursor.clear();
         assert_eq!(cursor.to_path(), vec![]);

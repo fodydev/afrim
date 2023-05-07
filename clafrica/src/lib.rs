@@ -61,14 +61,14 @@ pub fn run(config: Config) -> Result<(), io::Error> {
                     let i = out.chars().count();
                     (0..i).for_each(|_| keyboard.key_click(Key::Backspace));
 
-                    if let (Some(prev_out), _) = cursor.state() {
+                    if let (Some(prev_out), ..) = cursor.state() {
                         keyboard.key_sequence(&prev_out);
                     }
 
                     keyboard.key_up(Key::Escape);
 
                     // Clear the remaining code
-                    while let (None, _i @ 1..) = cursor.state() {
+                    while let (None, _i @ 1.., _c) = cursor.state() {
                         cursor.undo();
                     }
                 }
@@ -84,7 +84,7 @@ pub fn run(config: Config) -> Result<(), io::Error> {
                 let character = character.unwrap();
                 println!("Received: {:?}", character);
 
-                let (prev_out, prev_code_len) = cursor.state();
+                let (prev_out, prev_code_len, ..) = cursor.state();
                 let out = cursor.hit(character);
 
                 if let Some(out) = out {
