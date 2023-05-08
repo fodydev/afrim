@@ -1,13 +1,14 @@
+use crate::api::Frontend;
 use clafrica_lib::{text_buffer, utils};
 use enigo::{Enigo, Key, KeyboardControllable};
 use rdev::{self, EventType, Key as E_Key};
-use std::sync::mpsc;
-use std::thread;
-use std::{env, io};
+use std::{env, io, sync::mpsc, thread};
+
+pub mod api;
 
 pub struct Config {
-    data_path: String,
-    buffer_size: usize,
+    pub data_path: String,
+    pub buffer_size: usize,
 }
 
 impl Config {
@@ -20,7 +21,7 @@ impl Config {
     }
 }
 
-pub fn run(config: Config) -> Result<(), io::Error> {
+pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), io::Error> {
     let data = utils::load_data(&config.data_path)?;
     let map = utils::build_map(
         data.iter()
@@ -30,6 +31,8 @@ pub fn run(config: Config) -> Result<(), io::Error> {
     let mut cursor = text_buffer::Cursor::new(map, config.buffer_size);
 
     let mut keyboard = Enigo::new();
+
+    frontend.update_screen(rdev::display_size().unwrap());
 
     let (tx, rx) = mpsc::channel();
     thread::spawn(move || {
@@ -75,17 +78,17 @@ pub fn run(config: Config) -> Result<(), io::Error> {
                         cursor.undo();
                     }
                 }
+
+                frontend.update_text(cursor.to_path());
             }
             EventType::KeyPress(E_Key::Unknown(_) | E_Key::ShiftLeft | E_Key::ShiftRight) => {
-                println!("[ignore] {:?}", event.event_type)
+                // println!("[ignore] {:?}", event.event_type)
             }
             EventType::ButtonPress(_) | EventType::KeyPress(_) if !is_valid => {
                 cursor.clear();
-                println!("Buffer cleared");
             }
             EventType::KeyPress(_) => {
                 let character = character.unwrap();
-                println!("Received: {:?}", character);
 
                 let (prev_out, prev_code_len, ..) = cursor.state();
                 let out = cursor.hit(character);
@@ -100,7 +103,10 @@ pub fn run(config: Config) -> Result<(), io::Error> {
                     keyboard.key_up(Key::Escape);
                 };
 
-                println!("{:?}", cursor.to_path());
+                frontend.update_text(cursor.to_path());
+            }
+            EventType::MouseMove { x, y } => {
+                frontend.update_position((x, y));
             }
             _ => (),
         };
