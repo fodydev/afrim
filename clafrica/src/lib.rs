@@ -51,7 +51,9 @@ pub fn run(config: Config) -> Result<(), io::Error> {
 
     for event in rx.iter() {
         let character = event.name.and_then(|s| s.chars().next());
-        let is_ascii = character.map(|c| c.is_ascii()).unwrap_or_default();
+        let is_valid = character
+            .map(|c| c.is_ascii() && !c.is_whitespace())
+            .unwrap_or_default();
 
         match event.event_type {
             EventType::KeyPress(E_Key::Backspace) => {
@@ -76,7 +78,7 @@ pub fn run(config: Config) -> Result<(), io::Error> {
             EventType::KeyPress(E_Key::Unknown(_) | E_Key::ShiftLeft | E_Key::ShiftRight) => {
                 println!("[ignore] {:?}", event.event_type)
             }
-            EventType::ButtonPress(_) | EventType::KeyPress(_) if !is_ascii => {
+            EventType::ButtonPress(_) | EventType::KeyPress(_) if !is_valid => {
                 cursor.clear();
                 println!("Buffer cleared");
             }
