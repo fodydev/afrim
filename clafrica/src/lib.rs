@@ -59,6 +59,7 @@ pub fn run(config: Config) -> Result<(), io::Error> {
             EventType::KeyPress(E_Key::Backspace) => {
                 if let Some(out) = cursor.undo() {
                     keyboard.key_down(Key::Escape);
+                    keyboard.key_up(Key::Backspace);
 
                     let i = out.chars().count();
                     (1..i).for_each(|_| keyboard.key_click(Key::Backspace));
