@@ -59,7 +59,7 @@ pub fn run(config: Config) -> Result<(), io::Error> {
                     keyboard.key_down(Key::Escape);
 
                     let i = out.chars().count();
-                    (0..i).for_each(|_| keyboard.key_click(Key::Backspace));
+                    (1..i).for_each(|_| keyboard.key_click(Key::Backspace));
 
                     if let (Some(prev_out), ..) = cursor.state() {
                         keyboard.key_sequence(&prev_out);
@@ -68,7 +68,7 @@ pub fn run(config: Config) -> Result<(), io::Error> {
                     keyboard.key_up(Key::Escape);
 
                     // Clear the remaining code
-                    while let (None, _i @ 1.., _c) = cursor.state() {
+                    while let (None, _i @ 1.., ..) = cursor.state() {
                         cursor.undo();
                     }
                 }
