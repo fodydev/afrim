@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libxtst-dev libevdev-dev libxdo-dev
+          version: 1.0
+
       - name: Dependencies
         run: |
           sudo apt-get install libxtst-dev libevdev-dev libxdo-dev --assume-yes
@@ -23,21 +28,25 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
       - run: rustup component add llvm-tools-preview
+
       - name: Install grcov
         uses: actions-rs/install@v0.1
         with:
           crate: grcov
           version: latest
           use-tool-cache: true
+
       - name: build
         env:
           RUSTFLAGS: -Cinstrument-coverage
         run: cargo build --verbose
+
       - name: test
         env:
           RUSTFLAGS: -Cinstrument-coverage
           LLVM_PROFILE_FILE: clafrica-%p-%m.profraw
         run: cargo test --all-features --verbose
+
       - name: Run grcov
         run: |
           mkdir coverage
@@ -51,6 +60,7 @@ jobs:
             --ignore "clafrica/src/{lib,main}.rs" \
             --excl-line "#\\[derive\\(" \
             -o ./coverage/lcov.info
+            
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
