@@ -22,16 +22,20 @@ jobs:
         include:
         - os: ubuntu-latest
           headless: Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-        - os: ubuntu-latest
-          dependencies: sudo apt-get install libxtst-dev libevdev-dev libxdo-dev  --assume-yes
 
     steps:
       - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+
+      - if: matrix.os == 'ubuntu-latest'
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libxtst-dev libevdev-dev libxdo-dev
+          version: 1.0
 
       - name: Add components
         run: rustup component add clippy rustfmt
-      - name: Dependencies
-        run: ${{matrix.dependencies}}
+
       - name: Setup headless environment
         run: ${{matrix.headless}}
 
