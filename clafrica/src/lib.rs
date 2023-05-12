@@ -40,8 +40,8 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), io::Error>
 
         rdev::listen(move |event| {
             idle = match event.event_type {
-                EventType::KeyPress(E_Key::Escape) => true,
-                EventType::KeyRelease(E_Key::Escape) => false,
+                EventType::KeyPress(E_Key::Pause) => true,
+                EventType::KeyRelease(E_Key::Pause) => false,
                 _ => idle,
             };
             if !idle {
@@ -61,7 +61,8 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), io::Error>
         match event.event_type {
             EventType::KeyPress(E_Key::Backspace) => {
                 if let Some(out) = cursor.undo() {
-                    keyboard.key_down(Key::Escape);
+                    rdev::simulate(&EventType::KeyPress(E_Key::Pause))
+                        .expect("We could pause the listeners");
                     keyboard.key_up(Key::Backspace);
 
                     let i = out.chars().count();
@@ -71,7 +72,8 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), io::Error>
                         keyboard.key_sequence(&prev_out);
                     }
 
-                    keyboard.key_up(Key::Escape);
+                    rdev::simulate(&EventType::KeyRelease(E_Key::Pause))
+                        .expect("We could resume the listeners");
 
                     // Clear the remaining code
                     while let (None, _i @ 1.., ..) = cursor.state() {
@@ -95,13 +97,15 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), io::Error>
                 let out = cursor.hit(character);
 
                 if let Some(out) = out {
-                    keyboard.key_down(Key::Escape);
+                    rdev::simulate(&EventType::KeyPress(E_Key::Pause))
+                        .expect("We could pause the listenerss");
 
                     let i = prev_out.map(|s| s.chars().count()).unwrap_or(prev_code_len) + 1;
                     (0..i).for_each(|_| keyboard.key_click(Key::Backspace));
                     keyboard.key_sequence(&out);
 
-                    keyboard.key_up(Key::Escape);
+                    rdev::simulate(&EventType::KeyRelease(E_Key::Pause))
+                        .expect("We could resume the listeners");
                 };
 
                 frontend.update_text(cursor.to_path());
