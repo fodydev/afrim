@@ -55,7 +55,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), io::Error>
     for event in rx.iter() {
         let character = event.name.and_then(|s| s.chars().next());
         let is_valid = character
-            .map(|c| c.is_ascii() && !c.is_whitespace())
+            .map(|c| c.is_alphanumeric() || c.is_ascii_punctuation())
             .unwrap_or_default();
 
         match event.event_type {
@@ -86,6 +86,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), io::Error>
             }
             EventType::ButtonPress(_) | EventType::KeyPress(_) if !is_valid => {
                 cursor.clear();
+                frontend.update_text(cursor.to_path());
             }
             EventType::KeyPress(_) => {
                 let character = character.unwrap();
