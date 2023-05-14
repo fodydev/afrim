@@ -1,0 +1,14 @@
+# Sample data file
+
+[info]
+name = "Sample code 2"
+authors = ["Foo Bar <foo@example.com>"]
+website = "sample@example.com"
+description = "Sample code for testing purpose."
+
+[data]
+2aa		=	 { value = "áá", alias = ["a22"]}
+2ee		=	 { value = "éé", alias = ["e22"]}
+2aff	=	 { value = "ɑ́ɑ́", alias = ["aff22"]}
+2ii		=	 { value = "íí", alias = ["i22"]}
+2oo		=	 { value = "óó", alias = ["o22"]}

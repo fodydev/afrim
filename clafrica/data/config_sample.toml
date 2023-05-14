@@ -1,0 +1,7 @@
+# Main clafrica config file
+
+[core]
+buffer_size = 12
+
+[data]
+sample = { path = "./data_sample.toml" }
