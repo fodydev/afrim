@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2023-05-15
+
 ### Added
 
 - Add a void frontend (#33)
@@ -26,11 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (lib) Each node hold his key (#16)
 - (lib) Each node hold his depth on the tree
 
-### Change
+### Changed
 
 - (lib) Rename bst to text_buffer
 
-## [0.1.1] 2023-04-28
+## [0.1.1] - 2023-04-28
 
 ### Added
 
