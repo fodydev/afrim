@@ -4,6 +4,10 @@ pub trait Frontend {
     fn update_text(&mut self, _text: Vec<char>) {}
 }
 
+pub struct None;
+
+impl Frontend for None {}
+
 pub struct Console;
 
 impl Frontend for Console {
@@ -15,8 +19,9 @@ impl Frontend for Console {
 #[test]
 fn test_console() {
     let mut console = Console;
+    let mut none = None;
     console.update_screen((0, 0));
     console.update_position((0.0, 0.0));
-    Frontend::update_text(&mut console, vec!['h', 'e', 'l', 'l', 'o']);
     console.update_text(vec!['h', 'e', 'l', 'l', 'o']);
+    none.update_text(vec!['h', 'e', 'l', 'l', 'o']);
 }
