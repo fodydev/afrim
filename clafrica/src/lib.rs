@@ -1,34 +1,25 @@
+pub mod api;
+pub mod config;
+
 use crate::api::Frontend;
 use clafrica_lib::{text_buffer, utils};
 use enigo::{Enigo, Key, KeyboardControllable};
 use rdev::{self, EventType, Key as E_Key};
-use std::{env, io, sync::mpsc, thread};
+use std::{io, sync::mpsc, thread};
 
-pub mod api;
-
-pub struct Config {
-    pub data_path: String,
-    pub buffer_size: usize,
+pub mod prelude {
+    pub use crate::config::Config;
 }
 
-impl Config {
-    pub fn build(mut args: env::Args) -> Result<Self, &'static str> {
-        args.next();
-        Ok(Self {
-            data_path: args.next().ok_or("filepath required")?,
-            buffer_size: 10,
-        })
-    }
-}
-
-pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), io::Error> {
-    let data = utils::load_data(&config.data_path)?;
+pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io::Error> {
     let map = utils::build_map(
-        data.iter()
-            .map(|e| [e[0].as_ref(), e[1].as_ref()])
+        config
+            .extract_data()
+            .into_iter()
+            .map(|(k, v)| [k.as_str(), v.as_str()])
             .collect(),
     );
-    let mut cursor = text_buffer::Cursor::new(map, config.buffer_size);
+    let mut cursor = text_buffer::Cursor::new(map, config.core.map(|e| e.buffer_size).unwrap_or(8));
 
     let mut keyboard = Enigo::new();
 

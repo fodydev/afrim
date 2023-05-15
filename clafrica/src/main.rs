@@ -1,11 +1,16 @@
-use clafrica::{api, run, Config};
-use std::{env, process};
+use clafrica::{api, prelude::Config, run};
+use std::{env, path::Path, process};
 
 fn main() {
     let frontend = api::Console;
 
-    let conf = Config::build(env::args()).unwrap_or_else(|err| {
-        eprintln!("Problem parsing arguments: {err}");
+    let filename = env::args().nth(1).unwrap_or_else(|| {
+        eprintln!("Configuration file required");
+        process::exit(1);
+    });
+
+    let conf = Config::from_file(Path::new(&filename)).unwrap_or_else(|err| {
+        eprintln!("Problem parsing config file: {err}");
         process::exit(1);
     });
 

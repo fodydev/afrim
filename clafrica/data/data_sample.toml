@@ -1,0 +1,22 @@
+# Sample data file
+
+[info]
+name = "Sample code"
+authors = [
+  "Foo Bar <foo@example.com>",
+  { name = "Baz Qux", email = "bazqux@example.com", url = "https://example.com/bazqux" }
+]
+website = "sample@example.com"
+description = "Sample code for testing purpose."
+
+[data]
+2a_		   =	 "á̠"
+2af_	   =	 "ɑ̠́"
+2ai_	   =	 "έ̠"
+2ia		   =	 "íá"
+2iaf	   =	 "íɑ́"
+2ie		   =	 "íé"
+2ua		   =	 "úá"
+2uaf	   =	 "úɑ́"
+2uuaf	   =	 "ʉ́ɑ́"
+sample2  =   { path = "./data_sample2.toml" }
