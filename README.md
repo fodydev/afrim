@@ -1,6 +1,6 @@
 Clafrica
 ===
-
+  [![Keep a Changelog v1.1.0 badge][changelog-badge]][changelog] [![Version 1.1.0 Badge][version-badge]][changelog]
   [![crates.io](https://img.shields.io/crates/v/clafrica.svg)](https://crates.io/crates/clafrica)
   [![LICENSE](https://img.shields.io/crates/l/clafrica.svg)](https://github.com/pythonbrad/clafrica/blob/main/LICENSE)
   ![Rust](https://github.com/pythonbrad/clafrica/workflows/Rust/badge.svg)
@@ -46,7 +46,7 @@ Try it in the console
   `clafrica` comes with a REPL application which can be used to test if his library is working.
   To use the clafrica, simply provide the path of the datafile that suit your needs.
   
-  Eg. `clafrica clafrica_codes.txt`
+  Eg. `clafrica configfile.toml`
 
 Frontends
 ===
