@@ -5,7 +5,7 @@ use toml::{self};
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     pub core: Option<CoreConfig>,
-    pub data: HashMap<String, Data>,
+    data: HashMap<String, Data>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -15,19 +15,19 @@ pub struct CoreConfig {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
-pub enum Data {
+enum Data {
     Simple(String),
     File(DataFile),
     Detailed(DetailedData),
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct DataFile {
+struct DataFile {
     path: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct DetailedData {
+struct DetailedData {
     value: String,
     alias: Vec<String>,
 }
@@ -89,17 +89,17 @@ mod tests {
         use crate::config::Config;
         use std::path::Path;
 
-        let conf = Config::from_file(Path::new("./data/blank_sample.toml"));
-        assert!(conf.is_ok());
-
         let conf = Config::from_file(Path::new("./data/config_sample.toml")).unwrap();
         assert_eq!(conf.core.clone().unwrap().buffer_size, 12);
-        assert_eq!(conf.data.len(), 19);
 
         let data = conf.extract_data();
         assert_eq!(data.keys().len(), 19);
 
         let conf = Config::from_file(Path::new("./not_found"));
         assert!(conf.is_err());
+
+        let conf = Config::from_file(Path::new("./data/blank_sample.toml")).unwrap();
+        let data = conf.extract_data();
+        assert_eq!(data.keys().len(), 0);
     }
 }
