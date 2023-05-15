@@ -92,8 +92,11 @@ mod tests {
         let conf = Config::from_file(Path::new("./data/config_sample.toml"));
 
         let conf = conf.unwrap();
-        assert_eq!(conf.core.unwrap().buffer_size, 12);
+        assert_eq!(conf.core.clone().unwrap().buffer_size, 12);
         assert_eq!(conf.data.len(), 19);
+
+        let data = conf.extract_data();
+        assert_eq!(data.keys().len(), 19);
 
         let conf = Config::from_file(Path::new("./not_found"));
         assert!(conf.is_err());
