@@ -89,16 +89,16 @@ mod tests {
         use crate::config::Config;
         use std::path::Path;
 
-        let conf = Config::from_file(&Path::new("./data/config_sample.toml"));
+        let conf = Config::from_file(Path::new("./data/config_sample.toml"));
 
         let conf = conf.unwrap();
         assert_eq!(conf.core.unwrap().buffer_size, 12);
         assert_eq!(conf.data.len(), 19);
 
-        let conf = Config::from_file(&Path::new("./not_found"));
+        let conf = Config::from_file(Path::new("./not_found"));
         assert!(conf.is_err());
 
-        let conf = Config::from_file(&Path::new("./data/blank_sample.toml"));
+        let conf = Config::from_file(Path::new("./data/blank_sample.toml"));
         assert!(conf.is_err());
     }
 }
