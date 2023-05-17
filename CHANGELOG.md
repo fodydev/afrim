@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Correct logic of writing back of the previous out after backspace
+
 ## [0.2.1] - 2023-05-15
 
 ### Added
@@ -23,14 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Implement the initial binary application
-- (lib) Implement a cursor
+- Implement the initial binary application (#8)
+- (lib) Implement a cursor (#6)
 - (lib) Each node hold his key (#16)
-- (lib) Each node hold his depth on the tree
+- (lib) Each node hold his depth on the tree (#5)
 
 ### Changed
 
-- (lib) Rename bst to text_buffer
+- (lib) Rename bst to text_buffer (#9)
 
 ## [0.1.1] - 2023-04-28
 
