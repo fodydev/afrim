@@ -59,16 +59,16 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
                     let i = out.chars().count();
                     (1..i).for_each(|_| keyboard.key_click(Key::Backspace));
 
-                    if let (Some(prev_out), ..) = cursor.state() {
-                        keyboard.key_sequence(&prev_out);
-                    }
-
                     rdev::simulate(&EventType::KeyRelease(E_Key::Pause))
                         .expect("We could resume the listeners");
 
                     // Clear the remaining code
                     while let (None, _i @ 1.., ..) = cursor.state() {
                         cursor.undo();
+                    }
+
+                    if let (Some(prev_out), ..) = cursor.state() {
+                        keyboard.key_sequence(&prev_out);
                     }
                 }
 
