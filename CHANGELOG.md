@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Correct logic of writing back of the previous out after backspace
+- Correct logic of writing back of the previous out after backspace (#39)
 
 ## [0.2.1] - 2023-05-15
 
