@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2023-05-17
+
 ### Fixed
 
 - Correct logic of writing back of the previous out after backspace [(#39)](https://github.com/pythonbrad/clafrica/pull/39)
