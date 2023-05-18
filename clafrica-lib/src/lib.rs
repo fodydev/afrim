@@ -102,6 +102,7 @@ pub mod text_buffer {
         }
     }
 
+    #[derive(Clone)]
     pub struct Cursor {
         buffer: VecDeque<Rc<Node>>,
         root: Rc<Node>,
