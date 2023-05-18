@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- (lib) Problem of endless sequence  [(#44)](https://github.com/pythonbrad/clafrica/pull/44)
 - Correct problem of excessive backspace [(#43)](https://github.com/pythonbrad/clafrica/pull/43)
 
 ## [0.2.2] - 2023-05-17

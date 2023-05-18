@@ -72,14 +72,14 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
                     }
                 }
 
-                frontend.update_text(cursor.to_path());
+                frontend.update_text(cursor.to_sequence());
             }
             EventType::KeyPress(E_Key::Unknown(_) | E_Key::ShiftLeft | E_Key::ShiftRight) => {
                 // println!("[ignore] {:?}", event.event_type)
             }
             EventType::ButtonPress(_) | EventType::KeyPress(_) if !is_valid => {
                 cursor.clear();
-                frontend.update_text(cursor.to_path());
+                frontend.update_text(cursor.to_sequence());
             }
             EventType::KeyPress(_) => {
                 let character = character.unwrap();
@@ -108,7 +108,7 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
                         .expect("We could resume the listeners");
                 };
 
-                frontend.update_text(cursor.to_path());
+                frontend.update_text(cursor.to_sequence());
             }
             EventType::MouseMove { x, y } => {
                 frontend.update_position((x, y));
