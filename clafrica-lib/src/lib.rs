@@ -312,7 +312,6 @@ mod tests {
         assert_eq!(cursor.to_sequence(), vec!['2', '\0', '2', 'u', 'a']);
         undo!(cursor 5);
 
-
         hit!(
             cursor
             'a', 'a', '2', 'a', 'e', 'a', '2', 'f', 'a',
