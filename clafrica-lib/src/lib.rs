@@ -66,16 +66,16 @@ pub mod text_buffer {
             }
         }
 
-        /// Insert a path in the TextBuffer.
-        pub fn insert(&self, path: Vec<char>, value: String) {
-            if let Some(character) = path.clone().first() {
+        /// Insert a sequence in the TextBuffer.
+        pub fn insert(&self, sequence: Vec<char>, value: String) {
+            if let Some(character) = sequence.clone().first() {
                 let new_node = Rc::new(Self::new(*character, self.depth + 1));
 
                 self.neighbors
                     .borrow()
                     .get(character)
                     .unwrap_or(&new_node)
-                    .insert(path.into_iter().skip(1).collect(), value);
+                    .insert(sequence.into_iter().skip(1).collect(), value);
 
                 self.neighbors
                     .borrow_mut()
@@ -124,24 +124,38 @@ pub mod text_buffer {
                 .last()
                 .unwrap_or(&self.root)
                 .goto(character)
-                .or_else(|| self.root.goto(character))
+                .or_else(|| {
+                    // We end the current sequence
+                    self.insert(Rc::new(Node::new('\0', 0)));
+                    // and start a new one
+                    self.root.goto(character)
+                })
                 .unwrap_or(Rc::new(Node::new(character, 0)));
 
             let out = node.take();
+            self.insert(node);
 
+            out
+        }
+
+        fn insert(&mut self, node: Rc<Node>) {
             if self.buffer.len() == self.buffer.capacity() {
                 self.buffer.pop_front();
             }
             self.buffer.push_back(node);
-
-            out
         }
 
         /// Remove the previous enter and return his corresponding out
         pub fn undo(&mut self) -> Option<String> {
             let node = self.buffer.pop_back();
 
-            node.and_then(|node| node.take())
+            node.and_then(|node| {
+                if node.key == '\0' {
+                    self.undo()
+                } else {
+                    node.take()
+                }
+            })
         }
 
         /// Return the current state of the cursor
@@ -153,8 +167,8 @@ pub mod text_buffer {
                 .unwrap_or_default()
         }
 
-        /// Return the current path of the cursor
-        pub fn to_path(&self) -> Vec<char> {
+        /// Return the current sequence in the cursor
+        pub fn to_sequence(&self) -> Vec<char> {
             self.buffer.iter().map(|node| node.key).collect()
         }
 
@@ -276,26 +290,28 @@ mod tests {
         assert_eq!(cursor.state(), (None, 0, '\0'));
 
         hit!(cursor '2', 'i', 'a', 'f');
-        assert_eq!(cursor.to_path(), vec!['2', 'i', 'a', 'f']);
+        assert_eq!(cursor.to_sequence(), vec!['2', 'i', 'a', 'f']);
 
         assert_eq!(cursor.state(), (Some("íɑ́".to_owned()), 4, 'f'));
 
         undo!(cursor 1);
-        assert_eq!(cursor.to_path(), vec!['2', 'i', 'a']);
+        assert_eq!(cursor.to_sequence(), vec!['2', 'i', 'a']);
 
         undo!(cursor 1);
         cursor.hit('e');
-        assert_eq!(cursor.to_path(), vec!['2', 'i', 'e']);
+        assert_eq!(cursor.to_sequence(), vec!['2', 'i', 'e']);
 
         undo!(cursor 2);
         hit!(cursor 'o', 'o');
-        assert_eq!(cursor.to_path(), vec!['2', 'o', 'o']);
+        assert_eq!(cursor.to_sequence(), vec!['2', 'o', 'o']);
 
         undo!(cursor 3);
-        assert_eq!(cursor.to_path(), vec![]);
+        assert_eq!(cursor.to_sequence(), vec![]);
 
         hit!(cursor '2', '2', 'u', 'a');
-        assert_eq!(cursor.to_path(), vec!['2', '2', 'u', 'a']);
+        assert_eq!(cursor.to_sequence(), vec!['2', '\0', '2', 'u', 'a']);
+        undo!(cursor 5);
+
 
         hit!(
             cursor
@@ -303,9 +319,9 @@ mod tests {
             '2', '2', '2', 'i', 'a', '2', '2', '_', 'f',
             '2', 'a', '2', 'a', '_'
         );
-        assert_eq!(cursor.to_path(), vec!['2', 'a', '2', 'a', '_']);
+        assert_eq!(cursor.to_sequence(), vec!['a', '\0', '2', 'a', '_']);
 
         cursor.clear();
-        assert_eq!(cursor.to_path(), vec![]);
+        assert_eq!(cursor.to_sequence(), vec![]);
     }
 }
