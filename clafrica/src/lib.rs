@@ -74,7 +74,9 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
 
                 frontend.update_text(cursor.to_sequence());
             }
-            EventType::KeyPress(E_Key::Unknown(_) | E_Key::ShiftLeft | E_Key::ShiftRight) => {
+            EventType::KeyPress(
+                E_Key::Unknown(_) | E_Key::ShiftLeft | E_Key::ShiftRight | E_Key::CapsLock,
+            ) => {
                 // println!("[ignore] {:?}", event.event_type)
             }
             EventType::ButtonPress(_) | EventType::KeyPress(_) if !is_valid => {
