@@ -17,3 +17,6 @@ enigo = "0.1.2"
 rdev = "0.5.2"
 serde = { version = "1.0.163", features = ["serde_derive"] }
 toml = "0.7.3"
+
+[dev-dependencies]
+rstk = "0.1.0"

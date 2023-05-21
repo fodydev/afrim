@@ -22,18 +22,19 @@ checksum = "0d8c1fef690941d3e7788d328517591fecc684c084084702d6ff1641e993699a"
 
 [[package]]
 name = "clafrica"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "clafrica-lib",
  "enigo",
  "rdev",
+ "rstk",
  "serde",
  "toml",
 ]
 
 [[package]]
 name = "clafrica-lib"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "cocoa"
@@ -183,9 +184,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.142"
+version = "0.2.144"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a987beff54b60ffa6d51982e1aa1146bc42f19bd26be28b0586f252fccf5317"
+checksum = "2b00cc1c228a6782d0f076e7b232802e0c5689d41bb5df366f2a6b6621cfdfe1"
 
 [[package]]
 name = "malloc_buf"
@@ -210,6 +211,12 @@ checksum = "915b1b472bc21c53464d6c8461c9d3af805ba1ef837e1cac254428f4a77177b1"
 dependencies = [
  "malloc_buf",
 ]
+
+[[package]]
+name = "once_cell"
+version = "1.17.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7e5500299e16ebb147ae15a00a942af264cf3688f47923b8fc2cd5858f23ad3"
 
 [[package]]
 name = "pkg-config"
@@ -249,6 +256,15 @@ dependencies = [
  "libc",
  "winapi",
  "x11",
+]
+
+[[package]]
+name = "rstk"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f01d34f6758044cb899a4ecfd766df0fceb544ecff346d18f84523ee71e07442"
+dependencies = [
+ "once_cell",
 ]
 
 [[package]]
