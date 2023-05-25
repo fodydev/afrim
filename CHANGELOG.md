@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (lib) Problem of endless sequence  [(#44)](https://github.com/pythonbrad/clafrica/pull/44)
 - Correct problem of excessive backspace [(#43)](https://github.com/pythonbrad/clafrica/pull/43)
+- The Capslock key don't reset the cursor [(#45)](https://github.com/pythonbrad/clafrica/pull/45)
 
 ## [0.2.2] - 2023-05-17
 
