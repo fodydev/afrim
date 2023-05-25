@@ -310,7 +310,8 @@ mod tests {
 
         hit!(cursor '2', '2', 'u', 'a');
         assert_eq!(cursor.to_sequence(), vec!['2', '\0', '2', 'u', 'a']);
-        undo!(cursor 5);
+        undo!(cursor 4);
+        assert_eq!(cursor.to_sequence(), vec![]);
 
         hit!(
             cursor
