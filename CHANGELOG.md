@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+### Added
+- Add a pause/resume way via double pressing of CTRL key [(#49)](https://github.com/pythonbrad/clafrica/pull/49)
 
+### Fixed
 - (lib) Problem of endless sequence  [(#44)](https://github.com/pythonbrad/clafrica/pull/44)
 - Correct problem of excessive backspace [(#43)](https://github.com/pythonbrad/clafrica/pull/43)
 - The Capslock key don't reset the cursor [(#45)](https://github.com/pythonbrad/clafrica/pull/45)
