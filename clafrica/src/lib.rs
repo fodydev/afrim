@@ -28,12 +28,26 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
     let (tx, rx) = mpsc::channel();
     thread::spawn(move || {
         let mut idle = false;
+        let mut pause_counter = 0;
 
         rdev::listen(move |event| {
             idle = match event.event_type {
                 EventType::KeyPress(E_Key::Pause) => true,
                 EventType::KeyRelease(E_Key::Pause) => false,
-                _ => idle,
+                EventType::KeyRelease(E_Key::ControlLeft) | EventType::KeyPress(E_Key::ControlLeft) => {
+                    pause_counter += 1;
+
+                    if pause_counter != 0 && pause_counter % 4 == 0 {
+                        pause_counter = 0;
+                        !idle
+                    } else {
+                        idle
+                    }
+                },
+                _ => {
+                    pause_counter = 0;
+                    idle
+                },
             };
             if !idle {
                 tx.send(event)
