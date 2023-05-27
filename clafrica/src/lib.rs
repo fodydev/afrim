@@ -34,8 +34,8 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
             idle = match event.event_type {
                 EventType::KeyPress(E_Key::Pause) => true,
                 EventType::KeyRelease(E_Key::Pause) => false,
-                EventType::KeyRelease(E_Key::ControlLeft)
-                | EventType::KeyPress(E_Key::ControlLeft) => {
+                EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight)
+                | EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => {
                     pause_counter += 1;
 
                     if pause_counter != 0 && pause_counter % 4 == 0 {
