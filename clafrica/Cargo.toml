@@ -1,6 +1,6 @@
 [package]
 name = "clafrica"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 description = "This application allows you to type most of the characters in the african alphabet in any text field."
 keywords = ["african", "ime", "typing"]
@@ -12,7 +12,7 @@ authors = ["Fomegne Brady <fomegnemeudje@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clafrica-lib = { version = "0.2.0", path = "../clafrica-lib" }
+clafrica-lib = { version = "0.3.0", path = "../clafrica-lib" }
 enigo = "0.1.2"
 rdev = "0.5.2"
 serde = { version = "1.0.163", features = ["serde_derive"] }
