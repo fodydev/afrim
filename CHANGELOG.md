@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Reserved function key F1-12 for special purposes. [(#52)](https://github.com/pythonbrad/clafrica/pull/52)
 - Add a pause/resume way via double pressing of CTRL key [(#50)](https://github.com/pythonbrad/clafrica/pull/50) & [(#49)](https://github.com/pythonbrad/clafrica/pull/49)
 
 ### Fixed
