@@ -161,7 +161,7 @@ mod tests {
     macro_rules! output {
         ( $textfield: expr, $expected: expr ) => {
             // A loop to be sure to got something
-            for i in 0..10 {
+            for _i in 0..10 {
                 let content = $textfield.get_to_end((1, 0));
                 let content = content.chars().filter(|c| *c != '\0').collect::<String>();
                 let content = content.trim();
