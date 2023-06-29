@@ -141,4 +141,131 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use crate::{api, config::Config, run};
+    use rdev::{self, Button, EventType::*, Key::*};
+    use rstk::{self, TkPackLayout};
+    use std::{thread, time::Duration};
+
+    macro_rules! input {
+        ( $( $key:expr )*, $delay:expr ) => (
+            $(
+                thread::sleep($delay);
+                rdev::simulate(&KeyPress($key)).unwrap();
+                thread::sleep($delay);
+                rdev::simulate(&KeyRelease($key)).unwrap();
+            )*
+        );
+    }
+
+    macro_rules! output {
+        ( $textfield: expr, $expected: expr ) => {
+            // A loop to be sure to got something stable
+            loop {
+                let a = $textfield.get_to_end((1, 0));
+                let b = $textfield.get_to_end((1, 0));
+
+                if (a == b) {
+                    let content = a.chars().filter(|c| *c != '\0').collect::<String>();
+                    let content = content.trim();
+
+                    assert_eq!(content, $expected);
+                    break;
+                }
+            }
+        };
+    }
+
+    fn start_clafrica() {
+        use std::path::Path;
+
+        let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
+
+        thread::spawn(move || {
+            run(test_config, api::Console).unwrap();
+        });
+    }
+
+    fn start_sandbox() -> rstk::TkText {
+        let root = rstk::trace_with("wish").unwrap();
+        root.title("Clafrica Test Environment");
+        let input_field = rstk::make_text(&root);
+        input_field.width(50);
+        input_field.height(12);
+        input_field.pack().layout();
+        root.geometry(200, 200, 0, 0);
+        rstk::tell_wish(
+            r#"
+            bind . <Leave> { destroy . };
+            chan configure stdout -encoding utf-8;
+        "#,
+        );
+        thread::sleep(Duration::from_secs(1));
+        input_field
+    }
+
+    #[test]
+    fn test_simple() {
+        let typing_speed_ms = Duration::from_millis(300);
+
+        // To detect excessive backspace
+        const LIMIT: &str = "bbb";
+
+        // Start the clafrica
+        start_clafrica();
+
+        // Start the sandbox
+        let textfield = start_sandbox();
+
+        rdev::simulate(&MouseMove { x: 100.0, y: 100.0 }).unwrap();
+        thread::sleep(typing_speed_ms);
+        rdev::simulate(&ButtonPress(Button::Left)).unwrap();
+        thread::sleep(typing_speed_ms);
+        rdev::simulate(&ButtonRelease(Button::Left)).unwrap();
+        thread::sleep(typing_speed_ms);
+
+        input!(KeyB KeyB KeyB Escape, typing_speed_ms);
+
+        input!(KeyU Backspace KeyU KeyU Backspace KeyU, typing_speed_ms);
+
+        input!(KeyC KeyC KeyC KeyE KeyD, typing_speed_ms);
+        input!(KeyU KeyU KeyA KeyF, typing_speed_ms);
+
+        input!(CapsLock, typing_speed_ms);
+        input!(Num3, typing_speed_ms);
+        input!(CapsLock, typing_speed_ms);
+
+        input!(KeyA KeyF KeyA KeyF, typing_speed_ms);
+        input!(KeyA KeyF KeyF, typing_speed_ms);
+
+        input!(CapsLock, typing_speed_ms);
+        input!(Num3, typing_speed_ms);
+        input!(CapsLock, typing_speed_ms);
+
+        input!(KeyU KeyU, typing_speed_ms);
+
+        input!(CapsLock, typing_speed_ms);
+        input!(Num3, typing_speed_ms);
+        input!(CapsLock, typing_speed_ms);
+
+        output!(textfield, format!("{LIMIT}uçʉ̄ɑ̄ɑɑɑ̄ɑ̄ʉ̄"));
+
+        // To verify that the undo (backspace) work as expected
+        (0..12).for_each(|_| {
+            input!(Backspace, typing_speed_ms);
+        });
+
+        output!(textfield, LIMIT);
+
+        input!(Escape, typing_speed_ms);
+
+        input!(ControlLeft ControlLeft, typing_speed_ms);
+        input!(KeyA KeyF, typing_speed_ms);
+        input!(ControlLeft ControlLeft, typing_speed_ms);
+        input!(KeyA KeyF, typing_speed_ms);
+
+        output!(textfield, format!("{LIMIT}afɑ"));
+
+        rstk::end_wish();
+    }
+}

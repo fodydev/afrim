@@ -1,0 +1,18 @@
+# Test file
+
+[info]
+name = "Test code"
+description = "Test code for testing purpose."
+
+[core]
+buffer_size = 128
+
+[data]
+af       =   "ɑ"
+af3      =   "ɑ̄"
+aff      =   "ɑɑ"
+aff3     =   "ɑ̄ɑ̄"
+cc       =   { value = "ç", alias = ["ccced"]}
+uu       =   "ʉ"
+uu3      =   "ʉ̄"
+uuaf3    =   "ʉ̄ɑ̄"

@@ -13,12 +13,18 @@ env:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    env:
+      DISPLAY: ':99'
     steps:
       - uses: actions/checkout@v3
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: libxtst-dev libevdev-dev libxdo-dev
           version: 1.0
+
+      - name: Setup headless environment
+        run: |
+          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 
       - name: Dependencies
         run: |
@@ -57,7 +63,7 @@ jobs:
             --branch \
             --ignore-not-existing \
             --ignore "/*" \
-            --ignore "clafrica/src/{lib,main}.rs" \
+            --ignore "clafrica/src/{main}.rs" \
             --excl-line "#\\[derive\\(" \
             -o ./coverage/lcov.info
             

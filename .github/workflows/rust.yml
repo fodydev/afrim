@@ -22,6 +22,8 @@ jobs:
         include:
         - os: ubuntu-latest
           headless: Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        - os: macos-latest
+          extra: -- --skip test_simple
 
     steps:
       - uses: actions/checkout@v3
@@ -51,5 +53,5 @@ jobs:
 
       - name: Run tests
         run: |
-          cargo test --all-features --lib --bins --tests --verbose
-          cargo test --benches
+          cargo test --all-features --lib --bins --tests --verbose ${{matrix.extra}}
+          cargo test --benches ${{matrix.extra}}
