@@ -164,7 +164,7 @@ mod tests {
             loop {
                 let a = $textfield.get_to_end((1, 0));
                 let b = $textfield.get_to_end((1, 0));
-                
+
                 if (a == b) {
                     let content = a.chars().filter(|c| *c != '\0').collect::<String>();
                     let content = content.trim();
