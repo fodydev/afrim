@@ -160,13 +160,15 @@ mod tests {
 
     macro_rules! output {
         ( $textfield: expr, $expected: expr ) => {
-            // A loop to be sure to got something
-            for _i in 0..10 {
-                let content = $textfield.get_to_end((1, 0));
-                let content = content.chars().filter(|c| *c != '\0').collect::<String>();
-                let content = content.trim();
+            // A loop to be sure to got something stable
+            loop {
+                let a = $textfield.get_to_end((1, 0));
+                let b = $textfield.get_to_end((1, 0));
+                
+                if (a == b) {
+                    let content = a.chars().filter(|c| *c != '\0').collect::<String>();
+                    let content = content.trim();
 
-                if !content.is_empty() {
                     assert_eq!(content, $expected);
                     break;
                 }
@@ -208,9 +210,6 @@ mod tests {
 
         // To detect excessive backspace
         const LIMIT: &str = "bbb";
-        const EXPECTED: &str = "uçʉ̄ɑ̄ɑɑɑ̄ɑ̄ʉ̄";
-        // To verify that the undo (backspace) work as expected
-        const NB_TRANSFORM: usize = 12;
 
         // Start the clafrica
         start_clafrica();
@@ -249,15 +248,23 @@ mod tests {
         input!(Num3, typing_speed_ms);
         input!(CapsLock, typing_speed_ms);
 
-        output!(textfield, format!("{}{}", LIMIT, EXPECTED));
+        output!(textfield, format!("{LIMIT}uçʉ̄ɑ̄ɑɑɑ̄ɑ̄ʉ̄"));
 
-        (0..NB_TRANSFORM).for_each(|_| {
+        // To verify that the undo (backspace) work as expected
+        (0..12).for_each(|_| {
             input!(Backspace, typing_speed_ms);
         });
 
         output!(textfield, LIMIT);
 
         input!(Escape, typing_speed_ms);
+
+        input!(ControlLeft ControlLeft, typing_speed_ms);
+        input!(KeyA KeyF, typing_speed_ms);
+        input!(ControlLeft ControlLeft, typing_speed_ms);
+        input!(KeyA KeyF, typing_speed_ms);
+
+        output!(textfield, format!("{LIMIT}afɑ"));
 
         rstk::end_wish();
     }
