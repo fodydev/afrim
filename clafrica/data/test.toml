@@ -6,10 +6,12 @@ description = "Test code for testing purpose."
 
 [core]
 buffer_size = 128
+auto_capitalize = true
 
 [data]
 af       =   "ɑ"
-af3      =   "ɑ̄"
+Af       =   "α"
+u5       =   { value = "û", alias = ["5u"]}
 aff      =   "ɑɑ"
 aff3     =   "ɑ̄ɑ̄"
 cc       =   { value = "ç", alias = ["ccced"]}
