@@ -225,45 +225,28 @@ mod tests {
         thread::sleep(typing_speed_ms);
 
         input!(KeyB KeyB KeyB Escape, typing_speed_ms);
-
         input!(KeyU Backspace KeyU KeyU Backspace KeyU, typing_speed_ms);
-
-        input!(KeyC KeyC KeyC KeyE KeyD, typing_speed_ms);
-        input!(KeyU KeyU KeyA KeyF, typing_speed_ms);
-
-        input!(CapsLock, typing_speed_ms);
-        input!(Num3, typing_speed_ms);
-        input!(CapsLock, typing_speed_ms);
-
-        input!(KeyA KeyF KeyA KeyF, typing_speed_ms);
-        input!(KeyA KeyF KeyF, typing_speed_ms);
-
-        input!(CapsLock, typing_speed_ms);
-        input!(Num3, typing_speed_ms);
-        input!(CapsLock, typing_speed_ms);
-
-        input!(KeyU KeyU, typing_speed_ms);
-
-        input!(CapsLock, typing_speed_ms);
-        input!(Num3, typing_speed_ms);
-        input!(CapsLock, typing_speed_ms);
-
+        input!(
+            KeyC KeyC KeyC KeyE KeyD
+            KeyU KeyU
+            KeyA KeyF CapsLock Num3 CapsLock, typing_speed_ms);
+        input!(
+            KeyA KeyF KeyA KeyF
+            KeyA KeyF KeyF CapsLock Num3 CapsLock, typing_speed_ms);
+        input!(KeyU KeyU CapsLock Num3 CapsLock, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uçʉ̄ɑ̄ɑɑɑ̄ɑ̄ʉ̄"));
 
-        // To verify that the undo (backspace) work as expected
+        // We verify that the undo (backspace) works as expected
         (0..12).for_each(|_| {
             input!(Backspace, typing_speed_ms);
         });
-
         output!(textfield, LIMIT);
 
-        input!(Escape, typing_speed_ms);
-
+        // We verify that the pause/resume works as expected
         input!(ControlLeft ControlLeft, typing_speed_ms);
         input!(KeyA KeyF, typing_speed_ms);
-        input!(ControlLeft ControlLeft, typing_speed_ms);
+        input!(ControlLeft ControlRight, typing_speed_ms);
         input!(KeyA KeyF, typing_speed_ms);
-
         output!(textfield, format!("{LIMIT}afɑ"));
 
         (0..3).for_each(|_| {
