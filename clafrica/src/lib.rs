@@ -253,26 +253,11 @@ mod tests {
             input!(Backspace, typing_speed_ms);
         });
 
-        input!(CapsLock, typing_speed_ms);
-        input!(KeyA, typing_speed_ms);
-        input!(CapsLock, typing_speed_ms);
-
-        input!(KeyF, typing_speed_ms);
-
-        input!(CapsLock, typing_speed_ms);
-        input!(KeyU, typing_speed_ms);
-        input!(CapsLock, typing_speed_ms);
-
-        input!(CapsLock, typing_speed_ms);
-        input!(Num5, typing_speed_ms);
-        input!(CapsLock, typing_speed_ms);
-
-        input!(CapsLock, typing_speed_ms);
-        input!(Num5, typing_speed_ms);
-        input!(CapsLock, typing_speed_ms);
-
-        input!(KeyU, typing_speed_ms);
-
+        // We verify the auto capitalization works as expected
+        input!(CapsLock KeyA CapsLock KeyF, typing_speed_ms);
+        input!(CapsLock KeyU CapsLock, typing_speed_ms);
+        input!(CapsLock Num5 CapsLock, typing_speed_ms);
+        input!(CapsLock Num5 CapsLock KeyU, typing_speed_ms);
         output!(textfield, format!("{LIMIT}αÛû"));
 
         rstk::end_wish();
