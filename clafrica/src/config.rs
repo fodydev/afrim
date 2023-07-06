@@ -11,6 +11,7 @@ pub struct Config {
 #[derive(Deserialize, Debug, Clone)]
 pub struct CoreConfig {
     pub buffer_size: usize,
+    pub auto_capitalize: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -68,17 +69,41 @@ impl Config {
         Ok(config)
     }
 
-    pub fn extract_data(&self) -> HashMap<&String, &String> {
-        self.data
-            .iter()
-            .filter_map(|(k, v)| {
-                let v = match v {
-                    Data::Simple(value) => Some(value),
-                    _ => None,
-                };
-                v.map(|v| (k, v))
-            })
-            .collect()
+    pub fn extract_data(&self) -> HashMap<String, String> {
+        let data = self.data.iter().filter_map(|(k, v)| {
+            let v = match v {
+                Data::Simple(value) => Some(value),
+                _ => None,
+            };
+            v.map(|v| (k.to_owned(), v.to_owned()))
+        });
+
+        if self
+            .core
+            .as_ref()
+            .map(|c| c.auto_capitalize)
+            .unwrap_or(true)
+        {
+            data.clone()
+                .chain(data.clone().filter_map(|(k, v)| {
+                    if k.chars().next()?.is_lowercase() {
+                        Some((k[0..1].to_uppercase() + &k[1..], v.to_uppercase()))
+                    } else {
+                        None
+                    }
+                }))
+                // We overwrite the auto capitalization
+                .chain(data.filter_map(|(k, v)| {
+                    if k.chars().next()?.is_uppercase() {
+                        Some((k, v))
+                    } else {
+                        None
+                    }
+                }))
+                .collect()
+        } else {
+            data.collect()
+        }
     }
 }
 
@@ -91,6 +116,7 @@ mod tests {
 
         let conf = Config::from_file(Path::new("./data/config_sample.toml")).unwrap();
         assert_eq!(conf.core.clone().unwrap().buffer_size, 12);
+        assert!(!conf.core.clone().unwrap().auto_capitalize);
 
         let data = conf.extract_data();
         assert_eq!(data.keys().len(), 19);

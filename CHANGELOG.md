@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+- Implement the auto capitalization. [(#56)](https://github.com/pythonbrad/clafrica/pull/56)
+
+### Fixed
 - Improve the pause/resume way via double pressing of CTRL key. [(#54)](https://github.com/pythonbrad/clafrica/pull/54)
 
 ## [0.3.0] - 2023-06-02

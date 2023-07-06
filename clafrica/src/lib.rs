@@ -15,7 +15,7 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
     let map = utils::build_map(
         config
             .extract_data()
-            .into_iter()
+            .iter()
             .map(|(k, v)| [k.as_str(), v.as_str()])
             .collect(),
     );
@@ -248,6 +248,17 @@ mod tests {
         input!(ControlLeft ControlRight, typing_speed_ms);
         input!(KeyA KeyF, typing_speed_ms);
         output!(textfield, format!("{LIMIT}afɑ"));
+
+        (0..3).for_each(|_| {
+            input!(Backspace, typing_speed_ms);
+        });
+
+        // We verify the auto capitalization works as expected
+        input!(CapsLock KeyA CapsLock KeyF, typing_speed_ms);
+        input!(CapsLock KeyU CapsLock, typing_speed_ms);
+        input!(CapsLock Num5 CapsLock, typing_speed_ms);
+        input!(CapsLock Num5 CapsLock KeyU, typing_speed_ms);
+        output!(textfield, format!("{LIMIT}αÛû"));
 
         rstk::end_wish();
     }
