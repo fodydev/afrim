@@ -90,10 +90,7 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
                 frontend.update_text(cursor.to_sequence());
             }
             EventType::KeyPress(
-                E_Key::Unknown(_) | E_Key::ShiftLeft | E_Key::ShiftRight | E_Key::CapsLock |
-                // Reserved for special purpose
-                E_Key::F1 | E_Key::F2 | E_Key::F3 | E_Key::F4 | E_Key::F5 | E_Key::F6 |
-                E_Key::F7 | E_Key::F8 | E_Key::F9 | E_Key::F10 | E_Key::F11 | E_Key::F12
+                E_Key::Unknown(_) | E_Key::ShiftLeft | E_Key::ShiftRight | E_Key::CapsLock,
             ) => {
                 // println!("[ignore] {:?}", event.event_type)
             }
@@ -108,7 +105,7 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
 
                 if let Some(_in) = cursor.hit(character) {
                     rdev::simulate(&EventType::KeyPress(E_Key::Pause))
-                        .expect("We could pause the listenerss");
+                        .expect("We could pause the listeners");
 
                     keyboard.key_click(Key::Backspace);
 
