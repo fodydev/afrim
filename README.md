@@ -48,6 +48,14 @@ Try it in the console
   
   Eg. `clafrica configfile.toml`
 
+Dataset
+===
+  Official:
+  - [Clafrica Code](https://github.com/pythonbrad/clafrica-data): Maintened by [Resulam](http://resulam.com).
+
+  Community:
+  - Feel free to propose your own.
+
 Frontends
 ===
 
@@ -55,7 +63,7 @@ Frontends
   - [clafrica-wish](https://github.com/pythonbrad/clafrica-wish): Frontend for desktop environment.
 
   Community:
-  - nothing for the moment
+  - Feel free to propose your own.
 
 Similar works
 ===
