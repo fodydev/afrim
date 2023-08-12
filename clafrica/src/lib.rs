@@ -61,8 +61,8 @@ pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io
     for event in rx.iter() {
         let character = event.name.and_then(|s| s.chars().next());
         let is_valid = character
-            .map(|c| c.is_alphanumeric() || c.is_ascii_punctuation() || c.is_whitespace())
-            .unwrap_or(false);
+            .map(|c| c.is_alphanumeric() || c.is_ascii_punctuation())
+            .unwrap_or_default();
 
         match event.event_type {
             EventType::KeyPress(E_Key::Backspace) => {
@@ -256,10 +256,6 @@ mod tests {
         input!(CapsLock Num5 CapsLock, typing_speed_ms);
         input!(CapsLock Num5 CapsLock KeyU, typing_speed_ms);
         output!(textfield, format!("{LIMIT}αÛû"));
-
-        // We verify that the usage of white works as expected
-        input!(KeyA Tab, typing_speed_ms);
-        output!(textfield, format!("{LIMIT}αÛûɑ"));
 
         rstk::end_wish();
     }
