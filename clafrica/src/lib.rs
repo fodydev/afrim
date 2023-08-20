@@ -5,13 +5,16 @@ use crate::api::Frontend;
 use clafrica_lib::{text_buffer, utils};
 use enigo::{Enigo, Key, KeyboardControllable};
 use rdev::{self, EventType, Key as E_Key};
-use std::{io, sync::mpsc, thread};
+use std::{error, sync::mpsc, thread};
 
 pub mod prelude {
     pub use crate::config::Config;
 }
 
-pub fn run(config: config::Config, mut frontend: impl Frontend) -> Result<(), io::Error> {
+pub fn run(
+    config: config::Config,
+    mut frontend: impl Frontend,
+) -> Result<(), Box<dyn error::Error>> {
     let map = utils::build_map(
         config
             .extract_data()

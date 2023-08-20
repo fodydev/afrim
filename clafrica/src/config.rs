@@ -35,8 +35,11 @@ struct DetailedData {
 
 impl Config {
     pub fn from_file(filepath: &Path) -> Result<Self, Box<dyn error::Error>> {
-        let content = fs::read_to_string(filepath)?;
-        let mut config: Self = toml::from_str(&content)?;
+        let content = fs::read_to_string(filepath)
+            .map_err(|err| format!("Couldn't open file `{filepath:?}`.\nCaused by:\n\t{err}."))?;
+        let mut config: Self = toml::from_str(&content).map_err(|err| {
+            format!("Failed to parse configuration file `{filepath:?}`.\nCaused by:\n\t{err}")
+        })?;
 
         let config_path = filepath.parent().unwrap();
 
@@ -115,15 +118,21 @@ mod tests {
         use std::path::Path;
 
         let conf = Config::from_file(Path::new("./data/config_sample.toml")).unwrap();
-        assert_eq!(conf.core.clone().unwrap().buffer_size, 12);
-        assert!(!conf.core.clone().unwrap().auto_capitalize);
+        assert_eq!(conf.core.as_ref().unwrap().buffer_size, 12);
+        assert!(!conf.core.as_ref().unwrap().auto_capitalize);
 
         let data = conf.extract_data();
         assert_eq!(data.keys().len(), 19);
 
-        let conf = Config::from_file(Path::new("./not_found"));
+        // parsing error
+        let conf = Config::from_file(Path::new("./data/invalid.toml"));
         assert!(conf.is_err());
 
+        // config file not found
+        let conf = Config::from_file(Path::new("./data/not_found"));
+        assert!(conf.is_err());
+
+        // data and and core not provided
         let conf = Config::from_file(Path::new("./data/blank_sample.toml")).unwrap();
         let data = conf.extract_data();
         assert_eq!(data.keys().len(), 0);
