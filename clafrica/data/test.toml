@@ -18,3 +18,6 @@ c_       =   { value = "ç", alias = ["c_ced", "c8", "c8ced"]}
 uu       =   "ʉ"
 uu3      =   { value = "ʉ̄", alias = ["uu\""] }
 uuaf3    =   { value = "ʉ̄ɑ̄", alias = ["uuqf\""] }
+
+[translation]
+hello = "hi"

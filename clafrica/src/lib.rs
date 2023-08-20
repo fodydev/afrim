@@ -1,9 +1,12 @@
 pub mod api;
 pub mod config;
+pub mod processor;
+pub mod translator;
 
 use crate::api::Frontend;
-use clafrica_lib::{text_buffer, utils};
-use enigo::{Enigo, Key, KeyboardControllable};
+use crate::processor::Processor;
+use crate::translator::Translator;
+use clafrica_lib::utils;
 use rdev::{self, EventType, Key as E_Key};
 use std::{error, sync::mpsc, thread};
 
@@ -22,9 +25,11 @@ pub fn run(
             .map(|(k, v)| [k.as_str(), v.as_str()])
             .collect(),
     );
-    let mut cursor = text_buffer::Cursor::new(map, config.core.map(|e| e.buffer_size).unwrap_or(8));
-
-    let mut keyboard = Enigo::new();
+    let mut processor = Processor::new(
+        map,
+        config.core.as_ref().map(|e| e.buffer_size).unwrap_or(8),
+    );
+    let translator = Translator::new(config.extract_translation());
 
     frontend.update_screen(rdev::display_size().unwrap());
 
@@ -62,79 +67,31 @@ pub fn run(
     });
 
     for event in rx.iter() {
-        let character = event.name.and_then(|s| s.chars().next());
-        let is_valid = character
-            .map(|c| c.is_alphanumeric() || c.is_ascii_punctuation())
-            .unwrap_or_default();
+        if let EventType::MouseMove { x, y } = &event.event_type {
+            frontend.update_position((*x, *y));
+        } else {
+            let (changed, committed) = processor.process(event);
 
-        match event.event_type {
-            EventType::KeyPress(E_Key::Backspace) => {
-                if let Some(out) = cursor.undo() {
-                    rdev::simulate(&EventType::KeyPress(E_Key::Pause))
-                        .expect("We could pause the listeners");
-                    keyboard.key_up(Key::Backspace);
+            if changed {
+                let input = processor.get_input();
 
-                    let i = out.chars().count();
-                    (1..i).for_each(|_| keyboard.key_click(Key::Backspace));
+                frontend.clear_predicates();
 
-                    rdev::simulate(&EventType::KeyRelease(E_Key::Pause))
-                        .expect("We could resume the listeners");
-
-                    // Clear the remaining code
-                    while let (None, 1.., ..) = cursor.state() {
-                        cursor.undo();
-                    }
-
-                    if let (Some(_in), ..) = cursor.state() {
-                        keyboard.key_sequence(&_in);
-                    }
-                }
-
-                frontend.update_text(cursor.to_sequence());
-            }
-            EventType::KeyPress(
-                E_Key::Unknown(_) | E_Key::ShiftLeft | E_Key::ShiftRight | E_Key::CapsLock,
-            ) => {
-                // println!("[ignore] {:?}", event.event_type)
-            }
-            EventType::ButtonPress(_) | EventType::KeyPress(_) if !is_valid => {
-                cursor.clear();
-                frontend.update_text(cursor.to_sequence());
-            }
-            EventType::KeyPress(_) => {
-                let character = character.unwrap();
-
-                let mut prev_cursor = cursor.clone();
-
-                if let Some(_in) = cursor.hit(character) {
-                    rdev::simulate(&EventType::KeyPress(E_Key::Pause))
-                        .expect("We could pause the listeners");
-
-                    keyboard.key_click(Key::Backspace);
-
-                    // Remove the remaining code
-                    while let (None, 1.., ..) = prev_cursor.state() {
-                        prev_cursor.undo();
-                        keyboard.key_click(Key::Backspace);
-                    }
-
-                    if let (Some(out), ..) = prev_cursor.state() {
-                        (0..out.chars().count()).for_each(|_| keyboard.key_click(Key::Backspace))
-                    }
-
-                    keyboard.key_sequence(&_in);
-
-                    rdev::simulate(&EventType::KeyRelease(E_Key::Pause))
-                        .expect("We could resume the listeners");
+                if !committed {
+                    translator.translate(&input).iter().for_each(
+                        |(remaining_code, text, translated)| {
+                            if *translated {
+                                processor.commit(&input, text);
+                            } else if !remaining_code.is_empty() {
+                                frontend.add_predicate(remaining_code, text);
+                            }
+                        },
+                    );
                 };
 
-                frontend.update_text(cursor.to_sequence());
+                frontend.update_text(&input);
             }
-            EventType::MouseMove { x, y } => {
-                frontend.update_position((x, y));
-            }
-            _ => (),
-        };
+        }
     }
 
     Ok(())
@@ -253,6 +210,14 @@ mod tests {
         input!(CapsLock KeyA CapsLock KeyF KeyF, typing_speed_ms);
         input!(KeyA KeyF KeyF, typing_speed_ms);
         output!(textfield, format!("{LIMIT}αⱭⱭɑɑ"));
+
+        (0..5).for_each(|_| {
+            input!(Backspace, typing_speed_ms);
+        });
+
+        // We verify that the translation work as expected
+        input!(KeyH KeyE KeyL KeyL KeyO, typing_speed_ms);
+        output!(textfield, format!("{LIMIT}hi"));
 
         rstk::end_wish();
     }
