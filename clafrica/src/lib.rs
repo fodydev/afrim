@@ -191,12 +191,7 @@ mod tests {
         input_field.height(12);
         input_field.pack().layout();
         root.geometry(200, 200, 0, 0);
-        rstk::tell_wish(
-            r#"
-            bind . <Leave> { destroy . };
-            chan configure stdout -encoding utf-8;
-        "#,
-        );
+        rstk::tell_wish("chan configure stdout -encoding utf-8;");
         thread::sleep(Duration::from_secs(1));
         input_field
     }
@@ -224,13 +219,13 @@ mod tests {
         input!(KeyB KeyB KeyB Escape, typing_speed_ms);
         input!(KeyU Backspace KeyU KeyU Backspace KeyU, typing_speed_ms);
         input!(
-            KeyC KeyC KeyC KeyE KeyD
+            KeyC Num8 KeyC KeyE KeyD
             KeyU KeyU
-            KeyA KeyF CapsLock Num3 CapsLock, typing_speed_ms);
+            KeyA KeyF Num3, typing_speed_ms);
         input!(
             KeyA KeyF KeyA KeyF
-            KeyA KeyF KeyF CapsLock Num3 CapsLock, typing_speed_ms);
-        input!(KeyU KeyU CapsLock Num3 CapsLock, typing_speed_ms);
+            KeyA KeyF KeyF Num3, typing_speed_ms);
+        input!(KeyU KeyU Num3, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uçʉ̄ɑ̄ɑɑɑ̄ɑ̄ʉ̄"));
 
         // We verify that the undo (backspace) works as expected
@@ -241,10 +236,10 @@ mod tests {
 
         // We verify that the pause/resume works as expected
         input!(ControlLeft ControlLeft, typing_speed_ms);
-        input!(KeyA KeyF, typing_speed_ms);
+        input!(KeyU KeyU, typing_speed_ms);
         input!(ControlLeft ControlRight, typing_speed_ms);
         input!(KeyA KeyF, typing_speed_ms);
-        output!(textfield, format!("{LIMIT}afɑ"));
+        output!(textfield, format!("{LIMIT}uuɑ"));
 
         (0..3).for_each(|_| {
             input!(Backspace, typing_speed_ms);
@@ -252,10 +247,9 @@ mod tests {
 
         // We verify the auto capitalization works as expected
         input!(CapsLock KeyA CapsLock KeyF, typing_speed_ms);
-        input!(CapsLock KeyU CapsLock, typing_speed_ms);
-        input!(CapsLock Num5 CapsLock, typing_speed_ms);
-        input!(CapsLock Num5 CapsLock KeyU, typing_speed_ms);
-        output!(textfield, format!("{LIMIT}αÛû"));
+        input!(CapsLock KeyA CapsLock KeyF KeyF, typing_speed_ms);
+        input!(KeyA KeyF KeyF, typing_speed_ms);
+        output!(textfield, format!("{LIMIT}αⱭⱭɑɑ"));
 
         rstk::end_wish();
     }
