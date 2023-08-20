@@ -89,20 +89,13 @@ impl Config {
         {
             data.clone()
                 .chain(data.clone().filter_map(|(k, v)| {
-                    if k.chars().next()?.is_lowercase() {
-                        Some((k[0..1].to_uppercase() + &k[1..], v.to_uppercase()))
-                    } else {
-                        None
-                    }
+                    k.chars()
+                        .next()?
+                        .is_lowercase()
+                        .then(|| (k[0..1].to_uppercase() + &k[1..], v.to_uppercase()))
                 }))
                 // We overwrite the auto capitalization
-                .chain(data.filter_map(|(k, v)| {
-                    if k.chars().next()?.is_uppercase() {
-                        Some((k, v))
-                    } else {
-                        None
-                    }
-                }))
+                .chain(data.filter_map(|(k, v)| k.chars().next()?.is_uppercase().then_some((k, v))))
                 .collect()
         } else {
             data.collect()
