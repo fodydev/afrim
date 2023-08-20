@@ -5,16 +5,16 @@ name = "Test code"
 description = "Test code for testing purpose."
 
 [core]
-buffer_size = 128
+buffer_size = 64
 auto_capitalize = true
 
 [data]
-af       =   "ɑ"
-Af       =   "α"
-u5       =   { value = "û", alias = ["5u"]}
-aff      =   "ɑɑ"
-aff3     =   "ɑ̄ɑ̄"
-cc       =   { value = "ç", alias = ["ccced"]}
+af       =   { value = "ɑ", alias = ["qf"] }
+Af       =   { value = "α", alias = ["Qf"] }
+u5       =   { value = "û", alias = ["5u", "(u", "u("] }
+aff      =   { value = "ɑɑ", alias = ["qff"] }
+aff3     =   { value = "ɑ̄ɑ̄", alias = ["qff\""] }
+c_       =   { value = "ç", alias = ["c_ced", "c8", "c8ced"]}
 uu       =   "ʉ"
-uu3      =   "ʉ̄"
-uuaf3    =   "ʉ̄ɑ̄"
+uu3      =   { value = "ʉ̄", alias = ["uu\""] }
+uuaf3    =   { value = "ʉ̄ɑ̄", alias = ["uuqf\""] }
