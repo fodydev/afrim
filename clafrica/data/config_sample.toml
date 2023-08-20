@@ -6,3 +6,7 @@ auto_capitalize = false
 
 [data]
 sample = { path = "./data_sample.toml" }
+
+[translation]
+mydict = { path = "./dictionary.toml" }
+

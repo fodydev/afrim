@@ -5,7 +5,8 @@ use toml::{self};
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     pub core: Option<CoreConfig>,
-    data: HashMap<String, Data>,
+    data: Option<HashMap<String, Data>>,
+    translation: Option<HashMap<String, Data>>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -43,17 +44,16 @@ impl Config {
 
         let config_path = filepath.parent().unwrap();
 
+        // Data
         let mut data = HashMap::new();
 
-        config
-            .data
-            .iter()
-            .try_for_each(|(key, value)| -> Result<(), Box<dyn error::Error>> {
+        config.data.unwrap_or_default().iter().try_for_each(
+            |(key, value)| -> Result<(), Box<dyn error::Error>> {
                 match value {
                     Data::File(DataFile { path }) => {
                         let filepath = config_path.join(path);
                         let conf = Config::from_file(&filepath)?;
-                        data.extend(conf.data);
+                        data.extend(conf.data.unwrap_or_default());
                     }
                     Data::Simple(_) => {
                         data.insert(key.to_owned(), value.clone());
@@ -65,21 +65,53 @@ impl Config {
                     }
                 };
                 Ok(())
-            })?;
+            },
+        )?;
+        config.data = Some(data);
 
-        config.data = data;
+        // Translation
+        let mut translation = HashMap::new();
+
+        config.translation.unwrap_or_default().iter().try_for_each(
+            |(key, value)| -> Result<(), Box<dyn error::Error>> {
+                match value {
+                    Data::File(DataFile { path }) => {
+                        let filepath = config_path.join(path);
+                        let conf = Config::from_file(&filepath)?;
+                        translation.extend(conf.translation.unwrap_or_default());
+                    }
+                    Data::Simple(_) => {
+                        translation.insert(key.to_owned(), value.clone());
+                    }
+                    Data::Detailed(DetailedData { value, alias }) => {
+                        alias.iter().chain([key.to_owned()].iter()).for_each(|e| {
+                            translation.insert(e.to_owned(), Data::Simple(value.to_owned()));
+                        });
+                    }
+                };
+                Ok(())
+            },
+        )?;
+
+        config.translation = Some(translation);
 
         Ok(config)
     }
 
     pub fn extract_data(&self) -> HashMap<String, String> {
-        let data = self.data.iter().filter_map(|(k, v)| {
-            let v = match v {
-                Data::Simple(value) => Some(value),
-                _ => None,
-            };
-            v.map(|v| (k.to_owned(), v.to_owned()))
-        });
+        let empty = HashMap::default();
+        let data = self
+            .data
+            .as_ref()
+            .unwrap_or(&empty)
+            .iter()
+            .filter_map(|(k, v)| {
+                let v = match v {
+                    Data::Simple(value) => Some(value),
+                    _ => None,
+                };
+                v.map(|v| (k.to_owned(), v.to_owned()))
+            });
 
         if self
             .core
@@ -100,6 +132,24 @@ impl Config {
         } else {
             data.collect()
         }
+    }
+
+    pub fn extract_translation(&self) -> HashMap<String, String> {
+        let empty = HashMap::new();
+
+        self.translation
+            .as_ref()
+            .unwrap_or(&empty)
+            .iter()
+            .filter_map(|(k, v)| {
+                let v = match v {
+                    Data::Simple(v) => Some(v),
+                    _ => None,
+                };
+
+                v.map(|v| (k.to_owned(), v.to_owned()))
+            })
+            .collect()
     }
 }
 
@@ -129,5 +179,19 @@ mod tests {
         let conf = Config::from_file(Path::new("./data/blank_sample.toml")).unwrap();
         let data = conf.extract_data();
         assert_eq!(data.keys().len(), 0);
+    }
+
+    #[test]
+    fn from_file_with_translation() {
+        use crate::config::Config;
+        use std::path::Path;
+
+        let conf = Config::from_file(Path::new("./data/config_sample.toml")).unwrap();
+        let translation = conf.extract_translation();
+        assert_eq!(translation.keys().len(), 3);
+
+        let conf = Config::from_file(Path::new("./data/blank_sample.toml")).unwrap();
+        let translation = conf.extract_translation();
+        assert_eq!(translation.keys().len(), 0);
     }
 }
