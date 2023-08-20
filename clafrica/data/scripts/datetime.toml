@@ -1,0 +1,4 @@
+[translators]
+date = "./datetime/date.rhai"
+time = "./datetime/time.rhai"
+

@@ -21,8 +21,10 @@ uu       =   "ʉ"
 uu3      =   { value = "ʉ̄", alias = ["uu\""] }
 uuaf3    =   { value = "ʉ̄ɑ̄", alias = ["uuqf\""] }
 
+[translators]
+hi = "./scripts/hi.rhai"
+
 [translation]
-hi = "hello"
 hello = "hi"
 heli = "helicopter"
 hea = "health"

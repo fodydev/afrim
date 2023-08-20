@@ -9,6 +9,9 @@ page_size = 10
 [data]
 sample = { path = "./data_sample.toml" }
 
+[translators]
+datetime = { path = "./scripts/datetime.toml" }
+
 [translation]
 mydict = { path = "./dictionary.toml" }
 
