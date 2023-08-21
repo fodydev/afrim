@@ -1,7 +1,7 @@
 pub mod api;
-pub mod config;
-pub mod processor;
-pub mod translator;
+mod config;
+mod processor;
+mod translator;
 
 use crate::api::Frontend;
 use crate::processor::Processor;
