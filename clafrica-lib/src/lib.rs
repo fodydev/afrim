@@ -122,7 +122,7 @@ pub mod text_buffer {
                 .buffer
                 .iter()
                 .last()
-                .unwrap_or(&self.root)
+                .unwrap_or(&Rc::new(Node::new('\0', 0)))
                 .goto(character)
                 .or_else(|| {
                     // We end the current sequence
@@ -187,6 +187,7 @@ pub mod utils {
     pub fn load_data(file_path: &str) -> Result<Vec<Vec<String>>, io::Error> {
         let data = fs::read_to_string(file_path)?;
         let data = data
+            .trim()
             .split('\n')
             .map(|line| {
                 line.split_whitespace()
@@ -285,41 +286,49 @@ mod tests {
                 .collect(),
         );
 
-        let mut cursor = text_buffer::Cursor::new(root, 5);
+        let mut cursor = text_buffer::Cursor::new(root, 8);
 
         assert_eq!(cursor.state(), (None, 0, '\0'));
 
         hit!(cursor '2', 'i', 'a', 'f');
-        assert_eq!(cursor.to_sequence(), vec!['2', 'i', 'a', 'f']);
+        assert_eq!(cursor.to_sequence(), vec!['\0', '2', 'i', 'a', 'f']);
 
         assert_eq!(cursor.state(), (Some("íɑ́".to_owned()), 4, 'f'));
 
         undo!(cursor 1);
-        assert_eq!(cursor.to_sequence(), vec!['2', 'i', 'a']);
+        assert_eq!(cursor.to_sequence(), vec!['\0', '2', 'i', 'a']);
 
         undo!(cursor 1);
         cursor.hit('e');
-        assert_eq!(cursor.to_sequence(), vec!['2', 'i', 'e']);
+        assert_eq!(cursor.to_sequence(), vec!['\0', '2', 'i', 'e']);
 
         undo!(cursor 2);
         hit!(cursor 'o', 'o');
-        assert_eq!(cursor.to_sequence(), vec!['2', 'o', 'o']);
+        assert_eq!(cursor.to_sequence(), vec!['\0', '2', 'o', 'o']);
 
         undo!(cursor 3);
-        assert_eq!(cursor.to_sequence(), vec![]);
+        assert_eq!(cursor.to_sequence(), vec!['\0']);
 
         hit!(cursor '2', '2', 'u', 'a');
-        assert_eq!(cursor.to_sequence(), vec!['2', '\0', '2', 'u', 'a']);
+        assert_eq!(
+            cursor.to_sequence(),
+            vec!['\0', '\0', '2', '\0', '2', 'u', 'a']
+        );
         undo!(cursor 4);
+        assert_eq!(cursor.to_sequence(), vec!['\0', '\0']);
+        undo!(cursor 1);
         assert_eq!(cursor.to_sequence(), vec![]);
 
         hit!(
             cursor
             'a', 'a', '2', 'a', 'e', 'a', '2', 'f', 'a',
-            '2', '2', '2', 'i', 'a', '2', '2', '_', 'f',
+            '2', '2', 'x', 'x', '2', 'i', 'a', '2', '2', '_', 'f',
             '2', 'a', '2', 'a', '_'
         );
-        assert_eq!(cursor.to_sequence(), vec!['a', '\0', '2', 'a', '_']);
+        assert_eq!(
+            cursor.to_sequence(),
+            vec!['f', '\0', '2', 'a', '\0', '2', 'a', '_']
+        );
 
         cursor.clear();
         assert_eq!(cursor.to_sequence(), vec![]);
