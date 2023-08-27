@@ -7,6 +7,8 @@ description = "Test code for testing purpose."
 [core]
 buffer_size = 64
 auto_capitalize = true
+auto_commit = true
+page_size = 10
 
 [data]
 af       =   { value = "ɑ", alias = ["qf"] }
@@ -21,3 +23,5 @@ uuaf3    =   { value = "ʉ̄ɑ̄", alias = ["uuqf\""] }
 
 [translation]
 hello = "hi"
+heli = "helicopter"
+hea = "health"

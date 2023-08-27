@@ -29,8 +29,13 @@ pub fn run(
         map,
         config.core.as_ref().map(|e| e.buffer_size).unwrap_or(8),
     );
-    let translator = Translator::new(config.extract_translation());
+    let translator = Translator::new(
+        config.extract_translation(),
+        config.core.as_ref().map(|e| e.auto_commit).unwrap_or(false),
+    );
+    let mut is_special_pressed = false;
 
+    frontend.set_page_size(config.core.as_ref().map(|e| e.page_size).unwrap_or(10));
     frontend.update_screen(rdev::display_size().unwrap());
 
     let (tx, rx) = mpsc::channel();
@@ -67,29 +72,50 @@ pub fn run(
     });
 
     for event in rx.iter() {
-        if let EventType::MouseMove { x, y } = &event.event_type {
-            frontend.update_position((*x, *y));
-        } else {
-            let (changed, committed) = processor.process(event);
+        match event.event_type {
+            EventType::MouseMove { x, y } => {
+                frontend.update_position((x, y));
+            }
+            EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => {
+                is_special_pressed = true;
+            }
+            EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) => {
+                is_special_pressed = false;
+            }
+            EventType::KeyRelease(E_Key::Alt) if is_special_pressed => frontend.next_predicate(),
+            EventType::KeyRelease(E_Key::Unknown(151)) if is_special_pressed => {
+                frontend.previous_predicate()
+            }
+            EventType::KeyRelease(E_Key::Space) if is_special_pressed => {
+                if let Some(predicate) = frontend.get_selected_predicate() {
+                    is_special_pressed = false;
+                    processor.commit(&predicate.0, &predicate.1, &predicate.2);
+                }
+            }
+            _ if is_special_pressed => (),
+            _ => {
+                let (changed, committed) = processor.process(event);
 
-            if changed {
-                let input = processor.get_input();
+                if changed {
+                    let input = processor.get_input();
 
-                frontend.clear_predicates();
+                    frontend.clear_predicates();
 
-                if !committed {
-                    translator.translate(&input).iter().for_each(
-                        |(remaining_code, text, translated)| {
-                            if *translated {
-                                processor.commit(&input, text);
-                            } else if !remaining_code.is_empty() {
-                                frontend.add_predicate(remaining_code, text);
-                            }
-                        },
-                    );
-                };
+                    if !committed {
+                        translator.translate(&input).iter().for_each(
+                            |(code, remaining_code, text, translated)| {
+                                if *translated {
+                                    processor.commit(code, remaining_code, text);
+                                } else if !text.is_empty() {
+                                    frontend.add_predicate(code, remaining_code, text);
+                                }
+                            },
+                        );
+                    };
 
-                frontend.update_text(&input);
+                    frontend.set_input(&input);
+                    frontend.display();
+                }
             }
         }
     }
@@ -117,6 +143,8 @@ mod tests {
 
     macro_rules! output {
         ( $textfield: expr, $expected: expr ) => {
+            thread::sleep(Duration::from_millis(500));
+
             // A loop to be sure to got something stable
             loop {
                 let a = $textfield.get_to_end((1, 0));
@@ -139,7 +167,7 @@ mod tests {
         let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
 
         thread::spawn(move || {
-            run(test_config, api::Console).unwrap();
+            run(test_config, api::Console::default()).unwrap();
         });
     }
 
@@ -217,6 +245,23 @@ mod tests {
 
         // We verify that the translation work as expected
         input!(KeyH KeyE KeyL KeyL KeyO, typing_speed_ms);
+        output!(textfield, format!("{LIMIT}hi"));
+
+        (0..2).for_each(|_| {
+            input!(Backspace, typing_speed_ms);
+        });
+
+        // We verify that the predicate selection work as expected
+        input!(KeyH KeyE, typing_speed_ms);
+        rdev::simulate(&KeyPress(ControlLeft)).unwrap();
+        input!(Unknown(151), typing_speed_ms);
+        input!(Alt, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
+
+        input!(KeyL KeyL, typing_speed_ms);
+        rdev::simulate(&KeyPress(ControlLeft)).unwrap();
+        input!(Space, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
         output!(textfield, format!("{LIMIT}hi"));
 
         rstk::end_wish();
