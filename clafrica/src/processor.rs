@@ -59,10 +59,12 @@ impl Processor {
             }
             EventType::KeyPress(_) => {
                 let character = character.unwrap();
-                let mut prev_cursor = self.cursor.clone();
 
                 if let Some(_in) = self.cursor.hit(character) {
                     self.pause();
+
+                    let mut prev_cursor = self.cursor.clone();
+                    prev_cursor.undo();
                     self.keyboard.key_click(Key::Backspace);
 
                     // Remove the remaining code

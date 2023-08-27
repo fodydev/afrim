@@ -122,7 +122,7 @@ pub mod text_buffer {
                 .buffer
                 .iter()
                 .last()
-                .unwrap_or(&self.root)
+                .unwrap_or(&Rc::new(Node::new('\0', 0)))
                 .goto(character)
                 .or_else(|| {
                     // We end the current sequence
