@@ -13,6 +13,8 @@ pub struct Config {
 pub struct CoreConfig {
     pub buffer_size: usize,
     pub auto_capitalize: bool,
+    pub page_size: usize,
+    pub auto_commit: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -163,6 +165,8 @@ mod tests {
         let conf = Config::from_file(Path::new("./data/config_sample.toml")).unwrap();
         assert_eq!(conf.core.as_ref().unwrap().buffer_size, 12);
         assert!(!conf.core.as_ref().unwrap().auto_capitalize);
+        assert!(!conf.core.as_ref().unwrap().auto_commit);
+        assert_eq!(conf.core.as_ref().unwrap().page_size, 10);
 
         let data = conf.extract_data();
         assert_eq!(data.keys().len(), 19);

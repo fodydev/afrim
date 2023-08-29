@@ -29,8 +29,13 @@ pub fn run(
         map,
         config.core.as_ref().map(|e| e.buffer_size).unwrap_or(8),
     );
-    let translator = Translator::new(config.extract_translation());
+    let translator = Translator::new(
+        config.extract_translation(),
+        config.core.as_ref().map(|e| e.auto_commit).unwrap_or(false),
+    );
+    let mut is_special_pressed = false;
 
+    frontend.set_page_size(config.core.as_ref().map(|e| e.page_size).unwrap_or(10));
     frontend.update_screen(rdev::display_size().unwrap());
 
     let (tx, rx) = mpsc::channel();
@@ -42,8 +47,8 @@ pub fn run(
             idle = match event.event_type {
                 EventType::KeyPress(E_Key::Pause) => true,
                 EventType::KeyRelease(E_Key::Pause) => false,
-                EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => idle,
-                EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) => {
+                EventType::KeyPress(E_Key::ShiftLeft) => idle,
+                EventType::KeyRelease(E_Key::ShiftLeft) => {
                     pause_counter += 1;
 
                     if pause_counter != 0 && pause_counter % 2 == 0 {
@@ -67,29 +72,55 @@ pub fn run(
     });
 
     for event in rx.iter() {
-        if let EventType::MouseMove { x, y } = &event.event_type {
-            frontend.update_position((*x, *y));
-        } else {
-            let (changed, committed) = processor.process(event);
+        match event.event_type {
+            EventType::MouseMove { x, y } => {
+                frontend.update_position((x, y));
+            }
+            EventType::KeyPress(E_Key::ShiftLeft) => {
+                is_special_pressed = true;
+            }
+            EventType::KeyRelease(E_Key::ShiftLeft) => {
+                is_special_pressed = false;
+            }
+            EventType::KeyRelease(E_Key::ControlRight) if is_special_pressed => {
+                frontend.next_predicate()
+            }
+            EventType::KeyRelease(E_Key::ControlLeft) if is_special_pressed => {
+                frontend.previous_predicate()
+            }
+            EventType::KeyRelease(E_Key::ShiftRight) if is_special_pressed => {
+                rdev::simulate(&EventType::KeyRelease(E_Key::ShiftLeft))
+                    .expect("We couldn't cancel the special function");
+                is_special_pressed = false;
 
-            if changed {
-                let input = processor.get_input();
+                if let Some(predicate) = frontend.get_selected_predicate() {
+                    processor.commit(&predicate.0, &predicate.1, &predicate.2);
+                }
+            }
+            _ if is_special_pressed => (),
+            _ => {
+                let (changed, committed) = processor.process(event);
 
-                frontend.clear_predicates();
+                if changed {
+                    let input = processor.get_input();
 
-                if !committed {
-                    translator.translate(&input).iter().for_each(
-                        |(remaining_code, text, translated)| {
-                            if *translated {
-                                processor.commit(&input, text);
-                            } else if !remaining_code.is_empty() {
-                                frontend.add_predicate(remaining_code, text);
-                            }
-                        },
-                    );
-                };
+                    frontend.clear_predicates();
 
-                frontend.update_text(&input);
+                    if !committed {
+                        translator.translate(&input).iter().for_each(
+                            |(code, remaining_code, text, translated)| {
+                                if *translated {
+                                    processor.commit(code, remaining_code, text);
+                                } else if !text.is_empty() {
+                                    frontend.add_predicate(code, remaining_code, text);
+                                }
+                            },
+                        );
+                    };
+
+                    frontend.set_input(&input);
+                    frontend.display();
+                }
             }
         }
     }
@@ -117,6 +148,8 @@ mod tests {
 
     macro_rules! output {
         ( $textfield: expr, $expected: expr ) => {
+            thread::sleep(Duration::from_millis(500));
+
             // A loop to be sure to got something stable
             loop {
                 let a = $textfield.get_to_end((1, 0));
@@ -139,7 +172,7 @@ mod tests {
         let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
 
         thread::spawn(move || {
-            run(test_config, api::Console).unwrap();
+            run(test_config, api::Console::default()).unwrap();
         });
     }
 
@@ -195,9 +228,9 @@ mod tests {
         output!(textfield, LIMIT);
 
         // We verify that the pause/resume works as expected
-        input!(ControlLeft ControlLeft, typing_speed_ms);
+        input!(ShiftLeft ShiftLeft, typing_speed_ms);
         input!(KeyU KeyU, typing_speed_ms);
-        input!(ControlLeft ControlRight, typing_speed_ms);
+        input!(ShiftLeft ShiftLeft, typing_speed_ms);
         input!(KeyA KeyF, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑ"));
 
@@ -217,6 +250,23 @@ mod tests {
 
         // We verify that the translation work as expected
         input!(KeyH KeyE KeyL KeyL KeyO, typing_speed_ms);
+        output!(textfield, format!("{LIMIT}hi"));
+
+        (0..2).for_each(|_| {
+            input!(Backspace, typing_speed_ms);
+        });
+
+        // We verify that the predicate selection work as expected
+        input!(KeyH KeyE, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(ControlLeft, typing_speed_ms);
+        input!(ControlRight, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+
+        input!(KeyL KeyL, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(ShiftRight, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
         output!(textfield, format!("{LIMIT}hi"));
 
         rstk::end_wish();

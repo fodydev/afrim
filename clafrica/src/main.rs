@@ -2,7 +2,7 @@ use clafrica::{api, prelude::Config, run};
 use std::{env, path::Path, process};
 
 fn main() {
-    let frontend = api::Console;
+    let frontend = api::Console::default();
 
     let filename = env::args().nth(1).unwrap_or_else(|| {
         eprintln!("Configuration file required");

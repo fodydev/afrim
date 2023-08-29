@@ -91,11 +91,14 @@ impl Processor {
         (changed, committed)
     }
 
-    pub fn commit(&mut self, code: &str, text: &str) {
+    pub fn commit(&mut self, code: &str, remaining_code: &str, text: &str) {
         self.pause();
-        (0..code.len()).for_each(|_| self.keyboard.key_click(Key::Backspace));
+        (0..code.len() - remaining_code.len())
+            .for_each(|_| self.keyboard.key_click(Key::Backspace));
         self.keyboard.key_sequence(text);
         self.resume();
+        // We clear the buffer
+        self.cursor.clear();
     }
 
     fn pause(&mut self) {
