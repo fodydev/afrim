@@ -93,9 +93,6 @@ impl Processor {
 
     pub fn commit(&mut self, code: &str, remaining_code: &str, text: &str) {
         self.pause();
-        rdev::simulate(&EventType::KeyRelease(E_Key::ControlLeft)).unwrap();
-        rdev::simulate(&EventType::KeyRelease(E_Key::ControlRight)).unwrap();
-
         (0..code.len() - remaining_code.len())
             .for_each(|_| self.keyboard.key_click(Key::Backspace));
         self.keyboard.key_sequence(text);

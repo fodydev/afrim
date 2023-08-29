@@ -47,8 +47,8 @@ pub fn run(
             idle = match event.event_type {
                 EventType::KeyPress(E_Key::Pause) => true,
                 EventType::KeyRelease(E_Key::Pause) => false,
-                EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => idle,
-                EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) => {
+                EventType::KeyPress(E_Key::ShiftLeft) => idle,
+                EventType::KeyRelease(E_Key::ShiftLeft) => {
                     pause_counter += 1;
 
                     if pause_counter != 0 && pause_counter % 2 == 0 {
@@ -76,19 +76,24 @@ pub fn run(
             EventType::MouseMove { x, y } => {
                 frontend.update_position((x, y));
             }
-            EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => {
+            EventType::KeyPress(E_Key::ShiftLeft) => {
                 is_special_pressed = true;
             }
-            EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) => {
+            EventType::KeyRelease(E_Key::ShiftLeft) => {
                 is_special_pressed = false;
             }
-            EventType::KeyRelease(E_Key::Alt) if is_special_pressed => frontend.next_predicate(),
-            EventType::KeyRelease(E_Key::Unknown(151)) if is_special_pressed => {
+            EventType::KeyRelease(E_Key::ControlRight) if is_special_pressed => {
+                frontend.next_predicate()
+            }
+            EventType::KeyRelease(E_Key::ControlLeft) if is_special_pressed => {
                 frontend.previous_predicate()
             }
-            EventType::KeyRelease(E_Key::Space) if is_special_pressed => {
+            EventType::KeyRelease(E_Key::ShiftRight) if is_special_pressed => {
+                rdev::simulate(&EventType::KeyRelease(E_Key::ShiftLeft))
+                    .expect("We couldn't cancel the special function");
+                is_special_pressed = false;
+
                 if let Some(predicate) = frontend.get_selected_predicate() {
-                    is_special_pressed = false;
                     processor.commit(&predicate.0, &predicate.1, &predicate.2);
                 }
             }
@@ -223,9 +228,9 @@ mod tests {
         output!(textfield, LIMIT);
 
         // We verify that the pause/resume works as expected
-        input!(ControlLeft ControlLeft, typing_speed_ms);
+        input!(ShiftLeft ShiftLeft, typing_speed_ms);
         input!(KeyU KeyU, typing_speed_ms);
-        input!(ControlLeft ControlRight, typing_speed_ms);
+        input!(ShiftLeft ShiftLeft, typing_speed_ms);
         input!(KeyA KeyF, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑ"));
 
@@ -253,15 +258,15 @@ mod tests {
 
         // We verify that the predicate selection work as expected
         input!(KeyH KeyE, typing_speed_ms);
-        rdev::simulate(&KeyPress(ControlLeft)).unwrap();
-        input!(Unknown(151), typing_speed_ms);
-        input!(Alt, typing_speed_ms);
-        rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(ControlLeft, typing_speed_ms);
+        input!(ControlRight, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
 
         input!(KeyL KeyL, typing_speed_ms);
-        rdev::simulate(&KeyPress(ControlLeft)).unwrap();
-        input!(Space, typing_speed_ms);
-        rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(ShiftRight, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
         output!(textfield, format!("{LIMIT}hi"));
 
         rstk::end_wish();
