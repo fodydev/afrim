@@ -47,8 +47,8 @@ pub fn run(
             idle = match event.event_type {
                 EventType::KeyPress(E_Key::Pause) => true,
                 EventType::KeyRelease(E_Key::Pause) => false,
-                EventType::KeyPress(E_Key::ShiftLeft) => idle,
-                EventType::KeyRelease(E_Key::ShiftLeft) => {
+                EventType::KeyPress(E_Key::ControlLeft) => idle,
+                EventType::KeyRelease(E_Key::ControlLeft) => {
                     pause_counter += 1;
 
                     if pause_counter != 0 && pause_counter % 2 == 0 {
@@ -76,20 +76,20 @@ pub fn run(
             EventType::MouseMove { x, y } => {
                 frontend.update_position((x, y));
             }
-            EventType::KeyPress(E_Key::ShiftLeft) => {
+            EventType::KeyPress(E_Key::ControlLeft) => {
                 is_special_pressed = true;
             }
-            EventType::KeyRelease(E_Key::ShiftLeft) => {
+            EventType::KeyRelease(E_Key::ControlLeft) => {
                 is_special_pressed = false;
             }
-            EventType::KeyRelease(E_Key::ControlRight) if is_special_pressed => {
+            EventType::KeyRelease(E_Key::ShiftRight) if is_special_pressed => {
                 frontend.next_predicate()
             }
-            EventType::KeyRelease(E_Key::ControlLeft) if is_special_pressed => {
+            EventType::KeyRelease(E_Key::ShiftLeft) if is_special_pressed => {
                 frontend.previous_predicate()
             }
-            EventType::KeyRelease(E_Key::ShiftRight) if is_special_pressed => {
-                rdev::simulate(&EventType::KeyRelease(E_Key::ShiftLeft))
+            EventType::KeyRelease(E_Key::ControlRight) if is_special_pressed => {
+                rdev::simulate(&EventType::KeyRelease(E_Key::ControlLeft))
                     .expect("We couldn't cancel the special function");
                 is_special_pressed = false;
 
@@ -233,9 +233,9 @@ mod tests {
         output!(textfield, LIMIT);
 
         // We verify that the pause/resume works as expected
-        input!(ShiftLeft ShiftLeft, typing_speed_ms);
+        input!(ControlLeft ControlLeft, typing_speed_ms);
         input!(KeyU KeyU, typing_speed_ms);
-        input!(ShiftLeft ShiftLeft, typing_speed_ms);
+        input!(ControlLeft ControlLeft, typing_speed_ms);
         input!(KeyA KeyF, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑ"));
 
@@ -263,15 +263,15 @@ mod tests {
 
         // We verify that the predicate selection work as expected
         input!(KeyH KeyE, typing_speed_ms);
-        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
-        input!(ControlLeft, typing_speed_ms);
-        input!(ControlRight, typing_speed_ms);
-        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+        rdev::simulate(&KeyPress(ControlLeft)).unwrap();
+        input!(ShiftLeft, typing_speed_ms);
+        input!(ShiftRight, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
 
         input!(KeyL KeyL, typing_speed_ms);
-        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
-        input!(ShiftRight, typing_speed_ms);
-        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+        rdev::simulate(&KeyPress(ControlLeft)).unwrap();
+        input!(ControlRight, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
         output!(textfield, format!("{LIMIT}hi"));
     }
 }
