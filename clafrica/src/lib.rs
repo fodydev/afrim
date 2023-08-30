@@ -184,7 +184,12 @@ mod tests {
         input_field.height(12);
         input_field.pack().layout();
         root.geometry(200, 200, 0, 0);
-        rstk::tell_wish("chan configure stdout -encoding utf-8;");
+        rstk::tell_wish(
+            r#"
+            chan configure stdout -encoding utf-8;
+            wm protocol . WM_DELETE_WINDOW {destroy .};
+        "#,
+        );
         thread::sleep(Duration::from_secs(1));
         input_field
     }
@@ -268,7 +273,5 @@ mod tests {
         input!(ShiftRight, typing_speed_ms);
         rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
         output!(textfield, format!("{LIMIT}hi"));
-
-        rstk::end_wish();
     }
 }
