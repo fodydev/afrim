@@ -13,10 +13,10 @@ pub struct Config {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct CoreConfig {
-    pub buffer_size: usize,
-    pub auto_capitalize: bool,
-    pub page_size: usize,
-    pub auto_commit: bool,
+    pub buffer_size: Option<usize>,
+    pub auto_capitalize: Option<bool>,
+    pub page_size: Option<usize>,
+    pub auto_commit: Option<bool>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -38,6 +38,18 @@ struct DetailedData {
     alias: Vec<String>,
 }
 
+macro_rules! insert_with_auto_capitalize {
+    ( $data: expr, $auto_capitalize: expr, $key: expr, $value: expr ) => {
+        $data.insert($key.to_owned(), Data::Simple($value.to_owned()));
+
+        if $auto_capitalize && !$key.is_empty() && $key.chars().next().unwrap().is_lowercase() {
+            $data
+                .entry($key[0..1].to_uppercase() + &$key[1..])
+                .or_insert(Data::Simple($value.to_uppercase()));
+        }
+    };
+}
+
 impl Config {
     pub fn from_file(filepath: &Path) -> Result<Self, Box<dyn error::Error>> {
         let content = fs::read_to_string(filepath)
@@ -45,8 +57,12 @@ impl Config {
         let mut config: Self = toml::from_str(&content).map_err(|err| {
             format!("Failed to parse configuration file `{filepath:?}`.\nCaused by:\n\t{err}")
         })?;
-
         let config_path = filepath.parent().unwrap();
+        let auto_capitalize = config
+            .core
+            .as_ref()
+            .map(|c| c.auto_capitalize.unwrap_or(true))
+            .unwrap_or(true);
 
         // Data
         let mut data = HashMap::new();
@@ -59,12 +75,12 @@ impl Config {
                         let conf = Config::from_file(&filepath)?;
                         data.extend(conf.data.unwrap_or_default());
                     }
-                    Data::Simple(_) => {
-                        data.insert(key.to_owned(), value.clone());
+                    Data::Simple(value) => {
+                        insert_with_auto_capitalize!(data, auto_capitalize, key, value);
                     }
                     Data::Detailed(DetailedData { value, alias }) => {
-                        alias.iter().chain([key.to_owned()].iter()).for_each(|e| {
-                            data.insert(e.to_owned(), Data::Simple(value.to_owned()));
+                        alias.iter().chain([key.to_owned()].iter()).for_each(|key| {
+                            insert_with_auto_capitalize!(data, auto_capitalize, key, value);
                         });
                     }
                 };
@@ -126,8 +142,8 @@ impl Config {
 
     pub fn extract_data(&self) -> HashMap<String, String> {
         let empty = HashMap::default();
-        let data = self
-            .data
+
+        self.data
             .as_ref()
             .unwrap_or(&empty)
             .iter()
@@ -137,27 +153,8 @@ impl Config {
                     _ => None,
                 };
                 v.map(|v| (k.to_owned(), v.to_owned()))
-            });
-
-        if self
-            .core
-            .as_ref()
-            .map(|c| c.auto_capitalize)
-            .unwrap_or(true)
-        {
-            data.clone()
-                .chain(data.clone().filter_map(|(k, v)| {
-                    k.chars()
-                        .next()?
-                        .is_lowercase()
-                        .then(|| (k[0..1].to_uppercase() + &k[1..], v.to_uppercase()))
-                }))
-                // We overwrite the auto capitalization
-                .chain(data.filter_map(|(k, v)| k.chars().next()?.is_uppercase().then_some((k, v))))
-                .collect()
-        } else {
-            data.collect()
-        }
+            })
+            .collect()
     }
 
     pub fn extract_translators(&self) -> Result<HashMap<String, AST>, Box<dyn error::Error>> {
@@ -219,13 +216,20 @@ mod tests {
         use std::path::Path;
 
         let conf = Config::from_file(Path::new("./data/config_sample.toml")).unwrap();
-        assert_eq!(conf.core.as_ref().unwrap().buffer_size, 12);
-        assert!(!conf.core.as_ref().unwrap().auto_capitalize);
-        assert!(!conf.core.as_ref().unwrap().auto_commit);
-        assert_eq!(conf.core.as_ref().unwrap().page_size, 10);
+
+        assert_eq!(
+            conf.core.as_ref().map(|core| {
+                assert_eq!(core.buffer_size.unwrap(), 12);
+                assert!(!core.auto_capitalize.unwrap());
+                assert!(!core.auto_commit.unwrap());
+                assert_eq!(core.page_size.unwrap(), 10);
+                true
+            }),
+            Some(true)
+        );
 
         let data = conf.extract_data();
-        assert_eq!(data.keys().len(), 19);
+        assert_eq!(data.keys().len(), 23);
 
         // parsing error
         let conf = Config::from_file(Path::new("./data/invalid.toml"));
