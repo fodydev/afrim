@@ -6,6 +6,9 @@ authors = ["Foo Bar <foo@example.com>"]
 website = "sample@example.com"
 description = "Sample code for testing purpose."
 
+[core]
+auto_capitalize = false
+
 [data]
 2aa		=	 { value = "áá", alias = ["a22"]}
 2ee		=	 { value = "éé", alias = ["e22"]}

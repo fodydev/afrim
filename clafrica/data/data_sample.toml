@@ -9,6 +9,9 @@ authors = [
 website = "sample@example.com"
 description = "Sample code for testing purpose."
 
+[core]
+auto_capitalize = true
+
 [data]
 2a_		   =	 "á̠"
 2af_	   =	 "ɑ̠́"
@@ -19,4 +22,6 @@ description = "Sample code for testing purpose."
 2ua		   =	 "úá"
 2uaf	   =	 "úɑ́"
 2uuaf	   =	 "ʉ́ɑ́"
+u2	=	"ú"
+a2	=	"á"
 sample2  =   { path = "./data_sample2.toml" }

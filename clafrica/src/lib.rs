@@ -25,18 +25,26 @@ pub fn run(
             .map(|(k, v)| [k.as_str(), v.as_str()])
             .collect(),
     );
-    let mut processor = Processor::new(
-        map,
-        config.core.as_ref().map(|e| e.buffer_size).unwrap_or(8),
-    );
+    let (buffer_size, auto_commit, page_size) = config
+        .core
+        .as_ref()
+        .map(|core| {
+            (
+                core.buffer_size.unwrap_or(32),
+                core.auto_commit.unwrap_or(false),
+                core.page_size.unwrap_or(10),
+            )
+        })
+        .unwrap_or((32, false, 10));
+    let mut processor = Processor::new(map, buffer_size);
     let translator = Translator::new(
         config.extract_translation(),
         config.extract_translators()?,
-        config.core.as_ref().map(|e| e.auto_commit).unwrap_or(false),
+        auto_commit,
     );
     let mut is_special_pressed = false;
 
-    frontend.set_page_size(config.core.as_ref().map(|e| e.page_size).unwrap_or(10));
+    frontend.set_page_size(page_size);
     frontend.update_screen(rdev::display_size().unwrap());
 
     let (tx, rx) = mpsc::channel();
