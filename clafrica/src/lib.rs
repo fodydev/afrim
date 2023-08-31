@@ -31,6 +31,7 @@ pub fn run(
     );
     let translator = Translator::new(
         config.extract_translation(),
+        config.extract_translators()?,
         config.core.as_ref().map(|e| e.auto_commit).unwrap_or(false),
     );
     let mut is_special_pressed = false;
@@ -95,6 +96,7 @@ pub fn run(
 
                 if let Some(predicate) = frontend.get_selected_predicate() {
                     processor.commit(&predicate.0, &predicate.1, &predicate.2);
+                    frontend.clear_predicates();
                 }
             }
             _ if is_special_pressed => (),
@@ -256,8 +258,10 @@ mod tests {
         // We verify that the translation work as expected
         input!(KeyH KeyE KeyL KeyL KeyO, typing_speed_ms);
         output!(textfield, format!("{LIMIT}hi"));
+        input!(Escape KeyH KeyI, typing_speed_ms);
+        output!(textfield, format!("{LIMIT}hihello"));
 
-        (0..2).for_each(|_| {
+        (0..7).for_each(|_| {
             input!(Backspace, typing_speed_ms);
         });
 

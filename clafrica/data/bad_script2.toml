@@ -1,0 +1,4 @@
+# script parsing error
+
+[translators]
+invalid = "./scripts/invalid.rhai"
