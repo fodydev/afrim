@@ -119,7 +119,7 @@ pub fn run(
                     if !committed {
                         translator.translate(&input).iter().for_each(
                             |(code, remaining_code, text, translated)| {
-                                if *translated {
+                                if auto_commit && *translated {
                                     processor.commit(code, remaining_code, text);
                                 } else if !text.is_empty() {
                                     frontend.add_predicate(code, remaining_code, text);
