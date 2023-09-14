@@ -1,7 +1,7 @@
 # Main clafrica config file
 
 [core]
-buffer_size = 12
+buffer_size = 64
 auto_capitalize = false
 auto_commit = false
 page_size = 10
