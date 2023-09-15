@@ -49,14 +49,14 @@ impl Frontend for Console {
                 .chain(self.predicates.iter().enumerate())
                 .skip(self.current_predicate_id)
                 .take(page_size)
-                .map(|(i, (_code, remaining_code, text))| format!(
+                .map(|(id, (_code, remaining_code, text))| format!(
                     "{}{}. {} ~{}\t ",
-                    if i == self.current_predicate_id {
+                    if id == self.current_predicate_id {
                         "*"
                     } else {
                         ""
                     },
-                    i + 1,
+                    id + 1,
                     text,
                     remaining_code
                 ))
@@ -99,44 +99,54 @@ impl Frontend for Console {
     }
 }
 
-#[test]
-fn test_console() {
-    let mut none = None;
-    none.set_input("hello");
-    none.update_screen((64, 64));
-    none.update_position((64.0, 64.0));
-    none.set_input("input");
-    none.set_page_size(10);
-    none.add_predicate("hey", "y", "hello");
-    none.display();
-    none.clear_predicates();
-    none.previous_predicate();
-    none.next_predicate();
-    none.get_selected_predicate();
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_none() {
+        use crate::api::{Frontend, None};
 
-    let mut console = Console::default();
-    console.set_page_size(10);
-    console.update_screen((0, 0));
-    console.update_position((0.0, 0.0));
-    console.set_input("he");
+        let mut none = None;
+        none.set_input("hello");
+        none.update_screen((64, 64));
+        none.update_position((64.0, 64.0));
+        none.set_input("input");
+        none.set_page_size(10);
+        none.add_predicate("hey", "y", "hello");
+        none.display();
+        none.clear_predicates();
+        none.previous_predicate();
+        none.next_predicate();
+        none.get_selected_predicate();
+    }
 
-    console.add_predicate("hell", "llo", "hello");
-    console.add_predicate("helip", "lip", "helicopter");
-    console.add_predicate("heal", "al", "health");
-    console.display();
-    console.previous_predicate();
-    assert_eq!(
-        console.get_selected_predicate(),
-        Some(&("heal".to_owned(), "al".to_owned(), "health".to_owned()))
-    );
-    console.next_predicate();
-    assert_eq!(
-        console.get_selected_predicate(),
-        Some(&("hell".to_owned(), "llo".to_owned(), "hello".to_owned()))
-    );
+    #[test]
+    fn test_console() {
+        use crate::api::{Console, Frontend};
 
-    console.clear_predicates();
-    console.previous_predicate();
-    console.next_predicate();
-    assert!(console.get_selected_predicate().is_none());
+        let mut console = Console::default();
+        console.set_page_size(10);
+        console.update_screen((0, 0));
+        console.update_position((0.0, 0.0));
+        console.set_input("he");
+
+        console.add_predicate("hell", "llo", "hello");
+        console.add_predicate("helip", "lip", "helicopter");
+        console.add_predicate("heal", "al", "health");
+        console.display();
+        console.previous_predicate();
+        assert_eq!(
+            console.get_selected_predicate(),
+            Some(&("heal".to_owned(), "al".to_owned(), "health".to_owned()))
+        );
+        console.next_predicate();
+        assert_eq!(
+            console.get_selected_predicate(),
+            Some(&("hell".to_owned(), "llo".to_owned(), "hello".to_owned()))
+        );
+
+        console.clear_predicates();
+        console.previous_predicate();
+        console.next_predicate();
+        assert!(console.get_selected_predicate().is_none());
+    }
 }

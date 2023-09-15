@@ -22,7 +22,7 @@ pub fn run(
         config
             .extract_data()
             .iter()
-            .map(|(k, v)| [k.as_str(), v.as_str()])
+            .map(|(key, value)| [key.as_str(), value.as_str()])
             .collect(),
     );
     let (buffer_size, auto_commit, page_size) = config
@@ -99,7 +99,7 @@ pub fn run(
             }
             EventType::KeyRelease(E_Key::ControlRight) if is_special_pressed => {
                 rdev::simulate(&EventType::KeyRelease(E_Key::ControlLeft))
-                    .expect("We couldn't cancel the special function");
+                    .expect("We couldn't cancel the special function key");
                 is_special_pressed = false;
 
                 if let Some(predicate) = frontend.get_selected_predicate() {
@@ -191,6 +191,7 @@ mod tests {
     fn start_sandbox() -> rstk::TkText {
         let root = rstk::trace_with("wish").unwrap();
         root.title("Clafrica Test Environment");
+
         let input_field = rstk::make_text(&root);
         input_field.width(50);
         input_field.height(12);
