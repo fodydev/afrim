@@ -251,30 +251,21 @@ mod tests {
         input!(ControlLeft ControlLeft, typing_speed_ms);
         input!(KeyA KeyF, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑ"));
-
-        (0..3).for_each(|_| {
-            input!(Backspace, typing_speed_ms);
-        });
+        input!(Escape, typing_speed_ms);
 
         // We verify the auto capitalization works as expected
         input!(CapsLock KeyA CapsLock KeyF, typing_speed_ms);
         input!(CapsLock KeyA CapsLock KeyF KeyF, typing_speed_ms);
         input!(KeyA KeyF KeyF, typing_speed_ms);
-        output!(textfield, format!("{LIMIT}αⱭⱭɑɑ"));
-
-        (0..5).for_each(|_| {
-            input!(Backspace, typing_speed_ms);
-        });
+        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑ"));
+        input!(Escape, typing_speed_ms);
 
         // We verify that the translation work as expected
         input!(KeyH KeyE KeyL KeyL KeyO, typing_speed_ms);
-        output!(textfield, format!("{LIMIT}hi"));
+        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhi"));
         input!(Escape KeyH KeyI, typing_speed_ms);
-        output!(textfield, format!("{LIMIT}hihello"));
-
-        (0..7).for_each(|_| {
-            input!(Backspace, typing_speed_ms);
-        });
+        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihello"));
+        input!(Escape, typing_speed_ms);
 
         // We verify that the predicate selection work as expected
         input!(KeyH KeyE, typing_speed_ms);
@@ -287,6 +278,6 @@ mod tests {
         rdev::simulate(&KeyPress(ControlLeft)).unwrap();
         input!(ControlRight, typing_speed_ms);
         rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
-        output!(textfield, format!("{LIMIT}hi"));
+        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohi"));
     }
 }
