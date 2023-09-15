@@ -102,33 +102,31 @@ pub fn run(
                     .expect("We couldn't cancel the special function key");
                 is_special_pressed = false;
 
-                if let Some(predicate) = frontend.get_selected_predicate() {
-                    processor.commit(&predicate.0, &predicate.1, &predicate.2);
+                if let Some((_code, _remaining_code, text)) = frontend.get_selected_predicate() {
+                    processor.commit(text);
                     frontend.clear_predicates();
                 }
             }
             _ if is_special_pressed => (),
             _ => {
-                let (changed, committed) = processor.process(event);
+                let (changed, _committed) = processor.process(event);
 
                 if changed {
                     let input = processor.get_input();
 
                     frontend.clear_predicates();
 
-                    if !committed {
-                        translator.translate(&input).iter().for_each(
-                            |(code, remaining_code, texts, translated)| {
-                                texts.iter().for_each(|text| {
-                                    if auto_commit && *translated {
-                                        processor.commit(code, remaining_code, text);
-                                    } else if !text.is_empty() {
-                                        frontend.add_predicate(code, remaining_code, text);
-                                    }
-                                });
-                            },
-                        );
-                    };
+                    translator.translate(&input).iter().for_each(
+                        |(code, remaining_code, texts, translated)| {
+                            texts.iter().for_each(|text| {
+                                if auto_commit && *translated {
+                                    processor.commit(text);
+                                } else if !text.is_empty() {
+                                    frontend.add_predicate(code, remaining_code, text);
+                                }
+                            });
+                        },
+                    );
 
                     frontend.set_input(&input);
                     frontend.display();
@@ -152,7 +150,6 @@ mod tests {
             $(
                 thread::sleep($delay);
                 rdev::simulate(&KeyPress($key)).unwrap();
-                thread::sleep($delay);
                 rdev::simulate(&KeyRelease($key)).unwrap();
             )*
         );
@@ -209,7 +206,7 @@ mod tests {
 
     #[test]
     fn test_simple() {
-        let typing_speed_ms = Duration::from_millis(300);
+        let typing_speed_ms = Duration::from_millis(500);
 
         // To detect excessive backspace
         const LIMIT: &str = "bbb";
@@ -279,5 +276,11 @@ mod tests {
         input!(ControlRight, typing_speed_ms);
         rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohi"));
+        input!(Escape, typing_speed_ms);
+
+        // We verify that we don't have a conflict
+        // between the translator and the processor
+        input!(KeyV KeyU KeyU KeyE, typing_speed_ms);
+        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohivʉe"));
     }
 }
