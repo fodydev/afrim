@@ -26,14 +26,19 @@ impl Translator {
 
         self.dictionary
             .iter()
-            .filter_map(|(k, v)| {
-                if k == input {
-                    Some((k.to_owned(), "".to_owned(), v.to_owned(), self.auto_commit))
-                } else if input.len() > 1 && k.starts_with(input) {
+            .filter_map(|(key, value)| {
+                if key == input {
                     Some((
-                        k.to_owned(),
-                        k.chars().skip(input.len()).collect(),
-                        v.to_owned(),
+                        key.to_owned(),
+                        "".to_owned(),
+                        value.to_owned(),
+                        self.auto_commit,
+                    ))
+                } else if input.len() > 1 && key.starts_with(input) {
+                    Some((
+                        key.to_owned(),
+                        key.chars().skip(input.len()).collect(),
+                        value.to_owned(),
                         false,
                     ))
                 } else {

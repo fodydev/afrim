@@ -30,8 +30,7 @@ impl Processor {
                     self.pause();
                     self.keyboard.key_up(Key::Backspace);
 
-                    let i = out.chars().count();
-                    (1..i).for_each(|_| self.keyboard.key_click(Key::Backspace));
+                    (1..out.chars().count()).for_each(|_| self.keyboard.key_click(Key::Backspace));
 
                     // Clear the remaining code
                     while let (None, 1.., ..) = self.cursor.state() {
