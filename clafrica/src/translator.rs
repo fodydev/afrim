@@ -2,14 +2,14 @@ use rhai::{Array, Engine, Scope, AST};
 use std::collections::HashMap;
 
 pub struct Translator {
-    dictionary: HashMap<String, String>,
+    dictionary: HashMap<String, Vec<String>>,
     translators: HashMap<String, AST>,
     auto_commit: bool,
 }
 
 impl Translator {
     pub fn new(
-        dictionary: HashMap<String, String>,
+        dictionary: HashMap<String, Vec<String>>,
         translators: HashMap<String, AST>,
         auto_commit: bool,
     ) -> Self {
@@ -20,7 +20,7 @@ impl Translator {
         }
     }
 
-    pub fn translate(&self, input: &str) -> Vec<(String, String, String, bool)> {
+    pub fn translate(&self, input: &str) -> Vec<(String, String, Vec<String>, bool)> {
         let mut scope = Scope::new();
         let engine = Engine::new();
 
@@ -48,10 +48,16 @@ impl Translator {
                 (data.len() == 4).then(|| {
                     let code = data[0].clone().into_string().unwrap();
                     let remaining_code = data[1].clone().into_string().unwrap();
-                    let text = data[2].clone().into_string().unwrap();
+                    let texts = data[2]
+                        .clone()
+                        .into_array()
+                        .unwrap_or(vec![data[2].clone()])
+                        .iter()
+                        .map(|e| e.clone().into_string().unwrap())
+                        .collect();
                     let translated = data[3].clone().as_bool().unwrap();
 
-                    (code, remaining_code, text, translated)
+                    (code, remaining_code, texts, translated)
                 })
             }))
             .collect()

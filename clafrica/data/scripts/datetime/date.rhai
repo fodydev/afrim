@@ -24,7 +24,7 @@ fn translate(input) {
     let date = parse_date(data);
     
     if !date.is_empty() {
-        return [input, "", `${date[0]} ${global::MONTHS[date[1]]} ${date[2]}`, true];
+        return [input, "", [`${date[0]} ${global::MONTHS[date[1]]} ${date[2]}`, `${global::MONTHS[date[1]]} ${date[0]} ${date[2]}`], true];
     }
     
     return [input, "", "", false];

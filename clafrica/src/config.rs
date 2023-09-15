@@ -1,5 +1,6 @@
 use rhai::{Engine, AST};
 use serde::Deserialize;
+use std::result::Result;
 use std::{collections::HashMap, error, fs, path::Path};
 use toml::{self};
 
@@ -23,8 +24,10 @@ pub struct CoreConfig {
 #[serde(untagged)]
 enum Data {
     Simple(String),
+    Multi(Vec<String>),
     File(DataFile),
     Detailed(DetailedData),
+    MoreDetailed(MoreDetailedData),
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -35,6 +38,12 @@ struct DataFile {
 #[derive(Deserialize, Debug, Clone)]
 struct DetailedData {
     value: String,
+    alias: Vec<String>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+struct MoreDetailedData {
+    values: Vec<String>,
     alias: Vec<String>,
 }
 
@@ -83,6 +92,7 @@ impl Config {
                             insert_with_auto_capitalize!(data, auto_capitalize, key, value);
                         });
                     }
+                    _ => Err(format!("Invalid script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed in the data table."))?,
                 };
                 Ok(())
             },
@@ -104,7 +114,7 @@ impl Config {
                         let filepath = config_path.join(v.clone()).to_str().unwrap().to_string();
                         translators.insert(key.to_owned(), Data::Simple(filepath));
                     }
-                    _ => (),
+                    _ => Err(format!("Invalid script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed in the translator table."))?,
                 };
                 Ok(())
             },
@@ -122,12 +132,17 @@ impl Config {
                         let conf = Config::from_file(&filepath)?;
                         translation.extend(conf.translation.unwrap_or_default());
                     }
-                    Data::Simple(_) => {
+                    Data::Simple(_) | Data::Multi(_) => {
                         translation.insert(key.to_owned(), value.clone());
                     }
                     Data::Detailed(DetailedData { value, alias }) => {
                         alias.iter().chain([key.to_owned()].iter()).for_each(|e| {
                             translation.insert(e.to_owned(), Data::Simple(value.to_owned()));
+                        });
+                    }
+                    Data::MoreDetailed(MoreDetailedData { values, alias }) => {
+                        alias.iter().chain([key.to_owned()].iter()).for_each(|e| {
+                            translation.insert(e.to_owned(), Data::Multi(values.clone()));
                         });
                     }
                 };
@@ -189,7 +204,7 @@ impl Config {
             .collect()
     }
 
-    pub fn extract_translation(&self) -> HashMap<String, String> {
+    pub fn extract_translation(&self) -> HashMap<String, Vec<String>> {
         let empty = HashMap::new();
 
         self.translation
@@ -198,11 +213,12 @@ impl Config {
             .iter()
             .filter_map(|(k, v)| {
                 let v = match v {
-                    Data::Simple(v) => Some(v),
+                    Data::Simple(v) => Some(vec![v.to_owned()]),
+                    Data::Multi(v) => Some(v.to_owned()),
                     _ => None,
                 };
 
-                v.map(|v| (k.to_owned(), v.to_owned()))
+                v.map(|v| (k.to_owned(), v))
             })
             .collect()
     }
@@ -219,7 +235,7 @@ mod tests {
 
         assert_eq!(
             conf.core.as_ref().map(|core| {
-                assert_eq!(core.buffer_size.unwrap(), 12);
+                assert_eq!(core.buffer_size.unwrap(), 64);
                 assert!(!core.auto_capitalize.unwrap());
                 assert!(!core.auto_commit.unwrap());
                 assert_eq!(core.page_size.unwrap(), 10);
@@ -232,7 +248,7 @@ mod tests {
         assert_eq!(data.keys().len(), 23);
 
         // parsing error
-        let conf = Config::from_file(Path::new("./data/invalid.toml"));
+        let conf = Config::from_file(Path::new("./data/invalid_file.toml"));
         assert!(conf.is_err());
 
         // config file not found
@@ -243,6 +259,14 @@ mod tests {
         let conf = Config::from_file(Path::new("./data/blank_sample.toml")).unwrap();
         let data = conf.extract_data();
         assert_eq!(data.keys().len(), 0);
+
+        // invalid data
+        let conf = Config::from_file(Path::new("./data/invalid_data.toml"));
+        assert!(conf.is_err());
+
+        // invalid translator
+        let conf = Config::from_file(Path::new("./data/invalid_translator.toml"));
+        assert!(conf.is_err());
     }
 
     #[test]
@@ -275,7 +299,7 @@ mod tests {
 
         let conf = Config::from_file(Path::new("./data/config_sample.toml")).unwrap();
         let translation = conf.extract_translation();
-        assert_eq!(translation.keys().len(), 3);
+        assert_eq!(translation.keys().len(), 4);
 
         let conf = Config::from_file(Path::new("./data/blank_sample.toml")).unwrap();
         let translation = conf.extract_translation();

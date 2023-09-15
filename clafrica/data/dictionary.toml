@@ -1,3 +1,4 @@
 [translation]
 halo = "hello"
+hola = { values = ["hello", "hi"], alias = [] }
 hi = { value = "hello", alias = ["hey"] }
