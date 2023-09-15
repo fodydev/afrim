@@ -92,7 +92,7 @@ impl Config {
                             insert_with_auto_capitalize!(data, auto_capitalize, key, value);
                         });
                     }
-                    _ => Err(format!("Error in script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed for the data table."))?,
+                    _ => Err(format!("Invalid script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed in the data table."))?,
                 };
                 Ok(())
             },
@@ -114,7 +114,7 @@ impl Config {
                         let filepath = config_path.join(v.clone()).to_str().unwrap().to_string();
                         translators.insert(key.to_owned(), Data::Simple(filepath));
                     }
-                    _ => Err(format!("Error in script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed for translator."))?,
+                    _ => Err(format!("Invalid script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed in the translator table."))?,
                 };
                 Ok(())
             },
@@ -248,7 +248,7 @@ mod tests {
         assert_eq!(data.keys().len(), 23);
 
         // parsing error
-        let conf = Config::from_file(Path::new("./data/invalid.toml"));
+        let conf = Config::from_file(Path::new("./data/invalid_file.toml"));
         assert!(conf.is_err());
 
         // config file not found
@@ -259,6 +259,14 @@ mod tests {
         let conf = Config::from_file(Path::new("./data/blank_sample.toml")).unwrap();
         let data = conf.extract_data();
         assert_eq!(data.keys().len(), 0);
+
+        // invalid data
+        let conf = Config::from_file(Path::new("./data/invalid_data.toml"));
+        assert!(conf.is_err());
+
+        // invalid translator
+        let conf = Config::from_file(Path::new("./data/invalid_translator.toml"));
+        assert!(conf.is_err());
     }
 
     #[test]
