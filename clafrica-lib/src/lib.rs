@@ -176,6 +176,11 @@ pub mod text_buffer {
         pub fn clear(&mut self) {
             self.buffer.clear();
         }
+
+        /// Verify if the cursor is empty
+        pub fn is_empty(&self) -> bool {
+            return self.buffer.iter().filter(|c| c.key != '\0').count() == 0;
+        }
     }
 }
 
@@ -316,6 +321,7 @@ mod tests {
         );
         undo!(cursor 4);
         assert_eq!(cursor.to_sequence(), vec!['\0', '\0']);
+        assert!(cursor.is_empty());
         undo!(cursor 1);
         assert_eq!(cursor.to_sequence(), vec![]);
 
