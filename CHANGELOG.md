@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Extension scripting via the Rhai scripting language. [(#68)](https://github.com/pythonbrad/clafrica/pull/68)
+- Predication system. [(#72)](https://github.com/pythonbrad/clafrica/pull/72) & [(#75)](https://github.com/pythonbrad/clafrica/pull/75)
+- Added a proper way to verify when the cursor is empty in the library. [(#86)](https://github.com/pythonbrad/clafrica/pull/86)
+
+### Changed
+- Split the clafrica into separate components (processor and translator). [(#72)](https://github.com/pythonbrad/clafrica/pull/72)
+
+### Fixed
+- Restricted the auto_capitalize by configuration file. [(#79)](https://github.com/pythonbrad/clafrica/pull/79)
+- Improved sequence detection. [(#74)](https://github.com/pythonbrad/clafrica/pull/74)
+- Improved error handling and made it more understandable. [(#69)](https://github.com/pythonbrad/clafrica/pull/69)
+
 ## [0.3.1] - 2023-08-13
 
 ### Added
