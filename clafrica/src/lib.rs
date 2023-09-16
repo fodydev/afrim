@@ -152,7 +152,6 @@ mod tests {
             $(
                 thread::sleep($delay);
                 rdev::simulate(&KeyPress($key)).unwrap();
-                thread::sleep($delay);
                 rdev::simulate(&KeyRelease($key)).unwrap();
             )*
         );
@@ -209,7 +208,7 @@ mod tests {
 
     #[test]
     fn test_simple() {
-        let typing_speed_ms = Duration::from_millis(300);
+        let typing_speed_ms = Duration::from_millis(500);
 
         // To detect excessive backspace
         const LIMIT: &str = "bbb";
