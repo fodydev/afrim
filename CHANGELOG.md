@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2023-09-16
+
 ### Added
 - Extension scripting via the Rhai scripting language. [(#68)](https://github.com/pythonbrad/clafrica/pull/68)
 - Predication system. [(#72)](https://github.com/pythonbrad/clafrica/pull/72) & [(#75)](https://github.com/pythonbrad/clafrica/pull/75)
