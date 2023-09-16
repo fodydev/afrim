@@ -17,6 +17,27 @@ impl Processor {
         }
     }
 
+    fn rollback(&mut self) -> bool {
+        self.keyboard.key_up(Key::Backspace);
+
+        if let Some(out) = self.cursor.undo() {
+            (1..out.chars().count()).for_each(|_| self.keyboard.key_click(Key::Backspace));
+
+            // Clear the remaining code
+            while let (None, 1.., ..) = self.cursor.state() {
+                self.cursor.undo();
+            }
+
+            if let (Some(_in), ..) = self.cursor.state() {
+                self.keyboard.key_sequence(&_in);
+            }
+
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn process(&mut self, event: Event) -> (bool, bool) {
         let character = event.name.and_then(|s| s.chars().next());
         let is_valid = character
@@ -26,25 +47,9 @@ impl Processor {
 
         match event.event_type {
             EventType::KeyPress(E_Key::Backspace) => {
-                if let Some(out) = self.cursor.undo() {
-                    self.pause();
-                    self.keyboard.key_up(Key::Backspace);
-
-                    (1..out.chars().count()).for_each(|_| self.keyboard.key_click(Key::Backspace));
-
-                    // Clear the remaining code
-                    while let (None, 1.., ..) = self.cursor.state() {
-                        self.cursor.undo();
-                    }
-
-                    if let (Some(_in), ..) = self.cursor.state() {
-                        self.keyboard.key_sequence(&_in);
-                    }
-
-                    self.resume();
-                    committed = true;
-                }
-
+                self.pause();
+                committed = self.rollback();
+                self.resume();
                 changed = true;
             }
             EventType::KeyPress(
@@ -90,10 +95,12 @@ impl Processor {
         (changed, committed)
     }
 
-    pub fn commit(&mut self, code: &str, remaining_code: &str, text: &str) {
+    pub fn commit(&mut self, text: &str) {
         self.pause();
-        (0..code.len() - remaining_code.len())
-            .for_each(|_| self.keyboard.key_click(Key::Backspace));
+        while !self.cursor.is_empty() {
+            self.keyboard.key_down(Key::Backspace);
+            self.rollback();
+        }
         self.keyboard.key_sequence(text);
         self.resume();
         // We clear the buffer
