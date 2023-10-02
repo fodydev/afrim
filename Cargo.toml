@@ -3,3 +3,5 @@ members = [
 	"clafrica-lib",
 	"clafrica"
 ]
+resolver = "2"
+
