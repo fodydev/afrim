@@ -1,21 +1,32 @@
 use clafrica::{api, prelude::Config, run};
-use std::{env, path::Path, process};
+use clap::Parser;
+use std::process;
+
+/// Clafrica CLI
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Path to the configuration file
+    config_file: std::path::PathBuf,
+
+    /// Only verify if the configuration file is valid
+    #[arg(long, action)]
+    check: bool,
+}
 
 fn main() {
+    let args = Args::parse();
     let frontend = api::Console::default();
 
-    let filename = env::args().nth(1).unwrap_or_else(|| {
-        eprintln!("Configuration file required");
-        process::exit(1);
-    });
-
-    let conf = Config::from_file(Path::new(&filename)).unwrap_or_else(|err| {
+    let conf = Config::from_file(&args.config_file).unwrap_or_else(|err| {
         eprintln!("Problem parsing config file: {err}");
         process::exit(1);
     });
 
-    if let Err(e) = run(conf, frontend) {
-        eprintln!("Application error: {e}");
-        process::exit(1);
+    if !args.check {
+        run(conf, frontend).unwrap_or_else(|e| {
+            eprintln!("Application error: {e}");
+            process::exit(1);
+        });
     }
 }

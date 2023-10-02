@@ -13,6 +13,7 @@ authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
 
 [dependencies]
 clafrica-lib = { version = "0.3.0", path = "../clafrica-lib" }
+clap = { version = "4.4.6", features = ["derive"] }
 enigo = "0.1.2"
 rdev = "0.5.2"
 rhai = "1.15.1"
