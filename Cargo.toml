@@ -1,7 +1,10 @@
 [workspace]
 members = [
-	"clafrica-lib",
-	"clafrica"
+	"service",
+	"config",
+	"memory",
+	"engine/preprocessor",
+	"engine/translator",
 ]
 resolver = "2"
 

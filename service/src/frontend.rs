@@ -103,7 +103,7 @@ impl Frontend for Console {
 mod tests {
     #[test]
     fn test_none() {
-        use crate::api::{Frontend, None};
+        use crate::frontend::{Frontend, None};
 
         let mut none = None;
         none.set_input("hello");
@@ -121,7 +121,7 @@ mod tests {
 
     #[test]
     fn test_console() {
-        use crate::api::{Console, Frontend};
+        use crate::frontend::{Console, Frontend};
 
         let mut console = Console::default();
         console.set_page_size(10);

@@ -1,0 +1,14 @@
+[package]
+name = "clafrica-memory"
+version = "0.3.2"
+edition = "2021"
+description = "This library manage the memory of an input method."
+keywords = ["ime", "memory", "data-structure"]
+repository = "https://github.com/pythonbrad/name"
+license = "MIT"
+readme = "README.md"
+authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

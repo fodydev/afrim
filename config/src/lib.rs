@@ -184,17 +184,17 @@ impl Config {
             .as_ref()
             .unwrap_or(&empty)
             .iter()
-            .filter_map(|(name, filename)| {
-                let filename = match filename {
-                    Data::Simple(filename) => Some(filename),
+            .filter_map(|(name, file_path)| {
+                let file_path = match file_path {
+                    Data::Simple(file_path) => Some(file_path),
                     _ => None,
                 };
 
-                filename.map(|filename| {
-                    let parent = Path::new(&filename).parent().unwrap().to_str().unwrap();
+                file_path.map(|file_path| {
+                    let parent = Path::new(&file_path).parent().unwrap().to_str().unwrap();
                     let header = format!(r#"const DIR = {parent:?};"#);
-                    let ast = engine.compile_file(filename.into()).map_err(|err| {
-                        format!("Failed to parse script file `{filename}`.\nCaused by:\n\t{err}.")
+                    let ast = engine.compile_file(file_path.into()).map_err(|err| {
+                        format!("Failed to parse script file `{file_path}`.\nCaused by:\n\t{err}.")
                     })?;
                     let ast = engine.compile(header).unwrap().merge(&ast);
 
@@ -226,7 +226,7 @@ impl Config {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::Config;
+    use crate::Config;
     use std::path::Path;
 
     #[test]

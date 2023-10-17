@@ -68,3 +68,64 @@ impl Translator {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_translate() {
+        use crate::Translator;
+        use rhai::Engine;
+        use std::collections::HashMap;
+
+        let engine = Engine::new();
+        let ast1 = engine.compile("fn translate(input) {}").unwrap();
+        let ast2 = engine
+            .compile(
+                r#"
+            fn translate(input) {
+                if input == "hi" {
+                    ["hi", "", "hello", true]
+                }
+            }
+        "#,
+            )
+            .unwrap();
+        let mut translators = HashMap::new();
+        translators.insert("none".to_string(), ast1);
+        translators.insert("some".to_string(), ast2);
+
+        let mut dictionary = HashMap::new();
+        dictionary.insert("halo".to_string(), ["hello".to_string()].to_vec());
+
+        let translator = Translator::new(dictionary, translators, true);
+
+        assert_eq!(translator.translate("h"), vec![]);
+        assert_eq!(
+            translator.translate("hi"),
+            vec![(
+                "hi".to_owned(),
+                "".to_owned(),
+                vec!["hello".to_owned()],
+                true
+            )]
+        );
+        assert_eq!(
+            translator.translate("ha"),
+            vec![(
+                "halo".to_owned(),
+                "lo".to_owned(),
+                vec!["hello".to_owned()],
+                false
+            )]
+        );
+        assert_eq!(
+            translator.translate("halo"),
+            vec![(
+                "halo".to_owned(),
+                "".to_owned(),
+                vec!["hello".to_owned()],
+                true
+            )]
+        );
+    }
+}

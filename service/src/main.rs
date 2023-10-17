@@ -1,4 +1,4 @@
-use clafrica::{api, prelude::Config, run};
+use clafrica::{frontend, run, Config};
 use clap::Parser;
 use std::process;
 
@@ -16,7 +16,7 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let frontend = api::Console::default();
+    let frontend = frontend::Console::default();
 
     let conf = Config::from_file(&args.config_file).unwrap_or_else(|err| {
         eprintln!("Problem parsing config file: {err}");
