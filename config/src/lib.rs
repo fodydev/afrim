@@ -1,22 +1,34 @@
+//! Library to manage the configuration of the clafrica input method.
+//!
+
+#![deny(missing_docs)]
+
 use rhai::{Engine, AST};
 use serde::Deserialize;
 use std::result::Result;
 use std::{collections::HashMap, error, fs, path::Path};
 use toml::{self};
 
+/// Hold information about a configuration.
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
+    /// The core config.
     pub core: Option<CoreConfig>,
     data: Option<HashMap<String, Data>>,
     translators: Option<HashMap<String, Data>>,
     translation: Option<HashMap<String, Data>>,
 }
 
+/// Core information about a configuration.
 #[derive(Deserialize, Debug, Clone)]
 pub struct CoreConfig {
+    /// The size of the memory (history).
+    /// The number of elements that should be tracked.
     pub buffer_size: Option<usize>,
     auto_capitalize: Option<bool>,
+    /// The max numbers of predicates to display.
     pub page_size: Option<usize>,
+    /// Whether the predicate should be automatically committed.
     pub auto_commit: Option<bool>,
 }
 
@@ -60,6 +72,7 @@ macro_rules! insert_with_auto_capitalize {
 }
 
 impl Config {
+    /// Load the configuration from a file.
     pub fn from_file(filepath: &Path) -> Result<Self, Box<dyn error::Error>> {
         let content = fs::read_to_string(filepath)
             .map_err(|err| format!("Couldn't open file `{filepath:?}`.\nCaused by:\n\t{err}."))?;
@@ -155,6 +168,7 @@ impl Config {
         Ok(config)
     }
 
+    /// Extract the data from the configuration.
     pub fn extract_data(&self) -> HashMap<String, String> {
         let empty = HashMap::default();
 
@@ -172,6 +186,7 @@ impl Config {
             .collect()
     }
 
+    /// Extract the translators from the configuration.
     pub fn extract_translators(&self) -> Result<HashMap<String, AST>, Box<dyn error::Error>> {
         let empty = HashMap::default();
         let mut engine = Engine::new();
@@ -204,6 +219,7 @@ impl Config {
             .collect()
     }
 
+    /// Extract the translation from the configuration.
     pub fn extract_translation(&self) -> HashMap<String, Vec<String>> {
         let empty = HashMap::new();
 

@@ -1,6 +1,49 @@
-use rhai::{Array, Engine, Scope, AST};
+//! Engine to generate predicates based on a particular input.
+//!
+//! Example
+//! ```rust
+//! use clafrica_translator::{Engine, Translator};
+//! use std::collections::HashMap;
+//!
+//! // Translation via scripting
+//! let engine = Engine::new();
+//! let hi = engine.compile(r#"
+//!     fn translate(input) {
+//!         if input == "hi" {
+//!             ["hi", "", "hello", true]
+//!         }
+//!     }
+//! "#).unwrap();
+//! let mut translators = HashMap::new();
+//! translators.insert("hi".to_string(), hi);
+//!
+//! // Translation via dictionary
+//! let mut dictionary = HashMap::new();
+//! dictionary.insert("halo".to_string(), ["hello".to_string()].to_vec());
+//! dictionary.insert("nihao".to_string(), ["hello".to_string()].to_vec());
+//!
+//! // We build the translator.
+//! let translator = Translator::new(dictionary, translators, true);
+//!
+//! assert_eq!(
+//!     translator.translate("hi"),
+//!     vec![(
+//!         "hi".to_owned(),
+//!         "".to_owned(),
+//!         vec!["hello".to_owned()],
+//!         true
+//!     )]
+//! );
+//! ```
+//!
+
+#![deny(missing_docs)]
+
+pub use rhai::Engine;
+use rhai::{Array, Scope, AST};
 use std::collections::HashMap;
 
+/// Core structure of the translator.
 pub struct Translator {
     dictionary: HashMap<String, Vec<String>>,
     translators: HashMap<String, AST>,
@@ -8,6 +51,7 @@ pub struct Translator {
 }
 
 impl Translator {
+    /// Initiate a new translator.
     pub fn new(
         dictionary: HashMap<String, Vec<String>>,
         translators: HashMap<String, AST>,
@@ -20,6 +64,7 @@ impl Translator {
         }
     }
 
+    /// Generate a list of predicates based on the input.
     pub fn translate(&self, input: &str) -> Vec<(String, String, Vec<String>, bool)> {
         let mut scope = Scope::new();
         let engine = Engine::new();
@@ -73,8 +118,7 @@ impl Translator {
 mod tests {
     #[test]
     fn test_translate() {
-        use crate::Translator;
-        use rhai::Engine;
+        use crate::{Engine, Translator};
         use std::collections::HashMap;
 
         let engine = Engine::new();

@@ -1,3 +1,9 @@
+//! Module providing a set of tools to facilitate the loading
+//!     of a data in the memory.
+//!
+
+#![deny(missing_docs)]
+
 use crate::Node;
 
 /// Load the sequential code from a plain text.

@@ -9,6 +9,7 @@ use frontend::Frontend;
 use rdev::{self, EventType, Key as E_Key};
 use std::{error, sync::mpsc, thread};
 
+/// Start the clafrica.
 pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn error::Error>> {
     let map = utils::build_map(
         config

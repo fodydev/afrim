@@ -1,22 +1,40 @@
+//! API to develop a frontend interface for the clafrica.
+//!
+
+#![deny(missing_docs)]
+
+/// Trait that every clafrica frontend should implement.
 pub trait Frontend {
+    /// Update the frontenfrontend d size.
     fn update_screen(&mut self, _screen: (u64, u64)) {}
+    /// Update the frontend position.
     fn update_position(&mut self, _position: (f64, f64)) {}
+    /// Set the current sequential code to display.
     fn set_input(&mut self, _text: &str) {}
+    /// Set the maximun number of predicates to be display.
     fn set_page_size(&mut self, _size: usize) {}
+    /// Add a predicate in the list of predicates.
     fn add_predicate(&mut self, _code: &str, _remaining_code: &str, _text: &str) {}
+    /// Refresh the display.
     fn display(&self) {}
+    /// Clear the list of predicates.
     fn clear_predicates(&mut self) {}
+    /// Select the previous predicate.
     fn previous_predicate(&mut self) {}
+    /// Select the next predicate.
     fn next_predicate(&mut self) {}
+    /// Return the selected predicate.
     fn get_selected_predicate(&self) -> Option<&(String, String, String)> {
         Option::None
     }
 }
 
+/// This frontend do nothing.
 pub struct None;
 
 impl Frontend for None {}
 
+/// Cli frontent interface.
 #[derive(Default)]
 pub struct Console {
     page_size: usize,

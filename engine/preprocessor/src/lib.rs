@@ -1,3 +1,46 @@
+//! Preprocessor of keyboard events for an input method.
+//!
+//! Example
+//!
+//! ```rust
+//! use clafrica_preprocessor::{utils, Command, Preprocessor};
+//! use keyboard_types::{
+//!     webdriver::{self, Event},
+//!     Key::*,
+//! };
+//! use std::collections::VecDeque;
+//!
+//! // We build initiate our preprocessor
+//! let data = utils::load_data("cc ç");
+//! let map = utils::build_map(data);
+//! let mut preprocessor = Preprocessor::new(map, 8);
+//!
+//! // We trigger a sequence
+//! webdriver::send_keys("cc")
+//!     .into_iter()
+//!     .for_each(|e| {
+//!         match e {
+//!             Event::Keyboard(e) => preprocessor.process(e),
+//!             _ => unimplemented!(),
+//!         };
+//!     });
+//!
+//! // We got the generated command
+//! let mut expecteds = VecDeque::from(vec![
+//!     Command::Pause,
+//!     Command::KeyClick(Backspace),
+//!     Command::KeyClick(Backspace),
+//!     Command::CommitText("ç".to_owned()),
+//!     Command::Resume,
+//! ]);
+//!
+//! while let Some(command) = preprocessor.pop_stack() {
+//!     assert_eq!(command, expecteds.pop_front().unwrap());
+//! }
+//! ```
+
+#![deny(missing_docs)]
+
 mod message;
 
 pub use crate::message::Command;
@@ -6,6 +49,7 @@ use clafrica_memory::{Cursor, Node};
 pub use keyboard_types::{Key, KeyState, KeyboardEvent};
 use std::collections::VecDeque;
 
+/// The main structure of the preprocessor.
 #[derive(Debug)]
 pub struct Preprocessor {
     cursor: Cursor,
@@ -13,6 +57,7 @@ pub struct Preprocessor {
 }
 
 impl Preprocessor {
+    /// Initiate a new preprocessor.
     pub fn new(map: Node, buffer_size: usize) -> Self {
         let cursor = Cursor::new(map, buffer_size);
         let stack = VecDeque::with_capacity(15);
@@ -20,6 +65,7 @@ impl Preprocessor {
         Self { cursor, stack }
     }
 
+    /// Cancel the previous operation.
     fn rollback(&mut self) -> bool {
         self.stack.push_back(Command::KeyRelease(Key::Backspace));
 
@@ -42,6 +88,7 @@ impl Preprocessor {
         }
     }
 
+    /// Process the key event.
     pub fn process(&mut self, event: KeyboardEvent) -> (bool, bool) {
         let (mut changed, mut committed) = (false, false);
 
@@ -97,6 +144,7 @@ impl Preprocessor {
         (changed, committed)
     }
 
+    /// Commit a text.
     pub fn commit(&mut self, text: &str) {
         self.pause();
 
@@ -110,14 +158,17 @@ impl Preprocessor {
         self.cursor.clear();
     }
 
+    /// Pause the keyboard event listerner.
     fn pause(&mut self) {
         self.stack.push_back(Command::Pause);
     }
 
+    /// Resume the keyboard event listener.
     fn resume(&mut self) {
         self.stack.push_back(Command::Resume);
     }
 
+    /// Return the sequence present in the memory.
     pub fn get_input(&self) -> String {
         self.cursor
             .to_sequence()
@@ -126,10 +177,12 @@ impl Preprocessor {
             .collect::<String>()
     }
 
+    /// Return the next command to be executed.
     pub fn pop_stack(&mut self) -> Option<Command> {
         self.stack.pop_front()
     }
 
+    /// Clear the stack.
     pub fn clear_stack(&mut self) {
         self.stack.clear();
     }
@@ -145,7 +198,6 @@ mod tests {
         Key::*,
     };
     use std::collections::VecDeque;
-    use std::fs;
 
     #[test]
     fn test_process() {
@@ -248,6 +300,8 @@ mod tests {
 
     #[test]
     fn test_advanced() {
+        use std::fs;
+
         let data = fs::read_to_string("./data/sample.txt").unwrap();
         let data = utils::load_data(&data);
         let map = utils::build_map(data);

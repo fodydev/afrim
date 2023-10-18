@@ -1,3 +1,9 @@
+//! Set of tools to convert external event keyboards to
+//! generic keyboard events and vice versa.
+//!
+
+#![deny(missing_docs)]
+
 use clafrica_preprocessor::{Key, KeyState, KeyboardEvent};
 use enigo::{self};
 use rdev::{self};

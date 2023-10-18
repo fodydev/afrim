@@ -1,7 +1,5 @@
-//! # Clafrica Memory
-//!
-//! `clafrica-memory` is a data structure to make handling
-//!  of sequential code more convenient.
+//! Data structure to make handling of sequential
+//!     code more convenient.
 //!
 //! Example
 //! ```
@@ -21,29 +19,36 @@
 //! let data = fs::read_to_string("./data/sample.txt")
 //!                   .expect("Failed to load the clafrica code file");
 //! let data = utils::load_data(&data);
-//!
 //! utils::build_map(data);
 //!
 //! // Traverse the tree
 //! let node = root.goto('a').and_then(|e| e.goto('f'));
 //! assert_eq!(node.unwrap().take(), Some("ɑ".to_owned()));
 //!
-//! // Test our cursor
+//! // We initiate our cursor
 //! let mut cursor = Cursor::new(root, 10);
+//! // We move the cursor to the sequence
 //! let code = "af1";
 //! code.chars().for_each(|c| {cursor.hit(c);});
+//! // We verify the current state
 //! assert_eq!(cursor.state(), (Some("ɑ̀".to_owned()), 3, '1'));
+//! // We undo the last insertion
 //! assert_eq!(cursor.undo(), Some("ɑ̀".to_owned()));
 //! ```
+
+#![deny(missing_docs)]
 
 use std::collections::{HashMap, VecDeque};
 use std::{cell::RefCell, fmt, rc::Rc};
 pub mod utils;
 
+/// Extra information for a `Node`.
 #[derive(Clone, Debug)]
 pub struct Node {
     children: RefCell<HashMap<char, Rc<Node>>>,
+    /// Depth of the node.
     pub depth: usize,
+    /// Character holded by the node.
     pub key: char,
     value: RefCell<Option<String>>,
 }
@@ -86,12 +91,12 @@ impl Node {
         };
     }
 
-    /// Move from the node to his child.
+    /// Move from the current node to his child.
     pub fn goto(&self, character: char) -> Option<Rc<Self>> {
         self.children.borrow().get(&character).map(Rc::clone)
     }
 
-    /// Extract the value from the node.
+    /// Extract the value of the node.
     pub fn take(&self) -> Option<String> {
         self.value.borrow().as_ref().map(ToOwned::to_owned)
     }
@@ -102,6 +107,7 @@ impl Node {
     }
 }
 
+/// The Cursor permit to keep a track of the move in the memory.
 #[derive(Clone)]
 pub struct Cursor {
     buffer: VecDeque<Rc<Node>>,
@@ -115,7 +121,7 @@ impl fmt::Debug for Cursor {
 }
 
 impl Cursor {
-    /// Initialize the cursor
+    /// Initialize the cursor.
     pub fn new(root: Node, capacity: usize) -> Self {
         Self {
             buffer: VecDeque::with_capacity(capacity),
@@ -123,7 +129,7 @@ impl Cursor {
         }
     }
 
-    /// Enter a character in the sequence and return his corresponding out
+    /// Enter a character in the sequence and return his corresponding out.
     pub fn hit(&mut self, character: char) -> Option<String> {
         let node = self
             .buffer
@@ -152,7 +158,7 @@ impl Cursor {
         self.buffer.push_back(node);
     }
 
-    /// Remove the last node and return his corresponding out
+    /// Remove the last node and return his corresponding out.
     pub fn undo(&mut self) -> Option<String> {
         let node = self.buffer.pop_back();
 
@@ -165,7 +171,7 @@ impl Cursor {
         })
     }
 
-    /// Return the current state of the cursor
+    /// Return the current state of the cursor.
     pub fn state(&self) -> (Option<String>, usize, char) {
         self.buffer
             .iter()
@@ -174,17 +180,17 @@ impl Cursor {
             .unwrap_or_default()
     }
 
-    /// Return the current sequence in the cursor
+    /// Return the current sequence in the cursor.
     pub fn to_sequence(&self) -> Vec<char> {
         self.buffer.iter().map(|node| node.key).collect()
     }
 
-    /// Clear the memory of the cursor
+    /// Clear the memory of the cursor.
     pub fn clear(&mut self) {
         self.buffer.clear();
     }
 
-    /// Verify if the cursor is empty
+    /// Verify if the cursor is empty.
     pub fn is_empty(&self) -> bool {
         return self.buffer.iter().filter(|c| c.key != '\0').count() == 0;
     }

@@ -2,7 +2,7 @@
 name = "clafrica-memory"
 version = "0.3.2"
 edition = "2021"
-description = "This library manage the memory of an input method."
+description = "Make the handle of sequential codes easier for an input method."
 keywords = ["ime", "memory", "data-structure"]
 repository = "https://github.com/pythonbrad/name"
 license = "MIT"
