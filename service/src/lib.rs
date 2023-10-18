@@ -1,28 +1,21 @@
-pub mod api;
-mod config;
-mod processor;
-mod translator;
+mod convert;
+pub mod frontend;
 
-use crate::api::Frontend;
-use crate::processor::Processor;
-use crate::translator::Translator;
-use clafrica_lib::utils;
+pub use clafrica_config::Config;
+use clafrica_preprocessor::{utils, Command, Preprocessor};
+use clafrica_translator::Translator;
+use enigo::{Enigo, KeyboardControllable};
+use frontend::Frontend;
 use rdev::{self, EventType, Key as E_Key};
 use std::{error, sync::mpsc, thread};
 
-pub mod prelude {
-    pub use crate::config::Config;
-}
-
-pub fn run(
-    config: config::Config,
-    mut frontend: impl Frontend,
-) -> Result<(), Box<dyn error::Error>> {
+/// Start the clafrica.
+pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn error::Error>> {
     let map = utils::build_map(
         config
             .extract_data()
             .iter()
-            .map(|(key, value)| [key.as_str(), value.as_str()])
+            .map(|(key, value)| vec![key.as_str(), value.as_str()])
             .collect(),
     );
     let (buffer_size, auto_commit, page_size) = config
@@ -36,7 +29,8 @@ pub fn run(
             )
         })
         .unwrap_or((32, false, 10));
-    let mut processor = Processor::new(map, buffer_size);
+    let mut keyboard = Enigo::new();
+    let mut preprocessor = Preprocessor::new(map, buffer_size);
     let translator = Translator::new(
         config.extract_translation(),
         config.extract_translators()?,
@@ -103,16 +97,16 @@ pub fn run(
                 is_special_pressed = false;
 
                 if let Some((_code, _remaining_code, text)) = frontend.get_selected_predicate() {
-                    processor.commit(text);
+                    preprocessor.commit(text);
                     frontend.clear_predicates();
                 }
             }
             _ if is_special_pressed => (),
             _ => {
-                let (changed, _committed) = processor.process(event);
+                let (changed, _committed) = preprocessor.process(convert::from_event(event));
 
                 if changed {
-                    let input = processor.get_input();
+                    let input = preprocessor.get_input();
 
                     frontend.clear_predicates();
 
@@ -120,7 +114,7 @@ pub fn run(
                         |(code, remaining_code, texts, translated)| {
                             texts.iter().for_each(|text| {
                                 if auto_commit && *translated {
-                                    processor.commit(text);
+                                    preprocessor.commit(text);
                                 } else if !text.is_empty() {
                                     frontend.add_predicate(code, remaining_code, text);
                                 }
@@ -133,6 +127,30 @@ pub fn run(
                 }
             }
         }
+
+        // Process preprocessor instructions
+        while let Some(command) = preprocessor.pop_stack() {
+            match command {
+                Command::CommitText(text) => {
+                    keyboard.key_sequence(&text);
+                }
+                Command::KeyPress(key) => {
+                    keyboard.key_down(convert::to_key(key));
+                }
+                Command::KeyRelease(key) => {
+                    keyboard.key_up(convert::to_key(key));
+                }
+                Command::KeyClick(key) => {
+                    keyboard.key_click(convert::to_key(key));
+                }
+                Command::Pause => {
+                    rdev::simulate(&EventType::KeyPress(E_Key::Pause)).unwrap();
+                }
+                Command::Resume => {
+                    rdev::simulate(&EventType::KeyRelease(E_Key::Pause)).unwrap();
+                }
+            };
+        }
     }
 
     Ok(())
@@ -140,7 +158,7 @@ pub fn run(
 
 #[cfg(test)]
 mod tests {
-    use crate::{api, config::Config, run};
+    use crate::{frontend::Console, run, Config};
     use rdev::{self, Button, EventType::*, Key::*};
     use rstk::{self, TkPackLayout};
     use std::{thread, time::Duration};
@@ -181,7 +199,7 @@ mod tests {
         let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
 
         thread::spawn(move || {
-            run(test_config, api::Console::default()).unwrap();
+            run(test_config, Console::default()).unwrap();
         });
     }
 

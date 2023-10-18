@@ -1,0 +1,16 @@
+[package]
+name = "clafrica-preprocessor"
+version = "0.5.0"
+edition = "2021"
+description = "A preprocessor to process keyboard events for an input method."
+keywords = ["ime", "processor", "keyboard"]
+repository = "https://github.com/pythonbrad/name"
+license = "MIT"
+readme = "README.md"
+authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+keyboard-types = "0.7.0"
+clafrica-memory = { version = "0.3.2", path = "../../memory" }

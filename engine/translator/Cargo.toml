@@ -1,0 +1,15 @@
+[package]
+name = "clafrica-translator"
+version = "0.0.1"
+edition = "2021"
+description = "Manage the predication system of the clafrica input method."
+keywords = ["auto-complete", "ime", "predication"]
+repository = "https://github.com/pythonbrad/name"
+license = "MIT"
+readme = "README.md"
+authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rhai = "1.16.2"

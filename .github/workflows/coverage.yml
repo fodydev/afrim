@@ -50,7 +50,7 @@ jobs:
       - name: test
         env:
           RUSTFLAGS: -Cinstrument-coverage
-          LLVM_PROFILE_FILE: clafrica-%p-%m.profraw
+          LLVM_PROFILE_FILE: name-%p-%m.profraw
         run: cargo test --all-features --verbose
 
       - name: Run grcov
@@ -63,7 +63,7 @@ jobs:
             --branch \
             --ignore-not-existing \
             --ignore "/*" \
-            --ignore "clafrica/src/{main}.rs" \
+            --ignore "service/src/{main}.rs" \
             --excl-line "#\\[derive\\(" \
             -o ./coverage/lcov.info
             
