@@ -49,27 +49,26 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
     let (tx, rx) = mpsc::channel();
     thread::spawn(move || {
         let mut idle = false;
-        let mut pause_counter = 0;
+        let mut is_ctrl_released = false;
 
         rdev::listen(move |event| {
             idle = match event.event_type {
                 EventType::KeyPress(E_Key::Pause) => true,
                 EventType::KeyRelease(E_Key::Pause) => false,
-                EventType::KeyPress(E_Key::ControlLeft) => idle,
-                EventType::KeyRelease(E_Key::ControlLeft) => {
-                    pause_counter += 1;
-
-                    if pause_counter != 0 && pause_counter % 2 == 0 {
-                        pause_counter = 0;
-                        !idle
-                    } else {
-                        idle
-                    }
-                }
-                _ => {
-                    pause_counter = 0;
+                EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => {
+                    is_ctrl_released = false;
                     idle
                 }
+                EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight)
+                    if is_ctrl_released =>
+                {
+                    !idle
+                }
+                EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) => {
+                    is_ctrl_released = true;
+                    idle
+                }
+                _ => idle,
             };
             if !idle {
                 tx.send(event)
@@ -96,7 +95,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
             EventType::KeyRelease(E_Key::ShiftLeft) if is_special_pressed => {
                 frontend.previous_predicate()
             }
-            EventType::KeyRelease(E_Key::ControlRight) if is_special_pressed => {
+            EventType::KeyRelease(E_Key::Space) if is_special_pressed => {
                 rdev::simulate(&EventType::KeyRelease(E_Key::ControlLeft))
                     .expect("We couldn't cancel the special function key");
                 is_special_pressed = false;
@@ -268,9 +267,16 @@ mod tests {
         output!(textfield, LIMIT);
 
         // We verify that the pause/resume works as expected
-        input!(ControlLeft ControlLeft, typing_speed_ms);
+        rdev::simulate(&KeyPress(ControlLeft)).unwrap();
+        rdev::simulate(&KeyPress(ControlRight)).unwrap();
+        rdev::simulate(&KeyRelease(ControlRight)).unwrap();
+        rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
         input!(KeyU KeyU, typing_speed_ms);
-        input!(ControlLeft ControlLeft, typing_speed_ms);
+
+        rdev::simulate(&KeyPress(ControlLeft)).unwrap();
+        rdev::simulate(&KeyPress(ControlRight)).unwrap();
+        rdev::simulate(&KeyRelease(ControlRight)).unwrap();
+        rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
         input!(KeyA KeyF, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑ"));
         input!(Escape, typing_speed_ms);
@@ -301,7 +307,7 @@ mod tests {
 
         input!(KeyA, typing_speed_ms);
         rdev::simulate(&KeyPress(ControlLeft)).unwrap();
-        input!(ControlRight, typing_speed_ms);
+        input!(Space, typing_speed_ms);
         rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohealth"));
         input!(Escape, typing_speed_ms);
