@@ -17,8 +17,9 @@ name = "afrim"
 path = "./src/main.rs"
 
 [features]
-default = ["rhai"]
+default = ["rhai", "strsim"]
 rhai = ["afrim-config/rhai", "afrim-translator/rhai"]
+strsim = ["afrim-translator/strsim"]
 
 [dependencies]
 clap = { version = "4.4.6", features = ["derive"] }

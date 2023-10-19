@@ -3,11 +3,12 @@
 
 #![deny(missing_docs)]
 
+use indexmap::IndexMap;
 #[cfg(feature = "rhai")]
 use rhai::{Engine, AST};
 use serde::Deserialize;
 use std::result::Result;
-use std::{collections::HashMap, error, fs, path::Path};
+use std::{error, fs, path::Path};
 use toml::{self};
 
 /// Hold information about a configuration.
@@ -15,10 +16,10 @@ use toml::{self};
 pub struct Config {
     /// The core config.
     pub core: Option<CoreConfig>,
-    data: Option<HashMap<String, Data>>,
+    data: Option<IndexMap<String, Data>>,
     #[cfg(feature = "rhai")]
-    translators: Option<HashMap<String, Data>>,
-    translation: Option<HashMap<String, Data>>,
+    translators: Option<IndexMap<String, Data>>,
+    translation: Option<IndexMap<String, Data>>,
 }
 
 /// Core information about a configuration.
@@ -89,7 +90,7 @@ impl Config {
             .unwrap_or(true);
 
         // Data
-        let mut data = HashMap::new();
+        let mut data = IndexMap::new();
 
         config.data.unwrap_or_default().iter().try_for_each(
             |(key, value)| -> Result<(), Box<dyn error::Error>> {
@@ -117,7 +118,7 @@ impl Config {
         // Translators
         #[cfg(feature = "rhai")]
         {
-            let mut translators = HashMap::new();
+            let mut translators = IndexMap::new();
 
             config.translators.unwrap_or_default().iter().try_for_each(
                 |(key, value)| -> Result<(), Box<dyn error::Error>> {
@@ -140,7 +141,7 @@ impl Config {
         }
 
         // Translation
-        let mut translation = HashMap::new();
+        let mut translation = IndexMap::new();
 
         config.translation.unwrap_or_default().iter().try_for_each(
             |(key, value)| -> Result<(), Box<dyn error::Error>> {
@@ -174,8 +175,8 @@ impl Config {
     }
 
     /// Extract the data from the configuration.
-    pub fn extract_data(&self) -> HashMap<String, String> {
-        let empty = HashMap::default();
+    pub fn extract_data(&self) -> IndexMap<String, String> {
+        let empty = IndexMap::default();
 
         self.data
             .as_ref()
@@ -193,8 +194,8 @@ impl Config {
 
     /// Extract the translators from the configuration.
     #[cfg(feature = "rhai")]
-    pub fn extract_translators(&self) -> Result<HashMap<String, AST>, Box<dyn error::Error>> {
-        let empty = HashMap::default();
+    pub fn extract_translators(&self) -> Result<IndexMap<String, AST>, Box<dyn error::Error>> {
+        let empty = IndexMap::default();
         let mut engine = Engine::new();
 
         // allow nesting up to 50 layers of expressions/statements
@@ -226,8 +227,8 @@ impl Config {
     }
 
     /// Extract the translation from the configuration.
-    pub fn extract_translation(&self) -> HashMap<String, Vec<String>> {
-        let empty = HashMap::new();
+    pub fn extract_translation(&self) -> IndexMap<String, Vec<String>> {
+        let empty = IndexMap::new();
 
         self.translation
             .as_ref()

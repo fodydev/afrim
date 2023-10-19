@@ -12,8 +12,11 @@ authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["rhai"]
+default = ["rhai", "strsim"]
 rhai = ["dep:rhai"]
+strsim = ["dep:strsim"]
 
 [dependencies]
 rhai = { version = "1.16.2", optional = true  }
+indexmap = { version = "2.0.2", features = ["serde"] }
+strsim = { version = "0.10.0", optional = true }

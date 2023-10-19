@@ -115,8 +115,11 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
 
                     frontend.clear_predicates();
 
-                    translator.translate(&input).iter().for_each(
-                        |(code, remaining_code, texts, translated)| {
+                    translator
+                        .translate(&input)
+                        .iter()
+                        .take(page_size * 2)
+                        .for_each(|(code, remaining_code, texts, translated)| {
                             texts.iter().for_each(|text| {
                                 if auto_commit && *translated {
                                     preprocessor.commit(text);
@@ -124,8 +127,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
                                     frontend.add_predicate(code, remaining_code, text);
                                 }
                             });
-                        },
-                    );
+                        });
 
                     frontend.set_input(&input);
                     frontend.display();
@@ -297,16 +299,16 @@ mod tests {
         input!(ShiftRight, typing_speed_ms);
         rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
 
-        input!(KeyL KeyL, typing_speed_ms);
+        input!(KeyA, typing_speed_ms);
         rdev::simulate(&KeyPress(ControlLeft)).unwrap();
         input!(ControlRight, typing_speed_ms);
         rdev::simulate(&KeyRelease(ControlLeft)).unwrap();
-        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohi"));
+        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohealth"));
         input!(Escape, typing_speed_ms);
 
         // We verify that we don't have a conflict
         // between the translator and the processor
         input!(KeyV KeyU KeyU KeyE, typing_speed_ms);
-        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohivʉe"));
+        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohealthvʉe"));
     }
 }
