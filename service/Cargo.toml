@@ -13,7 +13,7 @@ authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
 
 [[bin]]
 doc = false
-name = "name"
+name = "clafrica"
 path = "./src/main.rs"
 
 [dependencies]
