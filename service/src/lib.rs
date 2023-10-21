@@ -33,6 +33,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
     let mut preprocessor = Preprocessor::new(map, buffer_size);
     let translator = Translator::new(
         config.extract_translation(),
+        #[cfg(feature = "rhai")]
         config.extract_translators()?,
         auto_commit,
     );
@@ -278,6 +279,9 @@ mod tests {
         // We verify that the translation work as expected
         input!(KeyH KeyE KeyL KeyL KeyO, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhi"));
+        #[cfg(not(feature = "rhai"))]
+        input!(Escape KeyH Escape KeyE KeyL KeyL KeyO, typing_speed_ms);
+        #[cfg(feature = "rhai")]
         input!(Escape KeyH KeyI, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihello"));
         input!(Escape, typing_speed_ms);
