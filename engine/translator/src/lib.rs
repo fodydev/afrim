@@ -12,9 +12,10 @@
 //! dictionary.insert("halo".to_string(), ["hello".to_string()].to_vec());
 //! dictionary.insert("nihao".to_string(), ["hello".to_string()].to_vec());
 //!
+//! // We build the translator.
+//! let mut translator = Translator::new(dictionary, true);
+//!
 //! // Translation via scripting
-//! #[cfg(feature = "rhai")]
-//! let mut translators = HashMap::new();
 //! #[cfg(feature = "rhai")]
 //! {
 //!     let engine = Engine::new();
@@ -25,14 +26,8 @@
 //!             }
 //!         }
 //!     "#).unwrap();
-//!     translators.insert("hi".to_string(), hi);
+//!     translator.register("hi".to_string(), hi);
 //! }
-//!
-//! // We build the translator.
-//! #[cfg(not(feature = "rhai"))]
-//! let translator = Translator::new(dictionary, true);
-//! #[cfg(feature = "rhai")]
-//! let translator = Translator::new(dictionary, translators, true);
 //!
 //! #[cfg(feature = "rhai")]
 //! assert_eq!(
@@ -65,17 +60,25 @@ pub struct Translator {
 
 impl Translator {
     /// Initiate a new translator.
-    pub fn new(
-        dictionary: HashMap<String, Vec<String>>,
-        #[cfg(feature = "rhai")] translators: HashMap<String, AST>,
-        auto_commit: bool,
-    ) -> Self {
+    pub fn new(dictionary: HashMap<String, Vec<String>>, auto_commit: bool) -> Self {
         Self {
             dictionary,
-            #[cfg(feature = "rhai")]
-            translators,
             auto_commit,
+            #[cfg(feature = "rhai")]
+            translators: HashMap::default(),
         }
+    }
+
+    #[cfg(feature = "rhai")]
+    /// Register a translator
+    pub fn register(&mut self, name: String, ast: AST) {
+        self.translators.insert(name, ast);
+    }
+
+    #[cfg(feature = "rhai")]
+    /// Unregister a translator
+    pub fn unregister(&mut self, name: &str) {
+        self.translators.remove(name);
     }
 
     /// Generate a list of predicates based on the input.
@@ -143,9 +146,13 @@ mod tests {
         let mut dictionary = HashMap::new();
         dictionary.insert("halo".to_string(), ["hello".to_string()].to_vec());
 
-        //
+        // We config the translator
+        #[cfg(not(feature = "rhai"))]
+        let translator = Translator::new(dictionary, true);
         #[cfg(feature = "rhai")]
-        let mut translators = HashMap::new();
+        let mut translator = Translator::new(dictionary, true);
+
+        //
         #[cfg(feature = "rhai")]
         {
             let engine = Engine::new();
@@ -161,15 +168,10 @@ mod tests {
             "#,
                 )
                 .unwrap();
-            translators.insert("none".to_string(), ast1);
-            translators.insert("some".to_string(), ast2);
+            translator.register("none".to_string(), ast1);
+            translator.unregister("none");
+            translator.register("some".to_string(), ast2);
         }
-
-        // We config the translator
-        #[cfg(not(feature = "rhai"))]
-        let translator = Translator::new(dictionary, true);
-        #[cfg(feature = "rhai")]
-        let translator = Translator::new(dictionary, translators, true);
 
         assert_eq!(translator.translate("h"), vec![]);
         #[cfg(feature = "rhai")]
