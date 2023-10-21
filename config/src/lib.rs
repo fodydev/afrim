@@ -3,6 +3,7 @@
 
 #![deny(missing_docs)]
 
+#[cfg(feature = "rhai")]
 use rhai::{Engine, AST};
 use serde::Deserialize;
 use std::result::Result;
@@ -15,6 +16,7 @@ pub struct Config {
     /// The core config.
     pub core: Option<CoreConfig>,
     data: Option<HashMap<String, Data>>,
+    #[cfg(feature = "rhai")]
     translators: Option<HashMap<String, Data>>,
     translation: Option<HashMap<String, Data>>,
 }
@@ -113,26 +115,29 @@ impl Config {
         config.data = Some(data);
 
         // Translators
-        let mut translators = HashMap::new();
+        #[cfg(feature = "rhai")]
+        {
+            let mut translators = HashMap::new();
 
-        config.translators.unwrap_or_default().iter().try_for_each(
-            |(key, value)| -> Result<(), Box<dyn error::Error>> {
-                match value {
-                    Data::File(DataFile { path }) => {
-                        let filepath = config_path.join(path);
-                        let conf = Config::from_file(&filepath)?;
-                        translators.extend(conf.translators.unwrap_or_default());
-                    }
-                    Data::Simple(value) => {
-                        let filepath = config_path.join(value.clone()).to_str().unwrap().to_string();
-                        translators.insert(key.to_owned(), Data::Simple(filepath));
-                    }
-                    _ => Err(format!("Invalid script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed in the translator table."))?,
-                };
-                Ok(())
-            },
-        )?;
-        config.translators = Some(translators);
+            config.translators.unwrap_or_default().iter().try_for_each(
+                |(key, value)| -> Result<(), Box<dyn error::Error>> {
+                    match value {
+                        Data::File(DataFile { path }) => {
+                            let filepath = config_path.join(path);
+                            let conf = Config::from_file(&filepath)?;
+                            translators.extend(conf.translators.unwrap_or_default());
+                        }
+                        Data::Simple(value) => {
+                            let filepath = config_path.join(value.clone()).to_str().unwrap().to_string();
+                            translators.insert(key.to_owned(), Data::Simple(filepath));
+                        }
+                        _ => Err(format!("Invalid script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed in the translator table."))?,
+                    };
+                    Ok(())
+                },
+            )?;
+            config.translators = Some(translators);
+        }
 
         // Translation
         let mut translation = HashMap::new();
@@ -187,6 +192,7 @@ impl Config {
     }
 
     /// Extract the translators from the configuration.
+    #[cfg(feature = "rhai")]
     pub fn extract_translators(&self) -> Result<HashMap<String, AST>, Box<dyn error::Error>> {
         let empty = HashMap::default();
         let mut engine = Engine::new();
@@ -282,14 +288,15 @@ mod tests {
         // invalid data
         let conf = Config::from_file(Path::new("./data/invalid_data.toml"));
         assert!(conf.is_err());
+    }
 
+    #[cfg(feature = "rhai")]
+    #[test]
+    fn from_file_with_translators() {
         // invalid translator
         let conf = Config::from_file(Path::new("./data/invalid_translator.toml"));
         assert!(conf.is_err());
-    }
 
-    #[test]
-    fn from_file_with_translators() {
         let conf = Config::from_file(Path::new("./data/config_sample.toml")).unwrap();
         let translators = conf.extract_translators().unwrap();
         assert_eq!(translators.keys().len(), 2);

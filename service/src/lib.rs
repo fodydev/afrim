@@ -31,11 +31,16 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
         .unwrap_or((32, false, 10));
     let mut keyboard = Enigo::new();
     let mut preprocessor = Preprocessor::new(map, buffer_size);
-    let translator = Translator::new(
-        config.extract_translation(),
-        config.extract_translators()?,
-        auto_commit,
-    );
+    #[cfg(not(feature = "rhai"))]
+    let translator = Translator::new(config.extract_translation(), auto_commit);
+    #[cfg(feature = "rhai")]
+    let mut translator = Translator::new(config.extract_translation(), auto_commit);
+    #[cfg(feature = "rhai")]
+    config
+        .extract_translators()?
+        .into_iter()
+        .for_each(|(name, ast)| translator.register(name, ast));
+
     let mut is_special_pressed = false;
 
     frontend.set_page_size(page_size);
@@ -278,6 +283,9 @@ mod tests {
         // We verify that the translation work as expected
         input!(KeyH KeyE KeyL KeyL KeyO, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhi"));
+        #[cfg(not(feature = "rhai"))]
+        input!(Escape KeyH Escape KeyE KeyL KeyL KeyO, typing_speed_ms);
+        #[cfg(feature = "rhai")]
         input!(Escape KeyH KeyI, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihello"));
         input!(Escape, typing_speed_ms);

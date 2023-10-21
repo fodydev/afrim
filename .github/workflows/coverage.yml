@@ -45,7 +45,7 @@ jobs:
       - name: build
         env:
           RUSTFLAGS: -Cinstrument-coverage
-        run: cargo build --verbose
+        run: cargo build --all-features --verbose
 
       - name: test
         env:
