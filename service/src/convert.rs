@@ -4,7 +4,7 @@
 
 #![deny(missing_docs)]
 
-use clafrica_preprocessor::{Key, KeyState, KeyboardEvent};
+use afrim_preprocessor::{Key, KeyState, KeyboardEvent};
 use enigo::{self};
 use rdev::{self};
 

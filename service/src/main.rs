@@ -1,8 +1,8 @@
-use clafrica::{frontend, run, Config};
+use afrim::{frontend, run, Config};
 use clap::Parser;
 use std::process;
 
-/// Clafrica CLI.
+/// Afrim CLI.
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {

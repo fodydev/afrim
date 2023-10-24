@@ -1,10 +1,10 @@
 [package]
-name = "clafrica-memory"
+name = "afrim-memory"
 version = "0.3.2"
 edition = "2021"
 description = "Make the handle of sequential codes easier for an input method."
 keywords = ["ime", "memory", "data-structure"]
-repository = "https://github.com/pythonbrad/name"
+repository = "https://github.com/pythonbrad/afrim"
 license = "MIT"
 readme = "README.md"
 authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]

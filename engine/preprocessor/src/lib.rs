@@ -3,7 +3,7 @@
 //! Example
 //!
 //! ```rust
-//! use clafrica_preprocessor::{utils, Command, Preprocessor};
+//! use afrim_preprocessor::{utils, Command, Preprocessor};
 //! use keyboard_types::{
 //!     webdriver::{self, Event},
 //!     Key::*,
@@ -44,8 +44,8 @@
 mod message;
 
 pub use crate::message::Command;
-pub use clafrica_memory::utils;
-use clafrica_memory::{Cursor, Node};
+pub use afrim_memory::utils;
+use afrim_memory::{Cursor, Node};
 pub use keyboard_types::{Key, KeyState, KeyboardEvent};
 use std::collections::VecDeque;
 
@@ -234,7 +234,7 @@ mod tests {
 
     #[test]
     fn test_commit() {
-        use clafrica_memory::Node;
+        use afrim_memory::Node;
         use keyboard_types::KeyboardEvent;
 
         let mut preprocessor = Preprocessor::new(Node::default(), 8);

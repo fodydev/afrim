@@ -1,9 +1,9 @@
-//! API to develop a frontend interface for the clafrica.
+//! API to develop a frontend interface for the afrim.
 //!
 
 #![deny(missing_docs)]
 
-/// Trait that every clafrica frontend should implement.
+/// Trait that every afrim frontend should implement.
 pub trait Frontend {
     /// Update the frontenfrontend d size.
     fn update_screen(&mut self, _screen: (u64, u64)) {}

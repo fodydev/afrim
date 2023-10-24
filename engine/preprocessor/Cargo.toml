@@ -1,10 +1,10 @@
 [package]
-name = "clafrica-preprocessor"
+name = "afrim-preprocessor"
 version = "0.5.0"
 edition = "2021"
 description = "A preprocessor to process keyboard events for an input method."
 keywords = ["ime", "processor", "keyboard"]
-repository = "https://github.com/pythonbrad/name"
+repository = "https://github.com/pythonbrad/afrim"
 license = "MIT"
 readme = "README.md"
 authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
@@ -13,4 +13,4 @@ authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
 
 [dependencies]
 keyboard-types = "0.7.0"
-clafrica-memory = { version = "0.3.2", path = "../../memory" }
+afrim-memory = { version = "0.3.2", path = "../../memory" }

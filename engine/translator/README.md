@@ -1,2 +1,2 @@
-# Clafrica Translator
-Handle the predication system of the clafrica input method.
+# Afrim Translator
+Handle the predication system for an input method.

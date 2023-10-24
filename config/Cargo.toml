@@ -1,10 +1,10 @@
 [package]
-name = "clafrica-config"
+name = "afrim-config"
 version = "0.4.1"
 edition = "2021"
-description = "Handle the configuration of the clafrica input method."
+description = "Handle the configuration of the afrim input method."
 keywords = ["ime", "config"]
-repository = "https://github.com/pythonbrad/clafrica"
+repository = "https://github.com/pythonbrad/afrim"
 license = "MIT"
 readme = "README.md"
 authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
