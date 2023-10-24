@@ -3,8 +3,8 @@
 //! Example
 //! ```rust
 //! #[cfg(feature = "rhai")]
-//! use clafrica_translator::Engine;
-//! use clafrica_translator::Translator;
+//! use afrim_translator::Engine;
+//! use afrim_translator::Translator;
 //! use std::collections::HashMap;
 //!
 //! // Translation via dictionary

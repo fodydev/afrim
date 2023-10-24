@@ -3,7 +3,7 @@
 //!
 //! Example
 //! ```
-//! use clafrica_memory::*;
+//! use afrim_memory::*;
 //! use std::fs;
 //!
 //! // Build a TextBuffer
@@ -17,7 +17,7 @@
 //!
 //! // or directly from a file
 //! let data = fs::read_to_string("./data/sample.txt")
-//!                   .expect("Failed to load the clafrica code file");
+//!                   .expect("Failed to load the code file");
 //! let data = utils::load_data(&data);
 //! utils::build_map(data);
 //!

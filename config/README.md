@@ -1,2 +1,2 @@
-# Clafrica Config Manager
-Manage the configuration of the clafrica input method.
+# Afrim Config Manager
+Manage the configuration of the afrim input method.

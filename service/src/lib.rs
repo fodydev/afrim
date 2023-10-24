@@ -1,15 +1,15 @@
 mod convert;
 pub mod frontend;
 
-pub use clafrica_config::Config;
-use clafrica_preprocessor::{utils, Command, Preprocessor};
-use clafrica_translator::Translator;
+pub use afrim_config::Config;
+use afrim_preprocessor::{utils, Command, Preprocessor};
+use afrim_translator::Translator;
 use enigo::{Enigo, KeyboardControllable};
 use frontend::Frontend;
 use rdev::{self, EventType, Key as E_Key};
 use std::{error, sync::mpsc, thread};
 
-/// Start the clafrica.
+/// Start the afrim.
 pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn error::Error>> {
     let map = utils::build_map(
         config
@@ -198,7 +198,7 @@ mod tests {
         };
     }
 
-    fn start_clafrica() {
+    fn start_afrim() {
         use std::path::Path;
 
         let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
@@ -210,7 +210,7 @@ mod tests {
 
     fn start_sandbox() -> rstk::TkText {
         let root = rstk::trace_with("wish").unwrap();
-        root.title("Clafrica Test Environment");
+        root.title("Afrim Test Environment");
 
         let input_field = rstk::make_text(&root);
         input_field.width(50);
@@ -234,8 +234,8 @@ mod tests {
         // To detect excessive backspace
         const LIMIT: &str = "bbb";
 
-        // Start the clafrica
-        start_clafrica();
+        // Start the afrim
+        start_afrim();
 
         // Start the sandbox
         let textfield = start_sandbox();

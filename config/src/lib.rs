@@ -1,4 +1,4 @@
-//! Library to manage the configuration of the clafrica input method.
+//! Library to manage the configuration of the afrim input method.
 //!
 
 #![deny(missing_docs)]
