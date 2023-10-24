@@ -5,7 +5,6 @@ Afrim
   [![LICENSE](https://img.shields.io/crates/l/afrim.svg)](https://github.com/pythonbrad/afrim/blob/main/LICENSE)
   ![Rust](https://github.com/pythonbrad/afrim/workflows/Rust/badge.svg)
   [![docs.rs](https://docs.rs/afrim/badge.svg)](https://docs.rs/afrim)
-  [![Chat](https://img.shields.io/discord/1101565344692318320?logo=discord&logoColor=white)](https://discord.gg/C6TDEgzDzY)
   [![Coverage Status](https://coveralls.io/repos/github/pythonbrad/afrim/badge.svg?branch=main)](https://coveralls.io/github/pythonbrad/afrim?branch=main)
 
   Afrim is an input method for African languages. It's designed to make it easier for people who speak African languages to type on their computers.
