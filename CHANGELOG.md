@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2023-10-24
+
+### Added
+- Execution of afrim in test only mode. [(#93)](https://github.com/pythonbrad/afrim/pull/93)
+- Auto-correction. [(#102)](https://github.com/pythonbrad/afrim/pull/102)
+- Full immersion mode for non-latin languages. [(#111)](https://github.com/pythonbrad/afrim/pull/111)
+
+### Changed
+- Change the project name . [(#112)](https://github.com/pythonbrad/afrim/pull/112)
+- Make afrim more modular (service, config, memory, ...). [(#99)](https://github.com/pythonbrad/afrim/pull/99)
+
+### Fixed
+- Update afrim special keys. [(#104)](https://github.com/pythonbrad/afrim/pull/104)
+
+
 ## [0.4.0] - 2023-09-16
 
 ### Added
