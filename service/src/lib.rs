@@ -209,7 +209,7 @@ mod tests {
         });
     }
 
-    fn start_sandbox() -> rstk::TkText {
+    fn start_sandbox(start_point: &str) -> rstk::TkText {
         let root = rstk::trace_with("wish").unwrap();
         root.title("Afrim Test Environment");
 
@@ -218,6 +218,7 @@ mod tests {
         input_field.height(12);
         input_field.pack().layout();
         root.geometry(200, 200, 0, 0);
+        input_field.insert((1, 1), start_point);
         rstk::tell_wish(
             r#"
             chan configure stdout -encoding utf-8;
@@ -239,7 +240,7 @@ mod tests {
         start_afrim();
 
         // Start the sandbox
-        let textfield = start_sandbox();
+        let textfield = start_sandbox(LIMIT);
 
         rdev::simulate(&MouseMove { x: 100.0, y: 100.0 }).unwrap();
         thread::sleep(typing_speed_ms);
@@ -248,8 +249,10 @@ mod tests {
         rdev::simulate(&ButtonRelease(Button::Left)).unwrap();
         thread::sleep(typing_speed_ms);
 
-        input!(KeyB KeyB KeyB Escape, typing_speed_ms);
-        input!(KeyU Backspace KeyU KeyU Backspace KeyU, typing_speed_ms);
+        input!(KeyU, typing_speed_ms);
+        #[cfg(not(feature = "inhibit"))]
+        input!(Backspace, typing_speed_ms);
+        input!(KeyU KeyU Backspace KeyU, typing_speed_ms);
         input!(
             KeyC Num8 KeyC KeyE KeyD
             KeyU KeyU
@@ -258,10 +261,18 @@ mod tests {
             KeyA KeyF KeyA KeyF
             KeyA KeyF KeyF Num3, typing_speed_ms);
         input!(KeyU KeyU Num3, typing_speed_ms);
+        #[cfg(feature = "inhibit")]
+        output!(textfield, format!("{LIMIT}çʉ̄ɑ̄ɑɑɑ̄ɑ̄ʉ̄"));
+        #[cfg(not(feature = "inhibit"))]
         output!(textfield, format!("{LIMIT}uçʉ̄ɑ̄ɑɑɑ̄ɑ̄ʉ̄"));
 
         // We verify that the undo (backspace) works as expected
+        #[cfg(not(feature = "inhibit"))]
         (0..12).for_each(|_| {
+            input!(Backspace, typing_speed_ms);
+        });
+        #[cfg(feature = "inhibit")]
+        (0..13).for_each(|_| {
             input!(Backspace, typing_speed_ms);
         });
         output!(textfield, LIMIT);
@@ -315,6 +326,9 @@ mod tests {
         // We verify that we don't have a conflict
         // between the translator and the processor
         input!(KeyV KeyU KeyU KeyE, typing_speed_ms);
+        #[cfg(not(feature = "inhibit"))]
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohealthvʉe"));
+        #[cfg(feature = "inhibit")]
+        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohealthʉvʉe"));
     }
 }
