@@ -50,7 +50,7 @@ Try it in the console
 Dataset
 ===
   Official:
-  - [Afrim Code](https://github.com/pythonbrad/afrim-data): Maintened by [Resulam](http://resulam.com).
+  - [Afrim Supported Code](https://github.com/pythonbrad/afrim-data).
 
   Community:
   - Feel free to propose your own.
@@ -63,11 +63,6 @@ Frontends
 
   Community:
   - Feel free to propose your own.
-
-Similar works
-===
-
-  - [afrim](https://github.com/H-Theking/clafrica): Python version
 
 Contributing
 ===
