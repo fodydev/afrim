@@ -27,5 +27,5 @@ hi = "./scripts/hi.rhai"
 [translation]
 hello = "hi"
 heli = "helicopter"
-hea = "health"
+heal = { value = "health", alias = ["heql"] }
 vuue = "vʉe"

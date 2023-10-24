@@ -5,11 +5,12 @@
 //! #[cfg(feature = "rhai")]
 //! use afrim_translator::Engine;
 //! use afrim_translator::Translator;
-//! use std::collections::HashMap;
+//! use indexmap::IndexMap;
 //!
 //! // Translation via dictionary
-//! let mut dictionary = HashMap::new();
-//! dictionary.insert("halo".to_string(), ["hello".to_string()].to_vec());
+//! let mut dictionary = IndexMap::new();
+//! dictionary.insert("jump".to_string(), ["sauter".to_string()].to_vec());
+//! dictionary.insert("jumper".to_string(), ["sauteur".to_string()].to_vec());
 //! dictionary.insert("nihao".to_string(), ["hello".to_string()].to_vec());
 //!
 //! // We build the translator.
@@ -19,24 +20,52 @@
 //! #[cfg(feature = "rhai")]
 //! {
 //!     let engine = Engine::new();
-//!     let hi = engine.compile(r#"
+//!     let jump = engine.compile(r#"
 //!         fn translate(input) {
-//!             if input == "hi" {
-//!                 ["hi", "", "hello", true]
+//!             if input == "jump" {
+//!                 [input, "", "\n", false]
 //!             }
 //!         }
 //!     "#).unwrap();
-//!     translator.register("hi".to_string(), hi);
+//!     translator.register("jump".to_string(), jump);
 //! }
 //!
-//! #[cfg(feature = "rhai")]
 //! assert_eq!(
-//!     translator.translate("hi"),
+//!     translator.translate("jump"),
+//!     vec![
+//!         (
+//!             "jump".to_owned(),
+//!             "".to_owned(),
+//!             vec!["sauter".to_owned()],
+//!             true
+//!         ),
+//!         #[cfg(feature = "rhai")]
+//!         // Programmable translation
+//!         (
+//!             "jump".to_owned(),
+//!             "".to_owned(),
+//!             vec!["\n".to_owned()],
+//!             false
+//!         ),
+//!         // Auto-completion
+//!         (
+//!             "jumper".to_owned(),
+//!             "er".to_owned(),
+//!             vec!["sauteur".to_owned()],
+//!             false
+//!         )
+//!     ]
+//! );
+//!
+//! // Auto-suggestion / Auto-correction
+//! #[cfg(feature = "strsim")]
+//! assert_eq!(
+//!     translator.translate("junp"),
 //!     vec![(
-//!         "hi".to_owned(),
+//!         "jump".to_owned(),
 //!         "".to_owned(),
-//!         vec!["hello".to_owned()],
-//!         true
+//!         vec!["sauter".to_owned()],
+//!         false
 //!     )]
 //! );
 //! ```
@@ -44,28 +73,33 @@
 
 #![deny(missing_docs)]
 
+use indexmap::IndexMap;
 #[cfg(feature = "rhai")]
 pub use rhai::Engine;
 #[cfg(feature = "rhai")]
 use rhai::{Array, Scope, AST};
-use std::collections::HashMap;
+use std::cmp::Ordering;
+#[cfg(feature = "strsim")]
+use strsim::{self};
+
+type P = (String, String, Vec<String>, bool);
 
 /// Core structure of the translator.
 pub struct Translator {
-    dictionary: HashMap<String, Vec<String>>,
+    dictionary: IndexMap<String, Vec<String>>,
     #[cfg(feature = "rhai")]
-    translators: HashMap<String, AST>,
+    translators: IndexMap<String, AST>,
     auto_commit: bool,
 }
 
 impl Translator {
     /// Initiate a new translator.
-    pub fn new(dictionary: HashMap<String, Vec<String>>, auto_commit: bool) -> Self {
+    pub fn new(dictionary: IndexMap<String, Vec<String>>, auto_commit: bool) -> Self {
         Self {
             dictionary,
             auto_commit,
             #[cfg(feature = "rhai")]
-            translators: HashMap::default(),
+            translators: IndexMap::default(),
         }
     }
 
@@ -82,30 +116,53 @@ impl Translator {
     }
 
     /// Generate a list of predicates based on the input.
-    pub fn translate(&self, input: &str) -> Vec<(String, String, Vec<String>, bool)> {
+    pub fn translate(&self, input: &str) -> Vec<P> {
         #[cfg(feature = "rhai")]
         let mut scope = Scope::new();
         #[cfg(feature = "rhai")]
         let engine = Engine::new();
-
         let predicates = self.dictionary.iter().filter_map(|(key, value)| {
-            if key == input {
-                Some((
+            if input.len() < 2 || input.len() > key.len() {
+                return None;
+            };
+
+            let predicate = (key == input).then_some((
+                1.0,
+                (
                     key.to_owned(),
                     "".to_owned(),
                     value.to_owned(),
                     self.auto_commit,
+                ),
+            ));
+            #[cfg(feature = "strsim")]
+            let predicate = predicate.or_else(|| {
+                if key.len() == input.len() {
+                    let confidence = strsim::hamming(key.as_ref(), input)
+                        .map(|n| 1.0 - (n as f64 / key.len() as f64))
+                        .unwrap_or(0.0);
+
+                    (confidence > 0.7).then(|| {
+                        (
+                            confidence,
+                            (key.to_owned(), "".to_owned(), value.to_owned(), false),
+                        )
+                    })
+                } else {
+                    None
+                }
+            });
+            predicate.or_else(|| {
+                key.starts_with(input).then_some((
+                    0.5,
+                    (
+                        key.to_owned(),
+                        key.chars().skip(input.len()).collect(),
+                        value.to_owned(),
+                        false,
+                    ),
                 ))
-            } else if input.len() > 1 && key.starts_with(input) {
-                Some((
-                    key.to_owned(),
-                    key.chars().skip(input.len()).collect(),
-                    value.to_owned(),
-                    false,
-                ))
-            } else {
-                None
-            }
+            })
         });
         #[cfg(feature = "rhai")]
         let predicates =
@@ -126,10 +183,18 @@ impl Translator {
                         .collect();
                     let translated = data[3].clone().as_bool().unwrap();
 
-                    (code, remaining_code, texts, translated)
+                    (1.0, (code, remaining_code, texts, translated))
                 })
             }));
-        predicates.collect()
+        let mut predicates = predicates.collect::<Vec<(f64, P)>>();
+
+        // from the best to the worst
+        predicates.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
+
+        predicates
+            .into_iter()
+            .map(|(_, predicate)| predicate)
+            .collect()
     }
 }
 
@@ -140,10 +205,10 @@ mod tests {
         #[cfg(feature = "rhai")]
         use crate::Engine;
         use crate::Translator;
-        use std::collections::HashMap;
+        use indexmap::IndexMap;
 
         // We build the translation
-        let mut dictionary = HashMap::new();
+        let mut dictionary = IndexMap::new();
         dictionary.insert("halo".to_string(), ["hello".to_string()].to_vec());
 
         // We config the translator
@@ -193,13 +258,14 @@ mod tests {
                 false
             )]
         );
+        #[cfg(feature = "strsim")]
         assert_eq!(
-            translator.translate("halo"),
+            translator.translate("helo"),
             vec![(
                 "halo".to_owned(),
                 "".to_owned(),
                 vec!["hello".to_owned()],
-                true
+                false
             )]
         );
     }
