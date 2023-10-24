@@ -29,6 +29,10 @@
 //! let mut expecteds = VecDeque::from(vec![
 //!     Command::Pause,
 //!     Command::KeyClick(Backspace),
+//!     #[cfg(feature = "inhibit")]
+//!     Command::Resume,
+//!     #[cfg(feature = "inhibit")]
+//!     Command::Pause,
 //!     Command::KeyClick(Backspace),
 //!     Command::CommitText("ç".to_owned()),
 //!     Command::Resume,
@@ -66,6 +70,8 @@ impl Preprocessor {
     }
 
     /// Cancel the previous operation.
+    /// NB: The inhibit feature don't manage the rollback
+    #[cfg(not(feature = "inhibit"))]
     fn rollback(&mut self) -> bool {
         self.stack.push_back(Command::KeyRelease(Key::Backspace));
 
@@ -94,9 +100,14 @@ impl Preprocessor {
 
         match (event.state, event.key) {
             (KeyState::Down, Key::Backspace) => {
-                self.pause();
-                committed = self.rollback();
-                self.resume();
+                #[cfg(not(feature = "inhibit"))]
+                {
+                    self.pause();
+                    committed = self.rollback();
+                    self.resume();
+                }
+                #[cfg(feature = "inhibit")]
+                self.cursor.clear();
                 changed = true;
             }
             (KeyState::Down, Key::Character(character))
@@ -106,18 +117,25 @@ impl Preprocessor {
                     .map(|e| e.is_alphanumeric() || e.is_ascii_punctuation())
                     .unwrap_or(false) =>
             {
+                #[cfg(feature = "inhibit")]
+                self.pause();
+                #[cfg(feature = "inhibit")]
+                self.stack.push_back(Command::KeyClick(Key::Backspace));
+
                 let character = character.chars().next().unwrap();
 
                 if let Some(_in) = self.cursor.hit(character) {
+                    #[cfg(not(feature = "inhibit"))]
                     self.pause();
-
                     let mut prev_cursor = self.cursor.clone();
                     prev_cursor.undo();
+                    #[cfg(not(feature = "inhibit"))]
                     self.stack.push_back(Command::KeyClick(Key::Backspace));
 
                     // Remove the remaining code
                     while let (None, 1.., ..) = prev_cursor.state() {
                         prev_cursor.undo();
+                        #[cfg(not(feature = "inhibit"))]
                         self.stack.push_back(Command::KeyClick(Key::Backspace));
                     }
 
@@ -127,10 +145,13 @@ impl Preprocessor {
                     }
 
                     self.stack.push_back(Command::CommitText(_in));
+                    #[cfg(not(feature = "inhibit"))]
                     self.resume();
                     committed = true;
                 };
 
+                #[cfg(feature = "inhibit")]
+                self.resume();
                 changed = true;
             }
             (KeyState::Down, Key::Shift | Key::CapsLock) => (),
@@ -148,10 +169,13 @@ impl Preprocessor {
     pub fn commit(&mut self, text: &str) {
         self.pause();
 
+        #[cfg(not(feature = "inhibit"))]
         while !self.cursor.is_empty() {
             self.stack.push_back(Command::KeyPress(Key::Backspace));
             self.rollback();
         }
+        #[cfg(feature = "inhibit")]
+        self.cursor.clear();
         self.stack.push_back(Command::CommitText(text.to_owned()));
         self.resume();
         // We clear the buffer
@@ -204,23 +228,35 @@ mod tests {
         let data = utils::load_data("ccced ç\ncc ç");
         let map = utils::build_map(data);
         let mut preprocessor = Preprocessor::new(map, 8);
-        webdriver::send_keys("\u{E00C}ccced")
-            .into_iter()
-            .for_each(|e| {
-                match e {
-                    Event::Keyboard(e) => preprocessor.process(e),
-                    _ => unimplemented!(),
-                };
-            });
+        webdriver::send_keys("ccced").into_iter().for_each(|e| {
+            match e {
+                Event::Keyboard(e) => preprocessor.process(e),
+                _ => unimplemented!(),
+            };
+        });
         let mut expecteds = VecDeque::from(vec![
+            // c c
             Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
             Command::CommitText("ç".to_owned()),
             Command::Resume,
+            // c e d
             Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
             Command::KeyClick(Backspace),
             Command::CommitText("ç".to_owned()),
@@ -246,7 +282,15 @@ mod tests {
 
         let mut expecteds = VecDeque::from(vec![
             Command::Pause,
+            #[cfg(feature = "inhibit")]
+            Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
+            #[cfg(not(feature = "inhibit"))]
             Command::KeyPress(Backspace),
+            #[cfg(not(feature = "inhibit"))]
             Command::KeyRelease(Backspace),
             Command::CommitText("word".to_owned()),
             Command::Resume,
@@ -279,17 +323,23 @@ mod tests {
         preprocessor.clear_stack();
         assert_eq!(preprocessor.get_input(), "ccced".to_owned());
         preprocessor.process(backspace_event.clone());
+        #[cfg(not(feature = "inhibit"))]
         assert_eq!(preprocessor.get_input(), "cc".to_owned());
+        #[cfg(not(feature = "inhibit"))]
         preprocessor.process(backspace_event);
         assert_eq!(preprocessor.get_input(), "".to_owned());
 
         let mut expecteds = VecDeque::from(vec![
             Command::Pause,
+            #[cfg(not(feature = "inhibit"))]
             Command::KeyRelease(Backspace),
             Command::CommitText("ç".to_owned()),
             Command::Resume,
+            #[cfg(not(feature = "inhibit"))]
             Command::Pause,
+            #[cfg(not(feature = "inhibit"))]
             Command::KeyRelease(Backspace),
+            #[cfg(not(feature = "inhibit"))]
             Command::Resume,
         ]);
 
@@ -319,72 +369,145 @@ mod tests {
 
         let mut expecteds = VecDeque::from(vec![
             // Process
+            // u backspace
             Command::Pause,
-            Command::KeyRelease(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
             Command::Resume,
+            #[cfg(not(feature = "inhibit"))]
+            Command::KeyRelease(Backspace),
+            #[cfg(not(feature = "inhibit"))]
+            Command::Resume,
+            // u u backspace
             Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
             Command::CommitText("ʉ".to_owned()),
             Command::Resume,
+            #[cfg(not(feature = "inhibit"))]
             Command::Pause,
+            #[cfg(not(feature = "inhibit"))]
             Command::KeyRelease(Backspace),
+            #[cfg(not(feature = "inhibit"))]
             Command::Resume,
+            // u
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
+            #[cfg(feature = "inhibit")]
+            Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            // c _
+            Command::Pause,
+            Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
+            Command::KeyClick(Backspace),
+            Command::CommitText("ç".to_owned()),
+            Command::Resume,
+            // c e d
+            Command::Pause,
+            Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
+            Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
             Command::Pause,
             Command::KeyClick(Backspace),
             Command::KeyClick(Backspace),
             Command::CommitText("ç".to_owned()),
             Command::Resume,
+            // u u
             Command::Pause,
             Command::KeyClick(Backspace),
-            Command::KeyClick(Backspace),
-            Command::KeyClick(Backspace),
-            Command::KeyClick(Backspace),
-            Command::CommitText("ç".to_owned()),
+            #[cfg(feature = "inhibit")]
             Command::Resume,
+            #[cfg(feature = "inhibit")]
             Command::Pause,
-            Command::KeyClick(Backspace),
             Command::KeyClick(Backspace),
             Command::CommitText("ʉ".to_owned()),
             Command::Resume,
+            // a f 3
             Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
             Command::KeyClick(Backspace),
             Command::CommitText("ʉ\u{304}ɑ\u{304}".to_owned()),
             Command::Resume,
+            // a f
             Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
             Command::CommitText("ɑ".to_owned()),
             Command::Resume,
+            // a f
             Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
             Command::CommitText("ɑ".to_owned()),
             Command::Resume,
+            // a f
             Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
             Command::CommitText("ɑ".to_owned()),
             Command::Resume,
+            // f
             Command::Pause,
             Command::KeyClick(Backspace),
             Command::KeyClick(Backspace),
             Command::CommitText("ɑɑ".to_owned()),
             Command::Resume,
+            // 3
             Command::Pause,
             Command::KeyClick(Backspace),
             Command::KeyClick(Backspace),
             Command::KeyClick(Backspace),
             Command::CommitText("ɑ\u{304}ɑ\u{304}".to_owned()),
             Command::Resume,
+            // uu
             Command::Pause,
             Command::KeyClick(Backspace),
+            #[cfg(feature = "inhibit")]
+            Command::Resume,
+            #[cfg(feature = "inhibit")]
+            Command::Pause,
             Command::KeyClick(Backspace),
             Command::CommitText("ʉ".to_owned()),
             Command::Resume,
+            // 3
             Command::Pause,
             Command::KeyClick(Backspace),
             Command::KeyClick(Backspace),
