@@ -45,13 +45,13 @@ jobs:
       - name: build
         env:
           RUSTFLAGS: -Cinstrument-coverage
-        run: cargo build --all-features --verbose
+        run: cargo build --features inhibit --verbose
 
       - name: test
         env:
           RUSTFLAGS: -Cinstrument-coverage
           LLVM_PROFILE_FILE: name-%p-%m.profraw
-        run: cargo test --all-features --verbose
+        run: cargo test --verbose
 
       - name: Run grcov
         run: |
