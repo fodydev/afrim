@@ -1,6 +1,6 @@
 [package]
 name = "afrim-translator"
-version = "0.0.2"
+version = "0.1.0"
 edition = "2021"
 description = "Manage the predication system of the afrim input method."
 keywords = ["auto-complete", "ime", "predication"]
@@ -14,6 +14,7 @@ authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
 [features]
 default = ["rhai", "strsim"]
 rhai = ["dep:rhai"]
+rhai-wasm = ["rhai", "rhai/wasm-bindgen", "rhai/internals", "rhai/only_i32"]
 strsim = ["dep:strsim"]
 
 [dependencies]
