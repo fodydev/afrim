@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for wasm (limited to the core). [(#120)](https://github.com/pythonbrad/afrim/pull/120)
+
 ## [0.5.0] - 2023-10-24
 
 ### Added
@@ -20,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Update afrim special keys. [(#104)](https://github.com/pythonbrad/afrim/pull/104)
-
 
 ## [0.4.0] - 2023-09-16
 

@@ -63,6 +63,7 @@ Try it in the console
 
   🏢 Official:
   - [afrim-wish](https://github.com/pythonbrad/afrim-wish): Frontend for desktop environment.
+  - [afrim-web](https://github.com/pythonbrad/afrim-web): Frontend for web environment.
 
   🧑🏿‍🤝‍🧑🏿 Community:
   - Feel free to propose your own.
