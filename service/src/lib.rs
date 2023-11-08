@@ -326,9 +326,6 @@ mod tests {
         // We verify that we don't have a conflict
         // between the translator and the processor
         input!(KeyV KeyU KeyU KeyE, typing_speed_ms);
-        #[cfg(not(feature = "inhibit"))]
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohealthvʉe"));
-        #[cfg(feature = "inhibit")]
-        output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohealthʉvʉe"));
     }
 }
