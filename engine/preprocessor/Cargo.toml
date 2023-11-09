@@ -1,6 +1,6 @@
 [package]
 name = "afrim-preprocessor"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 description = "A preprocessor to process keyboard events for an input method."
 keywords = ["ime", "processor", "keyboard"]

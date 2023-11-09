@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed autocompletion in inhibit mode. [(#122)](https://github.com/pythonbrad/afrim/pull/122)
+
 ### Added
 - Support for wasm (limited to the core). [(#120)](https://github.com/pythonbrad/afrim/pull/120)
 
