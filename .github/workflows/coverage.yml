@@ -45,13 +45,13 @@ jobs:
       - name: build
         env:
           RUSTFLAGS: -Cinstrument-coverage
-        run: cargo build --features inhibit --verbose
+        run: cargo build -p afrim-memory -p afrim-preprocessor -p afrim-translator -p afrim-config -p afrim --verbose
 
       - name: test
         env:
           RUSTFLAGS: -Cinstrument-coverage
           LLVM_PROFILE_FILE: name-%p-%m.profraw
-        run: cargo test --verbose
+        run: cargo test -p afrim-memory -p afrim-preprocessor -p afrim-translator -p afrim-config -p afrim --verbose
 
       - name: Run grcov
         run: |

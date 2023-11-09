@@ -1,0 +1,35 @@
+name: Web
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, release-*]
+  pull_request:
+    branches: [main, release-*]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libxtst-dev libevdev-dev libxdo-dev
+          version: 1.0
+
+      - name: Add components
+        run: rustup component add clippy
+
+      - name: Add wasm target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Clippy
+        run: cargo clippy -p afrim-translator -p afrim-memory -p afrim-preprocessor --target wasm32-unknown-unknown --all-features
+
+      - name: Build
+        run: cargo build -p afrim-translator -p afrim-memory -p afrim-preprocessor --target wasm32-unknown-unknown --all-features
