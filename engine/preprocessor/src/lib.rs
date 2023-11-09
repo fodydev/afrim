@@ -70,14 +70,18 @@ impl Preprocessor {
     }
 
     /// Cancel the previous operation.
-    /// NB: The inhibit feature don't manage the rollback
-    #[cfg(not(feature = "inhibit"))]
     fn rollback(&mut self) -> bool {
+        #[cfg(not(feature = "inhibit"))]
         self.stack.push_back(Command::KeyRelease(Key::Backspace));
 
         if let Some(out) = self.cursor.undo() {
-            (1..out.chars().count())
-                .for_each(|_| self.stack.push_back(Command::KeyClick(Key::Backspace)));
+            #[cfg(feature = "inhibit")]
+            let start = 0;
+            #[cfg(not(feature = "inhibit"))]
+            let start = 1;
+            let end = out.chars().count();
+
+            (start..end).for_each(|_| self.stack.push_back(Command::KeyClick(Key::Backspace)));
 
             // Clear the remaining code
             while let (None, 1.., ..) = self.cursor.state() {
@@ -169,8 +173,8 @@ impl Preprocessor {
     pub fn commit(&mut self, text: &str) {
         self.pause();
 
-        #[cfg(not(feature = "inhibit"))]
         while !self.cursor.is_empty() {
+            #[cfg(not(feature = "inhibit"))]
             self.stack.push_back(Command::KeyPress(Key::Backspace));
             self.rollback();
         }
