@@ -122,7 +122,7 @@ impl Translator {
         #[cfg(feature = "rhai")]
         let engine = Engine::new();
         let predicates = self.dictionary.iter().filter_map(|(key, value)| {
-            if input.len() < 2 || input.len() > key.len() {
+            if input.len() < 2 || input.len() > key.len() || key[0..1] != input[0..1] {
                 return None;
             };
 
