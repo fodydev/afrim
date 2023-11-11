@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2023-11-11
+
+### Fixed
+- Improve the translation system. [(#127)](https://github.com/pythonbrad/afrim/pull/127)
+
 ## [0.5.1] - 2023-11-10
 
 ### Fixed
