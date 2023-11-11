@@ -15,7 +15,7 @@ default = ["rhai"]
 rhai = ["dep:rhai"]
 
 [dependencies]
-rhai = { version = "1.16.2", optional = true }
-indexmap = { version = "2.0.2", features = ["serde"] }
-serde = { version = "1.0.188", features = ["derive"] }
-toml = "0.8.2"
+rhai = { version = "1.16.3", optional = true }
+indexmap = { version = "2.1.0", features = ["serde"] }
+serde = { version = "1.0.192", features = ["derive"] }
+toml = "0.8.8"
