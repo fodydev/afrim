@@ -37,5 +37,4 @@ jobs:
         run: |
           curl https://master.dl.sourceforge.net/project/magicsplat/magicsplat-tcl/tcl-8.6.8-installer-1.8.1-x86.msi?viasf=1 -o tcl.msi
           ./tcl.msi /quiet
-          dir.exe /
-          dir.exe "env:ProgramFiles(x86)"
+          tree.exe /
