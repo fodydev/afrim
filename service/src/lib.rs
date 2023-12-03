@@ -225,7 +225,7 @@ mod tests {
             wm protocol . WM_DELETE_WINDOW {destroy .};
         "#,
         );
-        thread::sleep(Duration::from_secs(1));
+
         input_field
     }
 
@@ -236,11 +236,14 @@ mod tests {
         // To detect excessive backspace
         const LIMIT: &str = "bbb";
 
+        // Start the sandbox
+        let textfield = start_sandbox(LIMIT);
+
         // Start the afrim
         start_afrim();
 
-        // Start the sandbox
-        let textfield = start_sandbox(LIMIT);
+        // We afrim to start
+        thread::sleep(Duration::from_secs(1));
 
         rdev::simulate(&MouseMove { x: 100.0, y: 100.0 }).unwrap();
         thread::sleep(typing_speed_ms);
