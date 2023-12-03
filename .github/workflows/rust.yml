@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix: 
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        # os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [windows-latest]
         include:
         - os: ubuntu-latest
           headless: Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
@@ -34,6 +35,12 @@ jobs:
         with:
           packages: libxtst-dev libevdev-dev libxdo-dev
           version: 1.0
+
+      - if: matrix.os == 'windows-latest'
+        run: |
+          wget https://master.dl.sourceforge.net/project/magicsplat/magicsplat-tcl/tcl-8.6.8-installer-1.8.1-x86.msi?viasf=1
+          wget -O https://master.dl.sourceforge.net/project/magicsplat/magicsplat-tcl/tcl-8.6.8-installer-1.8.1-x86.msi?viasf=1 > tcl.msi
+          ./tcl.msi /quiet
 
       - name: Add components
         run: rustup component add clippy rustfmt
