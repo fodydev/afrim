@@ -37,5 +37,5 @@ jobs:
         run: |
           curl "https://dl.activestate.com/camel-builds/ActiveTcl/MSWin32-x64/20230607T174924Z/ActiveTcl-8.6.13.0000-MSWin32-x64-559160e0.msi" -o tcl.msi
           ./tcl.msi /quiet
-          del c:/mingw64/bin/wish
+          del "c:/Program Files (x86)/mingw64/bin/wish"
           which wish
