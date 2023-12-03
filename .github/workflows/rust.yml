@@ -20,11 +20,11 @@ jobs:
       matrix: 
         # os: [macos-latest, ubuntu-latest, windows-latest]
         os: [windows-latest]
-        include:
-        - os: ubuntu-latest
-          headless: Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-        - os: macos-latest
-          extra: -- --skip test_simple
+        # include:
+        # - os: ubuntu-latest
+        #   headless: Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        # - os: macos-latest
+        #   extra: -- --skip test_simple
 
     steps:
       - uses: actions/checkout@v3
@@ -39,7 +39,9 @@ jobs:
       - if: matrix.os == 'windows-latest'
         run: |
           curl "https://master.dl.sourceforge.net/project/magicsplat/magicsplat-tcl/tcl-8.6.8-installer-1.8.1-x86.msi?viasf=1" -o tcl.msi
-          ./tcl.msi /quiet
+      - if: matrix.os == 'windows-latest'
+        run: |
+          tcl.msi /quiet
 
       - name: Add components
         run: rustup component add clippy rustfmt
