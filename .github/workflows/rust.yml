@@ -35,4 +35,6 @@ jobs:
 
       - if: matrix.os == 'windows-latest'
         run: |
-          dir
+          curl https://master.dl.sourceforge.net/project/magicsplat/magicsplat-tcl/tcl-8.6.8-installer-1.8.1-x86.msi?viasf=1 -o tcl.msi
+          ./tcl.msi /quiet
+          dir.exe "C:\Program Files\"
