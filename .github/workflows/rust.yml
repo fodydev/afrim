@@ -35,6 +35,6 @@ jobs:
 
       - if: matrix.os == 'windows-latest'
         run: |
-          curl https://master.dl.sourceforge.net/project/magicsplat/magicsplat-tcl/tcl-8.6.8-installer-1.8.1-x86.msi?viasf=1 -o tcl.msi
+          curl "https://dl.activestate.com/camel-builds/ActiveTcl/MSWin32-x64/20230607T174924Z/ActiveTcl-8.6.13.0000-MSWin32-x64-559160e0.msi" -o tcl.msi
           ./tcl.msi /quiet
-          dir "c:/Program Files (x86)"
+          which wish
