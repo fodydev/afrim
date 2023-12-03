@@ -41,7 +41,7 @@ jobs:
           curl "https://master.dl.sourceforge.net/project/magicsplat/magicsplat-tcl/tcl-8.6.8-installer-1.8.1-x86.msi?viasf=1" -o tcl.msi
       - if: matrix.os == 'windows-latest'
         run: |
-          tcl.msi /quiet
+          .\tcl.msi /quiet
 
       - name: Add components
         run: rustup component add clippy rustfmt
