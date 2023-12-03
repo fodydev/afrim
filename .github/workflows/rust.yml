@@ -27,9 +27,6 @@ jobs:
         #   extra: -- --skip test_simple
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2
-
       # - if: matrix.os == 'ubuntu-latest'
       #  uses: awalsh128/cache-apt-pkgs-action@latest
       #  with:
@@ -38,33 +35,4 @@ jobs:
 
       - if: matrix.os == 'windows-latest'
         run: |
-          curl "https://master.dl.sourceforge.net/project/magicsplat/magicsplat-tcl/tcl-8.6.8-installer-1.8.1-x86.msi?viasf=1" -o tcl.msi
-      - if: matrix.os == 'windows-latest'
-        run: |
-          .\tcl.msi /quiet
-
-      - name: Add components
-        run: rustup component add clippy rustfmt
-
-      - name: Setup headless environment
-        run: ${{matrix.headless}}
-
-      - name: Rustfmt
-        run: |
-          cargo fmt -- --check
-
-      - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-      
-      - name: Build
-        run: cargo build --all-features --verbose
-
-      - name: Run tests (minimal)
-        run: cargo test --no-default-features --lib --bins --tests --verbose ${{matrix.extra}}
-
-      - name: Run tests (normal)
-        run: cargo test --lib --bins --tests --verbose ${{matrix.extra}}
-        
-      - name: Run tests (full)
-        run: cargo test --all-features --lib --bins --tests --verbose ${{matrix.extra}}
-
+          dir
