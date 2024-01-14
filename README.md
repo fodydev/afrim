@@ -13,6 +13,19 @@ License
 ---
   [MIT](LICENSE) license.
 
+History
+---
+AFRIM is the abbreviation of *AFRICA IME* or *Africa Input Method Engine*.
+
+From the beginning, AFRIM was written as a remake of [Clafrica IME](https://github.com/H-Theking/clafrica), and named *clafrica*.
+
+Then, we created an input method library with some improvements inspired from [RIME](https://github.com/rime). We renamed it to *Afrim Input Method Engine*.
+
+Later, it supports Amharic and Geez and other african phonetic input method, and we want support all african phonetic Input Method.
+
+Inspired from [librime](https://github.com/rime/librime), we want AFRIM aka *Afrim Input Method Engine* to be the top IME for african languages.
+
+
 Features
 ===
 
