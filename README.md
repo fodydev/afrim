@@ -7,7 +7,7 @@ Afrim ⌨️
   [![docs.rs](https://docs.rs/afrim/badge.svg)](https://docs.rs/afrim)
   [![Coverage Status](https://coveralls.io/repos/github/pythonbrad/afrim/badge.svg?branch=main)](https://coveralls.io/github/pythonbrad/afrim?branch=main)
 
-  Afrim is an input method for African languages. It's designed to make it easier for people who speak African languages to type on their computers.
+  Afrim is an input method for African languages. It is designed to protect the native language of various local dialects of Africa and is a universal phonetic-based input method platform.
 
 License
 ---
