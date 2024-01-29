@@ -112,7 +112,7 @@ impl Translator {
     #[cfg(feature = "rhai")]
     /// Unregister a translator
     pub fn unregister(&mut self, name: &str) {
-        self.translators.remove(name);
+        self.translators.shift_remove(name);
     }
 
     /// Generate a list of predicates based on the input.
