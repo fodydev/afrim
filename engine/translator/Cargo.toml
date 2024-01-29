@@ -4,6 +4,7 @@ version = "0.1.2"
 edition = "2021"
 description = "Manage the predication system of the afrim input method."
 keywords = ["auto-complete", "ime", "predication"]
+category = ["text-processing"]
 repository = "https://github.com/pythonbrad/afrim"
 license = "MIT"
 readme = "README.md"
