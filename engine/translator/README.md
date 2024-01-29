@@ -3,5 +3,5 @@ Handle the predication system for an input method.
 
 ### Features
 - rhai: Enable the usage of the rhai scripting language.
-- rhai-wasm: Like rhai, but wasm compatible.
+- rhai-wasm: Like rai, but wasm compatible.
 - strsim: Enable the text similarity algorithm.
