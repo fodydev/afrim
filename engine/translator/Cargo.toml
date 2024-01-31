@@ -1,9 +1,10 @@
 [package]
 name = "afrim-translator"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 description = "Manage the predication system of the afrim input method."
 keywords = ["auto-complete", "ime", "predication"]
+categories = ["text-processing"]
 repository = "https://github.com/pythonbrad/afrim"
 license = "MIT"
 readme = "README.md"

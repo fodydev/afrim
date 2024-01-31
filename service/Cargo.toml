@@ -1,9 +1,10 @@
 [package]
 name = "afrim"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 description = "Core library of the afrim input method."
 keywords = ["ime", "keyboard"]
+categories = ["accessibility"]
 repository = "https://github.com/pythonbrad/afrim"
 license = "MIT"
 readme = "../README.md"
@@ -25,9 +26,9 @@ inhibit = ["afrim-preprocessor/inhibit"]
 [dependencies]
 clap = { version = "4.4.18", features = ["derive"] }
 enigo = "0.1.3"
-afrim-config = { version = "0.4.1", path = "../config", default-features = false }
+afrim-config = { version = "0.4.2", path = "../config", default-features = false }
 afrim-preprocessor = { version = "0.5.1", path = "../engine/preprocessor", default-features = false }
-afrim-translator = { version = "0.1.2", path = "../engine/translator", default-features = false }
+afrim-translator = { version = "0.1.3", path = "../engine/translator", default-features = false }
 rdev = "0.5.3"
 
 [dev-dependencies]
