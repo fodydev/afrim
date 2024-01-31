@@ -17,10 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libxtst-dev libevdev-dev libxdo-dev
-          version: 1.0
 
       - name: Add components
         run: rustup component add clippy
@@ -29,7 +25,7 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: Clippy
-        run: cargo clippy -p afrim-translator -p afrim-memory -p afrim-preprocessor --target wasm32-unknown-unknown --all-features
+        run: cargo clippy -p afrim-config -p afrim-translator -p afrim-memory -p afrim-preprocessor --target wasm32-unknown-unknown --all-features
 
       - name: Build
-        run: cargo build -p afrim-translator -p afrim-memory -p afrim-preprocessor --target wasm32-unknown-unknown --all-features
+        run: cargo build -p afrim-config -p afrim-translator -p afrim-memory -p afrim-preprocessor --target wasm32-unknown-unknown --all-features
