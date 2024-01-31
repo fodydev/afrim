@@ -13,9 +13,10 @@ authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
 [features]
 default = ["rhai"]
 rhai = ["dep:rhai"]
+rhai-wasm = ["rhai", "rhai/wasm-bindgen"]
 
 [dependencies]
-rhai = { version = "1.16.3", optional = true }
+rhai = { version = "1.16.3", optional = true, features = ["only_i32", "f32_float", "no_custom_syntax"] }
 indexmap = { version = "2.1.0", features = ["serde"] }
 serde = { version = "1.0.192", features = ["derive"] }
 toml = "0.8.8"

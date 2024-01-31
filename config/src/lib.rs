@@ -11,6 +11,21 @@ use std::result::Result;
 use std::{error, fs, path::Path};
 use toml::{self};
 
+/// Trait to customize the filesystem.
+pub trait FileSystem {
+    /// Alternative to the fs::read_to_string.
+    fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>>;
+}
+
+/// Representation of the std::fs.
+struct StdFileSystem;
+
+impl FileSystem for StdFileSystem {
+    fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>> {
+        Ok(fs::read_to_string(filepath)?)
+    }
+}
+
 /// Hold information about a configuration.
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
@@ -77,7 +92,16 @@ macro_rules! insert_with_auto_capitalize {
 impl Config {
     /// Load the configuration from a file.
     pub fn from_file(filepath: &Path) -> Result<Self, Box<dyn error::Error>> {
-        let content = fs::read_to_string(filepath)
+        Self::from_filesystem(filepath, &StdFileSystem {})
+    }
+
+    /// Load the configuration from a file in using a specified filesystem.
+    pub fn from_filesystem(
+        filepath: &Path,
+        fs: &impl FileSystem,
+    ) -> Result<Self, Box<dyn error::Error>> {
+        let content = fs
+            .read_to_string(filepath)
             .map_err(|err| format!("Couldn't open file `{filepath:?}`.\nCaused by:\n\t{err}."))?;
         let mut config: Self = toml::from_str(&content).map_err(|err| {
             format!("Failed to parse configuration file `{filepath:?}`.\nCaused by:\n\t{err}")
@@ -195,6 +219,15 @@ impl Config {
     /// Extract the translators from the configuration.
     #[cfg(feature = "rhai")]
     pub fn extract_translators(&self) -> Result<IndexMap<String, AST>, Box<dyn error::Error>> {
+        self.extract_translators_using_filesystem(&StdFileSystem {})
+    }
+
+    /// Extract the translators from the configuration using the specified filesystem..
+    #[cfg(feature = "rhai")]
+    pub fn extract_translators_using_filesystem(
+        &self,
+        fs: &impl FileSystem,
+    ) -> Result<IndexMap<String, AST>, Box<dyn error::Error>> {
         let empty = IndexMap::default();
         let mut engine = Engine::new();
 
@@ -213,10 +246,14 @@ impl Config {
                 };
 
                 file_path.map(|file_path| {
-                    let parent = Path::new(&file_path).parent().unwrap().to_str().unwrap();
+                    let file_path = Path::new(&file_path);
+                    let parent = file_path.parent().unwrap().to_str().unwrap();
                     let header = format!(r#"const DIR = {parent:?};"#);
-                    let ast = engine.compile_file(file_path.into()).map_err(|err| {
-                        format!("Failed to parse script file `{file_path}`.\nCaused by:\n\t{err}.")
+                    let body = fs.read_to_string(file_path)?;
+                    let ast = engine.compile(body).map_err(|err| {
+                        format!(
+                            "Failed to parse script file `{file_path:?}`.\nCaused by:\n\t{err}."
+                        )
                     })?;
                     let ast = engine.compile(header).unwrap().merge(&ast);
 
