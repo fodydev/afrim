@@ -55,7 +55,7 @@ Runtime dependencies (Linux only)
 Supported keyboard layouts
 ---
   - QWERTY (USA)
-  - AZERTY (FRENCH)
+  - FRENCH (not AZERTY)
 
 In using cargo
 ---
