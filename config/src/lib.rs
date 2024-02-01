@@ -121,7 +121,7 @@ impl Config {
                 match value {
                     Data::File(DataFile { path }) => {
                         let filepath = config_path.join(path);
-                        let conf = Config::from_file(&filepath)?;
+                        let conf = Config::from_filesystem(&filepath, fs)?;
                         data.extend(conf.data.unwrap_or_default());
                     }
                     Data::Simple(value) => {
@@ -149,7 +149,7 @@ impl Config {
                     match value {
                         Data::File(DataFile { path }) => {
                             let filepath = config_path.join(path);
-                            let conf = Config::from_file(&filepath)?;
+                            let conf = Config::from_filesystem(&filepath, fs)?;
                             translators.extend(conf.translators.unwrap_or_default());
                         }
                         Data::Simple(value) => {
@@ -172,7 +172,7 @@ impl Config {
                 match value {
                     Data::File(DataFile { path }) => {
                         let filepath = config_path.join(path);
-                        let conf = Config::from_file(&filepath)?;
+                        let conf = Config::from_filesystem(&filepath, fs)?;
                         translation.extend(conf.translation.unwrap_or_default());
                     }
                     Data::Simple(_) | Data::Multi(_) => {
@@ -362,5 +362,34 @@ mod tests {
         let conf = Config::from_file(Path::new("./data/blank_sample.toml")).unwrap();
         let translation = conf.extract_translation();
         assert_eq!(translation.keys().len(), 0);
+    }
+
+    #[test]
+    fn from_filesystem() {
+        use crate::FileSystem;
+        use std::{error::Error, fs};
+
+        #[derive(Default)]
+        struct FilterFileSystem;
+
+        impl FileSystem for FilterFileSystem {
+            fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn Error>> {
+                let file_stem = filepath.file_stem().unwrap();
+
+                Ok(if file_stem == "data_sample" {
+                    fs::read_to_string(filepath)?
+                } else {
+                    String::new()
+                })
+            }
+        }
+
+        let fs = FilterFileSystem {};
+        let filepath = Path::new("./data/data_sample.toml");
+        let conf = Config::from_filesystem(&filepath, &fs).unwrap();
+
+        assert_eq!(conf.extract_data().keys().len(), 13);
+        assert_eq!(conf.extract_translators().unwrap().keys().len(), 0);
+        assert_eq!(conf.extract_translation().keys().len(), 0);
     }
 }
