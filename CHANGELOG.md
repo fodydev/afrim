@@ -7,16 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- (lib) Incomplete extension of wasm support to afrim-config. [(#146)](https://github.com/pythonbrad/afrim/pull/146)
+
 ## [0.5.3] - 2024-01-31
 
 ### Added
-- Update depencies. [(#144)](https://github.com/pythonbrad/afrim/pull/144)
-- Extended wasm support to afrim-config. [(#142)](https://github.com/pythonbrad/afrim/pull/142)
+- Update dependencies. [(#144)](https://github.com/pythonbrad/afrim/pull/144)
+- (lib) Extended wasm support to afrim-config. [(#142)](https://github.com/pythonbrad/afrim/pull/142)
 
 ## [0.5.2] - 2023-11-11
 
 ### Fixed
-- Improve the translation system. [(#127)](https://github.com/pythonbrad/afrim/pull/127)
+- (lib) Improve the translation system. [(#127)](https://github.com/pythonbrad/afrim/pull/127)
 
 ## [0.5.1] - 2023-11-10
 
@@ -24,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed autocompletion in inhibit mode. [(#122)](https://github.com/pythonbrad/afrim/pull/122)
 
 ### Added
-- Support for wasm (limited to the core). [(#120)](https://github.com/pythonbrad/afrim/pull/120)
+- (lib) Support for wasm (limited to the core). [(#120)](https://github.com/pythonbrad/afrim/pull/120)
 
 ## [0.5.0] - 2023-10-24
 
