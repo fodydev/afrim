@@ -52,6 +52,11 @@ Runtime dependencies (Linux only)
   - libevdev-dev
   - libxdo-dev
 
+Supported keyboard layouts
+---
+  - QWERTY (USA)
+  - AZERTY (FRENCH)
+
 In using cargo
 ---
   `cargo install afrim`
