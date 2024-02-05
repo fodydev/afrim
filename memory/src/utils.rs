@@ -13,9 +13,9 @@ use crate::Node;
 ///
 /// let text_buffer = Node::default();
 /// let data = utils::load_data(r#"
-/// ..a	   	ä
-/// ..af	ɑ̈
-/// ..ai	ɛ̈
+/// ..a     ä
+/// ..af    ɑ̈
+/// ..ai    ɛ̈
 /// "#);
 /// data.iter().for_each(|d| { text_buffer.insert(d[0].chars().collect(), d[1].to_owned()); });
 /// let memory = Rc::new(text_buffer);
