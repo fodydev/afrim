@@ -1,12 +1,30 @@
-//! Module providing a set of tools to facilitate the loading
-//!     of a data in the memory.
-//!
-
 #![deny(missing_docs)]
+//! Set of tools to facilitate the loading of data.
 
 use crate::Node;
 
-/// Load the sequential code from a plain text.
+/// Load the sequential codes from a plain text and returns it.
+///
+/// # Example
+///
+/// ```
+/// use afrim_memory::{Cursor, Node, utils};
+/// use std::rc::Rc;
+///
+/// let text_buffer = Node::default();
+/// let data = utils::load_data(r#"
+/// ..a	   	ä
+/// ..af	ɑ̈
+/// ..ai	ɛ̈
+/// "#);
+/// data.iter().for_each(|d| { text_buffer.insert(d[0].chars().collect(), d[1].to_owned()); });
+/// let memory = Rc::new(text_buffer);
+///
+/// let mut cursor = Cursor::new(memory, 8);
+/// "..af".chars().for_each(|c| { cursor.hit(c); });
+///
+/// assert_eq!(cursor.state(), (Some("ɑ̈".to_owned()), 4, 'f'));
+///```
 pub fn load_data(data: &str) -> Vec<Vec<&str>> {
     let data = data
         .trim()
@@ -22,7 +40,27 @@ pub fn load_data(data: &str) -> Vec<Vec<&str>> {
     data
 }
 
-/// Build a map from the sequential code.
+/// Build a map from a list of sequential codes.
+///
+/// # Example
+///
+/// ```
+/// use afrim_memory::{Cursor, Node, utils};
+/// use std::rc::Rc;
+///
+/// let data = utils::load_data(r#"
+/// ..a     ä
+/// ..af    ɑ̈
+/// ..ai    ɛ̈
+/// "#);
+/// let text_buffer = utils::build_map(data);
+/// let memory = Rc::new(text_buffer);
+///
+/// let mut cursor = Cursor::new(memory, 8);
+/// "..af".chars().for_each(|c| { cursor.hit(c); });
+///
+/// assert_eq!(cursor.state(), (Some("ɑ̈".to_owned()), 4, 'f'));
+///```
 pub fn build_map(data: Vec<Vec<&str>>) -> Node {
     let root = Node::default();
 

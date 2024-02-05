@@ -1,2 +1,2 @@
-# Afrim
-Manage the memory for an input method.
+# Afrim Memory
+Make the handling of sequential codes easier.
