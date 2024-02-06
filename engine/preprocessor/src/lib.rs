@@ -100,7 +100,7 @@ impl Preprocessor {
     /// use std::rc::Rc;
     ///
     /// // We prepare the memory.
-    /// let data = utils::load_data("uuaf3	ʉ̄ɑ̄");
+    /// let data = utils::load_data("uuaf3    ʉ̄ɑ̄");
     /// let text_buffer = utils::build_map(data);
     /// let memory = Rc::new(text_buffer);
     ///
