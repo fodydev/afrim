@@ -8,12 +8,12 @@
 //!     webdriver::{self, Event},
 //!     Key::*,
 //! };
-//! use std::collections::VecDeque;
+//! use std::{collections::VecDeque, rc::Rc};
 //!
 //! // We build initiate our preprocessor
 //! let data = utils::load_data("cc ç");
-//! let map = utils::build_map(data);
-//! let mut preprocessor = Preprocessor::new(map, 8);
+//! let memory = utils::build_map(data);
+//! let mut preprocessor = Preprocessor::new(Rc::new(memory), 8);
 //!
 //! // We trigger a sequence
 //! webdriver::send_keys("cc")
@@ -51,7 +51,7 @@ pub use crate::message::Command;
 pub use afrim_memory::utils;
 use afrim_memory::{Cursor, Node};
 pub use keyboard_types::{Key, KeyState, KeyboardEvent};
-use std::collections::VecDeque;
+use std::{collections::VecDeque, rc::Rc};
 
 /// The main structure of the preprocessor.
 #[derive(Debug)]
@@ -62,8 +62,8 @@ pub struct Preprocessor {
 
 impl Preprocessor {
     /// Initiate a new preprocessor.
-    pub fn new(map: Node, buffer_size: usize) -> Self {
-        let cursor = Cursor::new(map, buffer_size);
+    pub fn new(memory: Rc<Node>, buffer_size: usize) -> Self {
+        let cursor = Cursor::new(memory, buffer_size);
         let stack = VecDeque::with_capacity(15);
 
         Self { cursor, stack }
@@ -229,9 +229,11 @@ mod tests {
 
     #[test]
     fn test_process() {
+        use std::rc::Rc;
+
         let data = utils::load_data("ccced ç\ncc ç");
-        let map = utils::build_map(data);
-        let mut preprocessor = Preprocessor::new(map, 8);
+        let memory = utils::build_map(data);
+        let mut preprocessor = Preprocessor::new(Rc::new(memory), 8);
         webdriver::send_keys("ccced").into_iter().for_each(|e| {
             match e {
                 Event::Keyboard(e) => preprocessor.process(e),
@@ -277,7 +279,7 @@ mod tests {
         use afrim_memory::Node;
         use keyboard_types::KeyboardEvent;
 
-        let mut preprocessor = Preprocessor::new(Node::default(), 8);
+        let mut preprocessor = Preprocessor::new(Node::default().into(), 8);
         preprocessor.process(KeyboardEvent {
             key: Character("a".to_owned()),
             ..Default::default()
@@ -308,10 +310,11 @@ mod tests {
     #[test]
     fn test_rollback() {
         use keyboard_types::KeyboardEvent;
+        use std::rc::Rc;
 
         let data = utils::load_data("ccced ç\ncc ç");
-        let map = utils::build_map(data);
-        let mut preprocessor = Preprocessor::new(map, 8);
+        let memory = utils::build_map(data);
+        let mut preprocessor = Preprocessor::new(Rc::new(memory), 8);
         let backspace_event = KeyboardEvent {
             key: Backspace,
             ..Default::default()
@@ -354,12 +357,12 @@ mod tests {
 
     #[test]
     fn test_advanced() {
-        use std::fs;
+        use std::{fs, rc::Rc};
 
         let data = fs::read_to_string("./data/sample.txt").unwrap();
         let data = utils::load_data(&data);
-        let map = utils::build_map(data);
-        let mut preprocessor = Preprocessor::new(map, 64);
+        let memory = utils::build_map(data);
+        let mut preprocessor = Preprocessor::new(Rc::new(memory), 64);
 
         webdriver::send_keys(
             "u\u{E003}uu\u{E003}uc_ceduuaf3afafaff3uu3\

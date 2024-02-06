@@ -4,7 +4,7 @@
 //! Example
 //! ```
 //! use afrim_memory::*;
-//! use std::fs;
+//! use std::{fs, rc::Rc};
 //!
 //! // Build a TextBuffer
 //! let root = Node::default();
@@ -26,7 +26,7 @@
 //! assert_eq!(node.unwrap().take(), Some("ɑ".to_owned()));
 //!
 //! // We initiate our cursor
-//! let mut cursor = Cursor::new(root, 10);
+//! let mut cursor = Cursor::new(Rc::new(root), 10);
 //! // We move the cursor to the sequence
 //! let code = "af1";
 //! code.chars().for_each(|c| {cursor.hit(c);});
@@ -122,10 +122,10 @@ impl fmt::Debug for Cursor {
 
 impl Cursor {
     /// Initialize the cursor.
-    pub fn new(root: Node, capacity: usize) -> Self {
+    pub fn new(root: Rc<Node>, capacity: usize) -> Self {
         Self {
             buffer: VecDeque::with_capacity(capacity),
-            root: Rc::new(root),
+            root,
         }
     }
 
@@ -198,8 +198,6 @@ impl Cursor {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
     #[test]
     fn test_node() {
         use crate::Node;
@@ -224,7 +222,8 @@ mod tests {
 
     #[test]
     fn test_cursor() {
-        use crate::*;
+        use crate::{Cursor, utils};
+        use std::{fs, rc::Rc};
 
         macro_rules! hit {
             ( $cursor:ident $( $c:expr ),* ) => (
@@ -243,7 +242,7 @@ mod tests {
         let data = fs::read_to_string("./data/sample.txt").unwrap();
         let root = utils::build_map(utils::load_data(&data));
 
-        let mut cursor = Cursor::new(root, 8);
+        let mut cursor = Cursor::new(Rc::new(root), 8);
 
         assert_eq!(cursor.state(), (None, 0, '\0'));
 
