@@ -135,7 +135,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
         }
 
         // Process preprocessor instructions
-        while let Some(command) = preprocessor.pop_stack() {
+        while let Some(command) = preprocessor.pop_queue() {
             match command {
                 Command::CommitText(text) => {
                     keyboard.key_sequence(&text);
