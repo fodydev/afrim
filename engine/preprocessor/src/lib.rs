@@ -38,7 +38,7 @@
 //!     Command::Resume,
 //! ]);
 //!
-//! while let Some(command) = preprocessor.pop_stack() {
+//! while let Some(command) = preprocessor.pop_queue() {
 //!     assert_eq!(command, expecteds.pop_front().unwrap());
 //! }
 //! ```
@@ -57,22 +57,22 @@ use std::{collections::VecDeque, rc::Rc};
 #[derive(Debug)]
 pub struct Preprocessor {
     cursor: Cursor,
-    stack: VecDeque<Command>,
+    queue: VecDeque<Command>,
 }
 
 impl Preprocessor {
     /// Initiate a new preprocessor.
     pub fn new(memory: Rc<Node>, buffer_size: usize) -> Self {
         let cursor = Cursor::new(memory, buffer_size);
-        let stack = VecDeque::with_capacity(15);
+        let queue = VecDeque::with_capacity(15);
 
-        Self { cursor, stack }
+        Self { cursor, queue }
     }
 
     /// Cancel the previous operation.
     fn rollback(&mut self) -> bool {
         #[cfg(not(feature = "inhibit"))]
-        self.stack.push_back(Command::KeyRelease(Key::Backspace));
+        self.queue.push_back(Command::KeyRelease(Key::Backspace));
 
         if let Some(out) = self.cursor.undo() {
             #[cfg(feature = "inhibit")]
@@ -81,7 +81,7 @@ impl Preprocessor {
             let start = 1;
             let end = out.chars().count();
 
-            (start..end).for_each(|_| self.stack.push_back(Command::KeyClick(Key::Backspace)));
+            (start..end).for_each(|_| self.queue.push_back(Command::KeyClick(Key::Backspace)));
 
             // Clear the remaining code
             while let (None, 1.., ..) = self.cursor.state() {
@@ -89,7 +89,7 @@ impl Preprocessor {
             }
 
             if let (Some(_in), ..) = self.cursor.state() {
-                self.stack.push_back(Command::CommitText(_in));
+                self.queue.push_back(Command::CommitText(_in));
             }
 
             true
@@ -124,7 +124,7 @@ impl Preprocessor {
                 #[cfg(feature = "inhibit")]
                 self.pause();
                 #[cfg(feature = "inhibit")]
-                self.stack.push_back(Command::KeyClick(Key::Backspace));
+                self.queue.push_back(Command::KeyClick(Key::Backspace));
 
                 let character = character.chars().next().unwrap();
 
@@ -134,21 +134,21 @@ impl Preprocessor {
                     let mut prev_cursor = self.cursor.clone();
                     prev_cursor.undo();
                     #[cfg(not(feature = "inhibit"))]
-                    self.stack.push_back(Command::KeyClick(Key::Backspace));
+                    self.queue.push_back(Command::KeyClick(Key::Backspace));
 
                     // Remove the remaining code
                     while let (None, 1.., ..) = prev_cursor.state() {
                         prev_cursor.undo();
                         #[cfg(not(feature = "inhibit"))]
-                        self.stack.push_back(Command::KeyClick(Key::Backspace));
+                        self.queue.push_back(Command::KeyClick(Key::Backspace));
                     }
 
                     if let (Some(out), ..) = prev_cursor.state() {
                         (0..out.chars().count())
-                            .for_each(|_| self.stack.push_back(Command::KeyClick(Key::Backspace)))
+                            .for_each(|_| self.queue.push_back(Command::KeyClick(Key::Backspace)))
                     }
 
-                    self.stack.push_back(Command::CommitText(_in));
+                    self.queue.push_back(Command::CommitText(_in));
                     #[cfg(not(feature = "inhibit"))]
                     self.resume();
                     committed = true;
@@ -175,12 +175,12 @@ impl Preprocessor {
 
         while !self.cursor.is_empty() {
             #[cfg(not(feature = "inhibit"))]
-            self.stack.push_back(Command::KeyPress(Key::Backspace));
+            self.queue.push_back(Command::KeyPress(Key::Backspace));
             self.rollback();
         }
         #[cfg(feature = "inhibit")]
         self.cursor.clear();
-        self.stack.push_back(Command::CommitText(text.to_owned()));
+        self.queue.push_back(Command::CommitText(text.to_owned()));
         self.resume();
         // We clear the buffer
         self.cursor.clear();
@@ -188,12 +188,12 @@ impl Preprocessor {
 
     /// Pause the keyboard event listerner.
     fn pause(&mut self) {
-        self.stack.push_back(Command::Pause);
+        self.queue.push_back(Command::Pause);
     }
 
     /// Resume the keyboard event listener.
     fn resume(&mut self) {
-        self.stack.push_back(Command::Resume);
+        self.queue.push_back(Command::Resume);
     }
 
     /// Return the sequence present in the memory.
@@ -206,13 +206,13 @@ impl Preprocessor {
     }
 
     /// Return the next command to be executed.
-    pub fn pop_stack(&mut self) -> Option<Command> {
-        self.stack.pop_front()
+    pub fn pop_queue(&mut self) -> Option<Command> {
+        self.queue.pop_front()
     }
 
-    /// Clear the stack.
-    pub fn clear_stack(&mut self) {
-        self.stack.clear();
+    /// Clear the queue.
+    pub fn clear_queue(&mut self) {
+        self.queue.clear();
     }
 }
 
@@ -269,7 +269,7 @@ mod tests {
             Command::Resume,
         ]);
 
-        while let Some(command) = preprocessor.pop_stack() {
+        while let Some(command) = preprocessor.pop_queue() {
             assert_eq!(command, expecteds.pop_front().unwrap());
         }
     }
@@ -302,7 +302,7 @@ mod tests {
             Command::Resume,
         ]);
 
-        while let Some(command) = preprocessor.pop_stack() {
+        while let Some(command) = preprocessor.pop_queue() {
             assert_eq!(command, expecteds.pop_front().unwrap());
         }
     }
@@ -327,7 +327,7 @@ mod tests {
             };
         });
 
-        preprocessor.clear_stack();
+        preprocessor.clear_queue();
         assert_eq!(preprocessor.get_input(), "ccced".to_owned());
         preprocessor.process(backspace_event.clone());
         #[cfg(not(feature = "inhibit"))]
@@ -350,7 +350,7 @@ mod tests {
             Command::Resume,
         ]);
 
-        while let Some(command) = preprocessor.pop_stack() {
+        while let Some(command) = preprocessor.pop_queue() {
             assert_eq!(command, expecteds.pop_front().unwrap());
         }
     }
@@ -572,7 +572,7 @@ mod tests {
             Command::Resume,
         ]);
 
-        while let Some(command) = preprocessor.pop_stack() {
+        while let Some(command) = preprocessor.pop_queue() {
             assert_eq!(command, expecteds.pop_front().unwrap());
         }
     }
