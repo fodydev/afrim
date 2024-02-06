@@ -7,11 +7,11 @@ use afrim_translator::Translator;
 use enigo::{Enigo, KeyboardControllable};
 use frontend::Frontend;
 use rdev::{self, EventType, Key as E_Key};
-use std::{error, sync::mpsc, thread};
+use std::{error, rc::Rc, sync::mpsc, thread};
 
 /// Start the afrim.
 pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn error::Error>> {
-    let map = utils::build_map(
+    let memory = utils::build_map(
         config
             .extract_data()
             .iter()
@@ -30,7 +30,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
         })
         .unwrap_or((32, false, 10));
     let mut keyboard = Enigo::new();
-    let mut preprocessor = Preprocessor::new(map, buffer_size);
+    let mut preprocessor = Preprocessor::new(Rc::new(memory), buffer_size);
     #[cfg(not(feature = "rhai"))]
     let translator = Translator::new(config.extract_translation(), auto_commit);
     #[cfg(feature = "rhai")]
