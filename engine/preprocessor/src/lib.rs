@@ -1,8 +1,13 @@
-//! Preprocessor of keyboard events for an input method.
+#![deny(missing_docs)]
+//! Preprocess keyboard events for an input method.
 //!
-//! Example
+//! Enables the generation of keyboard event responses from a keyboard input event in an input method
+//! engine.
+//! The `afrim-preprocessor` crate is built on the top of the [`afrim-memory`](afrim_memory) crate.
 //!
-//! ```rust
+//! # Example
+//!
+//! ```
 //! use afrim_preprocessor::{utils, Command, Preprocessor};
 //! use keyboard_types::{
 //!     webdriver::{self, Event},
@@ -10,40 +15,56 @@
 //! };
 //! use std::{collections::VecDeque, rc::Rc};
 //!
-//! // We build initiate our preprocessor
+//! // Prepares the memory.
 //! let data = utils::load_data("cc ç");
-//! let memory = utils::build_map(data);
-//! let mut preprocessor = Preprocessor::new(Rc::new(memory), 8);
+//! let text_buffer = utils::build_map(data);
+//! let memory = Rc::new(text_buffer);
 //!
-//! // We trigger a sequence
-//! webdriver::send_keys("cc")
+//! // Builds the preprocessor.
+//! let mut preprocessor = Preprocessor::new(memory, 8);
+//!
+//! // Process an input.
+//! let input = "cc";
+//! webdriver::send_keys(input)
 //!     .into_iter()
-//!     .for_each(|e| {
-//!         match e {
-//!             Event::Keyboard(e) => preprocessor.process(e),
+//!     .for_each(|event| {
+//!         match event {
+//!             // Triggers the generated keyboard input event.
+//!             Event::Keyboard(event) => preprocessor.process(event),
 //!             _ => unimplemented!(),
 //!         };
 //!     });
 //!
-//! // We got the generated command
+//! // Now let's look at the generated commands.
+//! // The expected results without `inhibit` feature.
+//! #[cfg(not(feature = "inhibit"))]
 //! let mut expecteds = VecDeque::from(vec![
 //!     Command::Pause,
 //!     Command::KeyClick(Backspace),
-//!     #[cfg(feature = "inhibit")]
+//!     Command::KeyClick(Backspace),
+//!     Command::CommitText("ç".to_owned()),
 //!     Command::Resume,
-//!     #[cfg(feature = "inhibit")]
+//! ]);
+//!
+//! // The expected results with `inhibit` feature.
+//! #[cfg(feature = "inhibit")]
+//! let mut expecteds = VecDeque::from(vec![
+//!     Command::Pause,
+//!     Command::KeyClick(Backspace),
+//!     Command::Resume,
 //!     Command::Pause,
 //!     Command::KeyClick(Backspace),
 //!     Command::CommitText("ç".to_owned()),
 //!     Command::Resume,
 //! ]);
 //!
+//! // Verification.
 //! while let Some(command) = preprocessor.pop_queue() {
 //!     assert_eq!(command, expecteds.pop_front().unwrap());
 //! }
 //! ```
-
-#![deny(missing_docs)]
+//! **Note**: When dealing with non latin languages. The inhibit feature permit to remove as possible
+//! the non wanted characters (generally, latin characters).
 
 mod message;
 
@@ -61,7 +82,31 @@ pub struct Preprocessor {
 }
 
 impl Preprocessor {
-    /// Initiate a new preprocessor.
+    /// Initializes a new preprocessor.
+    ///
+    /// The preprocessor needs a memory to operate. You have two options to build this memory.
+    /// - Use the [`afrim-memory`](afrim_memory) crate.
+    /// - Use the [`utils`](crate::utils) module.
+    /// It also needs you set the capacity of his cursor. We recommend to set a capacity equal
+    /// or greater than N times the maximun sequence length that you want to handle.
+    /// Where N is the number of sequences that you want track in the cursor.
+    ///
+    /// Note that the cursor is the internal memory of the `afrim_preprocessor`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use afrim_preprocessor::{Preprocessor, utils};
+    /// use std::rc::Rc;
+    ///
+    /// // We prepare the memory.
+    /// let data = utils::load_data("uuaf3	ʉ̄ɑ̄");
+    /// let text_buffer = utils::build_map(data);
+    /// let memory = Rc::new(text_buffer);
+    ///
+    /// // We initialize our preprocessor.
+    /// let preprocessor = Preprocessor::new(memory, 8);
+    /// ```
     pub fn new(memory: Rc<Node>, buffer_size: usize) -> Self {
         let cursor = Cursor::new(memory, buffer_size);
         let queue = VecDeque::with_capacity(15);
@@ -69,7 +114,7 @@ impl Preprocessor {
         Self { cursor, queue }
     }
 
-    /// Cancel the previous operation.
+    // Cancel the previous operation.
     fn rollback(&mut self) -> bool {
         #[cfg(not(feature = "inhibit"))]
         self.queue.push_back(Command::KeyRelease(Key::Backspace));
@@ -98,7 +143,82 @@ impl Preprocessor {
         }
     }
 
-    /// Process the key event.
+    /// Preprocess the keyboard input event and returns infos on his internal changes (change on
+    /// the cursor and/or something to commit).
+    ///
+    /// It's useful when you process keyboard input events in bulk. Whether there is something that
+    /// you want to do based on this information, you can decide how to continue.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use afrim_preprocessor::{Command, Preprocessor, utils};
+    /// use keyboard_types::{Key::*, KeyboardEvent};
+    /// use std::{collections::VecDeque, rc::Rc};
+    ///
+    /// // We prepare the memory.
+    /// let data = utils::load_data("i3  ī");
+    /// let text_buffer = utils::build_map(data);
+    /// let memory = Rc::new(text_buffer);
+    ///
+    /// let mut preprocessor = Preprocessor::new(memory, 8);
+    ///
+    /// // We process the input.
+    /// // let input = "si3";
+    ///
+    /// let info = preprocessor.process(KeyboardEvent {
+    ///     key: Character("s".to_string()),
+    ///     ..Default::default()
+    /// });
+    /// assert_eq!(info, (true, false));
+    ///
+    /// let info = preprocessor.process(KeyboardEvent {
+    ///     key: Character("i".to_string()),
+    ///     ..Default::default()
+    /// });
+    /// assert_eq!(info, (true, false));
+    ///
+    /// let info = preprocessor.process(KeyboardEvent {
+    ///     key: Character("3".to_string()),
+    ///     ..Default::default()
+    /// });
+    /// assert_eq!(info, (true, true));
+    ///
+    /// // The input inside the preprocessor.
+    /// assert_eq!(preprocessor.get_input(), "si3".to_owned());
+    ///
+    /// // The generated commands.
+    /// // The expected results without inhibit feature.
+    /// #[cfg(not(feature = "inhibit"))]
+    /// let mut expecteds = VecDeque::from(vec![
+    ///     Command::Pause,
+    ///     Command::KeyClick(Backspace),
+    ///     Command::KeyClick(Backspace),
+    ///     Command::CommitText("ī".to_owned()),
+    ///     Command::Resume,
+    /// ]);
+    ///
+    /// // The expected results with inhibit feature.
+    /// #[cfg(feature = "inhibit")]
+    /// let mut expecteds = VecDeque::from(vec![
+    ///     Command::Pause,
+    ///     Command::KeyClick(Backspace),
+    ///     Command::Resume,
+    ///     Command::Pause,
+    ///     Command::KeyClick(Backspace),
+    ///     Command::Resume,
+    ///     Command::Pause,
+    ///     Command::KeyClick(Backspace),
+    ///     Command::CommitText("ī".to_owned()),
+    ///     Command::Resume,
+    /// ]);
+    ///
+    /// // Verification.
+    /// while let Some(command) = preprocessor.pop_queue() {
+    ///     dbg!(command.clone());
+    ///     assert_eq!(command, expecteds.pop_front().unwrap());
+    /// }
+    /// ```
     pub fn process(&mut self, event: KeyboardEvent) -> (bool, bool) {
         let (mut changed, mut committed) = (false, false);
 
@@ -170,6 +290,62 @@ impl Preprocessor {
     }
 
     /// Commit a text.
+    ///
+    /// Generate a command to ensure the commitment of this text.
+    /// Useful when you want deal with auto-completion.
+    ///
+    /// **Note**: Before any commitment, the preprocessor make sure to discard the current input.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use afrim_preprocessor::{Command, Preprocessor, utils};
+    /// use keyboard_types::{Key::*, KeyboardEvent};
+    /// use std::{collections::VecDeque, rc::Rc};
+    ///
+    /// // We prepare the memory.
+    /// let data = utils::load_data("i3  ī");
+    /// let text_buffer = utils::build_map(data);
+    /// let memory = Rc::new(text_buffer);
+    ///
+    /// let mut preprocessor = Preprocessor::new(memory, 8);
+    ///
+    /// // We process the input.
+    /// // let input = "si3";
+    /// preprocessor.process(KeyboardEvent {
+    ///     key: Character("s".to_string()),
+    ///     ..Default::default()
+    /// });
+    ///
+    /// preprocessor.commit("sī");
+    ///
+    /// // The generated commands.
+    /// // The expected results without inhibit feature.
+    /// #[cfg(not(feature = "inhibit"))]
+    /// let mut expecteds = VecDeque::from(vec![
+    ///     Command::Pause,
+    ///     Command::KeyPress(Backspace),
+    ///     Command::KeyRelease(Backspace),
+    ///     Command::CommitText("sī".to_owned()),
+    ///     Command::Resume,
+    /// ]);
+    ///
+    /// // The expected results with inhibit feature.
+    /// #[cfg(feature = "inhibit")]
+    /// let mut expecteds = VecDeque::from(vec![
+    ///     Command::Pause,
+    ///     Command::KeyClick(Backspace),
+    ///     Command::Resume,
+    ///     Command::Pause,
+    ///     Command::CommitText("sī".to_owned()),
+    ///     Command::Resume,
+    /// ]);
+    ///
+    /// // Verification.
+    /// while let Some(command) = preprocessor.pop_queue() {
+    ///     assert_eq!(command, expecteds.pop_front().unwrap());
+    /// }
+    /// ```
     pub fn commit(&mut self, text: &str) {
         self.pause();
 
@@ -186,17 +362,50 @@ impl Preprocessor {
         self.cursor.clear();
     }
 
-    /// Pause the keyboard event listerner.
+    // Pauses the keyboard event listerner.
     fn pause(&mut self) {
         self.queue.push_back(Command::Pause);
     }
 
-    /// Resume the keyboard event listener.
+    // Resumes the keyboard event listener.
     fn resume(&mut self) {
         self.queue.push_back(Command::Resume);
     }
 
-    /// Return the sequence present in the memory.
+    /// Returns the input present in the internal memory.
+    ///
+    /// It's always useful to know what is inside the memory of the preprocessor for debugging.
+    /// **Note**: The input inside the preprocessor is not always the same than the original because
+    /// of the limited capacity of his internal cursor.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use afrim_preprocessor::{Command, Preprocessor, utils};
+    /// use keyboard_types::{Key::*, webdriver::{self, Event}};
+    /// use std::{collections::VecDeque, rc::Rc};
+    ///
+    /// // We prepare the memory.
+    /// let data = utils::load_data("i3  ī");
+    /// let text_buffer = utils::build_map(data);
+    /// let memory = Rc::new(text_buffer);
+    ///
+    /// let mut preprocessor = Preprocessor::new(memory, 4);
+    ///
+    /// // We process the input.
+    /// let input = "si3";
+    /// webdriver::send_keys(input)
+    ///     .into_iter()
+    ///     .for_each(|event| {
+    ///         match event {
+    ///             // Triggers the generated keyboard input event.
+    ///             Event::Keyboard(event) => preprocessor.process(event),
+    ///             _ => unimplemented!(),
+    ///         };
+    ///     });
+    ///
+    /// // The input inside the processor.
+    /// assert_eq!(preprocessor.get_input(), "si3".to_owned());
     pub fn get_input(&self) -> String {
         self.cursor
             .to_sequence()
@@ -205,12 +414,57 @@ impl Preprocessor {
             .collect::<String>()
     }
 
-    /// Return the next command to be executed.
+    /// Returns the next command to be executed.
+    ///
+    /// The next command is dropped from the queue and can't be returned anymore.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use afrim_preprocessor::{Command, Preprocessor, utils};
+    /// use std::{collections::VecDeque, rc::Rc};
+    ///
+    /// // We prepare the memory.
+    /// let text_buffer = utils::build_map(vec![]);
+    /// let memory = Rc::new(text_buffer);
+    ///
+    /// let mut preprocessor = Preprocessor::new(memory, 8);
+    /// preprocessor.commit("hello");
+    ///
+    /// // The expected results.
+    /// let mut expecteds = VecDeque::from(vec![
+    ///     Command::Pause,
+    ///     Command::CommitText("hello".to_owned()),
+    ///     Command::Resume,
+    /// ]);
+    ///
+    /// // Verification.
+    /// while let Some(command) = preprocessor.pop_queue() {
+    ///     assert_eq!(command, expecteds.pop_front().unwrap());
+    /// }
     pub fn pop_queue(&mut self) -> Option<Command> {
         self.queue.pop_front()
     }
 
-    /// Clear the queue.
+    /// Clears the queue.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use afrim_preprocessor::{Preprocessor, utils};
+    /// use std::rc::Rc;
+    ///
+    /// let data =
+    /// utils::load_data("n* ŋ");
+    /// let text_buffer = utils::build_map(data);
+    /// let memory = Rc::new(text_buffer);
+    ///
+    /// let mut preprocessor = Preprocessor::new(memory, 8);
+    /// preprocessor.commit("hi");
+    /// preprocessor.clear_queue();
+    ///
+    /// assert_eq!(preprocessor.pop_queue(), None);
+    /// ```
     pub fn clear_queue(&mut self) {
         self.queue.clear();
     }
