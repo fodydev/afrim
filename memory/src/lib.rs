@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_cursor() {
-        use crate::{Cursor, utils};
+        use crate::{utils, Cursor};
         use std::{fs, rc::Rc};
 
         macro_rules! hit {
