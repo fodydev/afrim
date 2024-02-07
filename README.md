@@ -25,6 +25,7 @@ Later, it supports Amharic and Geez and other african phonetic input method, and
 
 Inspired from [librime](https://github.com/rime/librime), we want AFRIM aka *Afrim Input Method Engine* to be the top IME for african languages.
 
+For more details on the project name, confer the issue https://github.com/pythonbrad/afrim/issues/107.
 
 Features
 ===
