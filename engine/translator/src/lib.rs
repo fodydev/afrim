@@ -3,6 +3,9 @@
 //! auto-suggestions, auto-correction and more.
 //! It's designed to enhance the language processing tasks within in input method engine.
 //!
+//! **Note**: We use [`IndexMap`](indexmap::IndexMap) instead of [`HashMap`](std::collections::HashMap) for better performance
+//! when dealing with big datasets.
+//!
 //! # Example
 //!
 //! ```
@@ -121,9 +124,6 @@
 //!     ]
 //! );
 //! ```
-//!
-//! **Note**: We use [`IndexMap`](indexmap::IndexMap) instead of [`HashMap`](std::collections::HashMap) for better performance
-//! when dealing with big datasets.
 
 use indexmap::IndexMap;
 #[cfg(feature = "rhai")]
