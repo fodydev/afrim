@@ -6,6 +6,16 @@
 //! **Note**: We use [`IndexMap`](indexmap::IndexMap) instead of [`HashMap`](std::collections::HashMap) for better performance
 //! when dealing with big datasets.
 //!
+//! ### Feature flags
+//!
+//! To reduce the amount of compiled code in the crate, you can enable feature manually. This is
+//! done by adding `default-features = false` to your dependency specification. Below is a list of
+//! the features available in this crate.
+//!
+//! * `rhai`: Enables the usage of rhai script files.
+//! * `rhai-wasm`: Like rhai, but wasm compatible.
+//! * `strsim`: Enables the text similarity algorithm for better predictions.
+//!
 //! # Example
 //!
 //! ```
