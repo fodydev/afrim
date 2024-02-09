@@ -263,7 +263,7 @@ impl Translator {
         self.translators.shift_remove(name);
     }
 
-    /// Generate a list of predicates based on the input.
+    /// Generates a list of predicates based on the input.
     ///
     /// # Example
     ///
