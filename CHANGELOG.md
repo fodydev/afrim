@@ -7,14 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Small refactor to improve the codebase. [(#163)](https://github.com/pythonbrad/afrim/pull/163)
+
 ### Fixed
-- (lib) Incomplete extension of wasm support to afrim-config. [(#146)](https://github.com/pythonbrad/afrim/pull/146)
+- (lib) Incomplete extension of the wasm support. [(#146)](https://github.com/pythonbrad/afrim/pull/146)
 
 ## [0.5.3] - 2024-01-31
 
 ### Added
 - Update dependencies. [(#144)](https://github.com/pythonbrad/afrim/pull/144)
-- (lib) Extended wasm support to afrim-config. [(#142)](https://github.com/pythonbrad/afrim/pull/142)
+- (lib) Extension of the wasm support. [(#142)](https://github.com/pythonbrad/afrim/pull/142)
 
 ## [0.5.2] - 2023-11-11
 
