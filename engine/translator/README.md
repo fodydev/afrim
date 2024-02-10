@@ -1,7 +1,7 @@
 # Afrim Translator
-Handle the predication system for an input method.
+Enhance the language processing tasks within in input method engine.
 
 ### Features
-- rhai: Enable the usage of the rhai scripting language.
+- rhai: Enables the usage of the rhai scripting language.
 - rhai-wasm: Like rhai, but wasm compatible.
-- strsim: Enable the text similarity algorithm.
+- strsim: Enables the text similarity algorithm for better predictions.

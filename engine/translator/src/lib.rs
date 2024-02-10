@@ -1,34 +1,35 @@
-//! Engine to generate predicates based on a particular input.
+#![deny(missing_docs)]
+//! This crate provides a range of language-related functionalities, including translation,
+//! auto-suggestions, auto-correction and more.
+//! It's designed to enhance the language processing tasks within in input method engine.
 //!
-//! Example
-//! ```rust
-//! #[cfg(feature = "rhai")]
-//! use afrim_translator::Engine;
+//! **Note**: We use [`IndexMap`](indexmap::IndexMap) instead of [`HashMap`](std::collections::HashMap) for better performance
+//! when dealing with big datasets.
+//!
+//! ### Feature flags
+//!
+//! To reduce the amount of compiled code in the crate, you can enable feature manually. This is
+//! done by adding `default-features = false` to your dependency specification. Below is a list of
+//! the features available in this crate.
+//!
+//! * `rhai`: Enables the usage of rhai script files.
+//! * `rhai-wasm`: Like rhai, but wasm compatible.
+//! * `strsim`: Enables the text similarity algorithm for better predictions.
+//!
+//! # Example
+//!
+//! ```
 //! use afrim_translator::Translator;
 //! use indexmap::IndexMap;
 //!
-//! // Translation via dictionary
+//! // Prepares the dictionary.
 //! let mut dictionary = IndexMap::new();
-//! dictionary.insert("jump".to_string(), ["sauter".to_string()].to_vec());
-//! dictionary.insert("jumper".to_string(), ["sauteur".to_string()].to_vec());
-//! dictionary.insert("nihao".to_string(), ["hello".to_string()].to_vec());
+//! dictionary.insert("jump".to_string(), vec!["sauter".to_string()]);
+//! dictionary.insert("jumper".to_string(), vec!["sauteur".to_string()]);
+//! dictionary.insert("nihao".to_string(), vec!["hello".to_string()]);
 //!
-//! // We build the translator.
+//! // Builds the translator.
 //! let mut translator = Translator::new(dictionary, true);
-//!
-//! // Translation via scripting
-//! #[cfg(feature = "rhai")]
-//! {
-//!     let engine = Engine::new();
-//!     let jump = engine.compile(r#"
-//!         fn translate(input) {
-//!             if input == "jump" {
-//!                 [input, "", "\n", false]
-//!             }
-//!         }
-//!     "#).unwrap();
-//!     translator.register("jump".to_string(), jump);
-//! }
 //!
 //! assert_eq!(
 //!     translator.translate("jump"),
@@ -39,15 +40,7 @@
 //!             vec!["sauter".to_owned()],
 //!             true
 //!         ),
-//!         #[cfg(feature = "rhai")]
-//!         // Programmable translation
-//!         (
-//!             "jump".to_owned(),
-//!             "".to_owned(),
-//!             vec!["\n".to_owned()],
-//!             false
-//!         ),
-//!         // Auto-completion
+//!         // Auto-completion.
 //!         (
 //!             "jumper".to_owned(),
 //!             "er".to_owned(),
@@ -56,8 +49,23 @@
 //!         )
 //!     ]
 //! );
+//! ```
 //!
-//! // Auto-suggestion / Auto-correction
+//! # Example with the strsim feature
+//!
+//! ```
+//! use afrim_translator::Translator;
+//! use indexmap::IndexMap;
+//!
+//! // Prepares the dictionary.
+//! let mut dictionary = IndexMap::new();
+//! dictionary.insert("jump".to_string(), vec!["sauter".to_string()]);
+//! dictionary.insert("jumper".to_string(), vec!["sauteur".to_string()]);
+//!
+//! // Builds the translator.
+//! let mut translator = Translator::new(dictionary, true);
+//!
+//! // Auto-suggestion / Auto-correction.
 //! #[cfg(feature = "strsim")]
 //! assert_eq!(
 //!     translator.translate("junp"),
@@ -70,8 +78,62 @@
 //! );
 //! ```
 //!
-
-#![deny(missing_docs)]
+//! # Example with the rhai feature
+//!
+//! ```
+//! #[cfg(feature = "rhai")]
+//! use afrim_translator::Engine;
+//! use afrim_translator::Translator;
+//! use indexmap::IndexMap;
+//!
+//! // Prepares the dictionary.
+//! let mut dictionary = IndexMap::new();
+//! dictionary.insert("jump".to_string(), vec!["sauter".to_string()]);
+//! dictionary.insert("jumper".to_string(), vec!["sauteur".to_string()]);
+//! // Prepares the script.
+//! let engine = Engine::new();
+//! let jump_translator = engine.compile(r#"
+//!     // The main script function.
+//!     fn translate(input) {
+//!         if input == "jump" {
+//!             [input, "", "\n", false]
+//!         }
+//!     }
+//! "#).unwrap();
+//!
+//! // Builds the translator.
+//! let mut translator = Translator::new(dictionary, true);
+//!
+//! // Registers the jump translator.
+//! translator.register("jump".to_string(), jump_translator);
+//!
+//! assert_eq!(
+//!     translator.translate("jump"),
+//!     vec![
+//!         (
+//!             "jump".to_owned(),
+//!             "".to_owned(),
+//!             vec!["sauter".to_owned()],
+//!             true
+//!         ),
+//!         #[cfg(feature = "rhai")]
+//!         // Programmable translation.
+//!         (
+//!             "jump".to_owned(),
+//!             "".to_owned(),
+//!             vec!["\n".to_owned()],
+//!             false
+//!         ),
+//!         // Auto-completion.
+//!         (
+//!             "jumper".to_owned(),
+//!             "er".to_owned(),
+//!             vec!["sauteur".to_owned()],
+//!             false
+//!         )
+//!     ]
+//! );
+//! ```
 
 use indexmap::IndexMap;
 #[cfg(feature = "rhai")]
@@ -93,7 +155,17 @@ pub struct Translator {
 }
 
 impl Translator {
-    /// Initiate a new translator.
+    /// Initiatializes a new translator.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use afrim_translator::Translator;
+    /// use indexmap::IndexMap;
+    ///
+    /// let dictionary = IndexMap::new();
+    /// let translator = Translator::new(dictionary, false);
+    /// ```
     pub fn new(dictionary: IndexMap<String, Vec<String>>, auto_commit: bool) -> Self {
         Self {
             dictionary,
@@ -104,18 +176,134 @@ impl Translator {
     }
 
     #[cfg(feature = "rhai")]
-    /// Register a translator
+    /// Registers a translator.
+    ///
+    /// The provided name will be used for debugging in case of script error.
+    /// Note that the scripts are compiled using [`Engine`](crate::Engine::compile).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use afrim_translator::{Engine, Translator};
+    /// use indexmap::IndexMap;
+    ///
+    /// // We prepare the script.
+    /// let date_translator = r#"
+    ///    // Date converter.
+    ///    
+    ///    const MONTHS = [
+    ///        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    ///        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ///    ];
+    ///    
+    ///    fn parse_date(input) {
+    ///        let data = input.split('/');
+    ///    
+    ///        if data.len() != 3 {
+    ///            return [];
+    ///        }
+    ///    
+    ///        let day = parse_int(data[0]);
+    ///        let month = parse_int(data[1]);
+    ///        let year = parse_int(data[2]);
+    ///    
+    ///        if day in 1..31 && month in 1..13 && year in 1..2100 {
+    ///            return [day, month, year];
+    ///        }
+    ///    }
+    ///    
+    ///    // Script main function.
+    ///    fn translate(input) {
+    ///        let date = parse_date(input);
+    ///    
+    ///        if date.is_empty() { return }
+    ///    
+    ///        let month = global::MONTHS[date[1]-1];
+    ///    
+    ///        [input, "", [`${date[0]}, ${month} ${date[2]}`], true]
+    ///    }
+    /// "#;
+    /// let mut engine = Engine::new();
+    /// // confer: https://rhai.rs/book/safety/max-stmt-depth.html
+    /// engine.set_max_expr_depths(25, 25);
+    /// let date_translator = engine.compile(date_translator).unwrap();
+    ///
+    /// // We build the translator.
+    /// let mut translator = Translator::new(IndexMap::new(), true);
+    ///
+    /// // We register our date translator.
+    /// translator.register("date_translator".to_owned(), date_translator);
+    ///
+    /// assert_eq!(
+    ///     translator.translate("09/02/2024"),
+    ///     vec![
+    ///         ("09/02/2024".to_owned(), "".to_owned(),
+    ///         vec!["9, Feb 2024".to_owned()], true)
+    ///     ]
+    /// );
+    /// ```
     pub fn register(&mut self, name: String, ast: AST) {
         self.translators.insert(name, ast);
     }
 
     #[cfg(feature = "rhai")]
-    /// Unregister a translator
+    /// Unregisters a translator.
+    ///
+    /// # Example
+    /// ```
+    /// use afrim_translator::{Engine, Translator};
+    /// use indexmap::IndexMap;
+    ///
+    /// // We prepare the script.
+    /// let engine = Engine::new();
+    /// let erase_translator = engine.compile("fn translate(input) { [input, \"\", [], true] }").unwrap();
+    ///
+    /// // We build the translator.
+    /// let mut translator = Translator::new(IndexMap::new(), false);
+    ///
+    /// // We register the erase translator.
+    /// translator.register("erase".to_owned(), erase_translator);
+    /// assert_eq!(translator.translate("hello"), vec![("hello".to_owned(), "".to_owned(), vec![], true)]);
+    ///
+    /// // We unregister the erase translator.
+    /// translator.unregister("erase");
+    /// assert_eq!(translator.translate("hello"), vec![]);
+    /// ```
     pub fn unregister(&mut self, name: &str) {
         self.translators.shift_remove(name);
     }
 
-    /// Generate a list of predicates based on the input.
+    /// Generates a list of predicates based on the input.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use indexmap::IndexMap;
+    /// use afrim_translator::Translator;
+    ///
+    /// // We prepares the dictionary.
+    /// let mut dictionary = IndexMap::new();
+    /// dictionary.insert("salut!".to_owned(), vec!["hello!".to_owned(), "hi!".to_owned()]);
+    /// dictionary.insert("salade".to_owned(), vec!["vegetable".to_owned()]);
+    ///
+    /// // We build the translator.
+    /// let translator = Translator::new(dictionary, false);
+    /// assert_eq!(
+    ///     translator.translate("sal"),
+    ///     vec![
+    ///         (
+    ///             "salut!".to_owned(), "ut!".to_owned(),
+    ///             vec!["hello!".to_owned(), "hi!".to_owned()],
+    ///             false
+    ///         ),
+    ///         (
+    ///             "salade".to_owned(), "ade".to_owned(),
+    ///             vec!["vegetable".to_owned()],
+    ///             false
+    ///         )
+    ///     ]
+    /// )
+    /// ```
     pub fn translate(&self, input: &str) -> Vec<P> {
         #[cfg(feature = "rhai")]
         let mut scope = Scope::new();
