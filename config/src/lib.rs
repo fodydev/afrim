@@ -119,7 +119,7 @@ impl FileSystem for StdFileSystem {
 /// version = "2023-10-02"
 ///
 /// [data]
-/// 2a_	= "á̠"
+/// 2a_ = "á̠"
 /// ".?" = { value = "ʔ", alias = ["?."] }
 /// emoji = { path = "./emoji.toml" }
 ///
