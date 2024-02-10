@@ -90,8 +90,11 @@
 //! let mut dictionary = IndexMap::new();
 //! dictionary.insert("jump".to_string(), vec!["sauter".to_string()]);
 //! dictionary.insert("jumper".to_string(), vec!["sauteur".to_string()]);
+//!
 //! // Prepares the script.
+//! #[cfg(feature = "rhai")]
 //! let engine = Engine::new();
+//! #[cfg(feature = "rhai")]
 //! let jump_translator = engine.compile(r#"
 //!     // The main script function.
 //!     fn translate(input) {
@@ -105,6 +108,7 @@
 //! let mut translator = Translator::new(dictionary, true);
 //!
 //! // Registers the jump translator.
+//! #[cfg(feature = "rhai")]
 //! translator.register("jump".to_string(), jump_translator);
 //!
 //! assert_eq!(
