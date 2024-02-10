@@ -1,7 +1,68 @@
+#![deny(missing_docs)]
 //! Library to manage the configuration of the afrim input method.
 //!
-
-#![deny(missing_docs)]
+//! It's based on the top of the [`toml`](toml) crate.
+//!
+//! # Example
+//!
+//! ```no_run
+//! use afrim_config::Config;
+//! use std::path::Path;
+//!
+//! let filepath = Path::new("./data/config_sample.toml");
+//! let conf = Config::from_file(&filepath).unwrap();
+//!
+//! # assert_eq!(conf.extract_data().keys().len(), 23);
+//! # #[cfg(feature = "rhai")]
+//! # assert_eq!(conf.extract_translators().unwrap().keys().len(), 2);
+//! # assert_eq!(conf.extract_translation().keys().len(), 4);
+//! ```
+//!
+//! In case that you want control the filesystem (reading of file), you can use the
+//! [`Config::from_filesystem`](crate::Config::from_filesystem) method.
+//!
+//! # Example
+//!
+//! ```
+//! use afrim_config::{Config, FileSystem};
+//! use std::{error, path::Path, string::String};
+//!
+//! // Implements a custom filesystem.
+//! struct File {
+//!     source: String,
+//! }
+//!
+//! impl File {
+//!     pub fn new(source: String) -> Self {
+//!         Self { source }
+//!     }
+//! }
+//!
+//! impl FileSystem for File {
+//!     fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>> {
+//!         Ok(self.source.to_string())
+//!     }
+//! }
+//!
+//! // Sets the config file.
+//! let config_file = File::new(r#"
+//! [core]
+//! auto_commit = false
+//!
+//! [data]
+//! "n*" = "ŋ"
+//! "#.to_owned());
+//!
+//! // Loads the config file.
+//! let config = Config::from_filesystem(&Path::new("."), &config_file).unwrap();
+//!
+//! assert_eq!(config.core.clone().unwrap().auto_commit, Some(false));
+//! // Note that the auto_capitalize is enabled by default.
+//! assert_eq!(
+//!     Vec::from_iter(config.extract_data().into_iter()),
+//!     vec![("n*".to_owned(), "ŋ".to_owned()), ("N*".to_owned(), "Ŋ".to_owned())]
+//! );
+//! ```
 
 use indexmap::IndexMap;
 #[cfg(feature = "rhai")]
@@ -17,7 +78,7 @@ pub trait FileSystem {
     fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>>;
 }
 
-/// Representation of the std::fs.
+// Representation of the std::fs.
 struct StdFileSystem;
 
 impl FileSystem for StdFileSystem {
@@ -26,7 +87,55 @@ impl FileSystem for StdFileSystem {
     }
 }
 
-/// Hold information about a configuration.
+/// Holds information about a configuration.
+///
+/// # Example
+///
+/// ```no_run
+/// # use afrim_config::{Config, FileSystem};
+/// # use std::{error, path::Path, string::String};
+/// #
+/// # // Implements a custom filesystem.
+/// # struct File {
+/// #     source: String,
+/// # }
+/// #
+/// # impl File {
+/// #     pub fn new(source: String) -> Self {
+/// #         Self { source }
+/// #     }
+/// # }
+/// #
+/// # impl FileSystem for File {
+/// #     fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>> {
+/// #         Ok(self.source.to_string())
+/// #     }
+/// # }
+/// #
+/// # // Sets the config file.
+/// # let config_file = File::new(r#"
+/// [info]
+/// description = "Sample Config File"
+/// version = "2023-10-02"
+///
+/// [data]
+/// 2a_	= "á̠"
+/// ".?" = { value = "ʔ", alias = ["?."] }
+/// emoji = { path = "./emoji.toml" }
+///
+/// [translation]
+/// hey = "hi"
+/// hi = { value = "hello", alias = ["hey"] }
+/// hola = { values = ["hello"], alias = [] }
+/// dictionary = { path = "./dictionary.toml" }
+///
+/// [translator]
+/// date = "./scripts/datetime/date.rhai"
+/// # "#.to_owned());
+///
+/// # // Loads the config file.
+/// # Config::from_filesystem(&Path::new("."), &config_file).unwrap();
+/// ```
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     /// The core config.
@@ -38,6 +147,42 @@ pub struct Config {
 }
 
 /// Core information about a configuration.
+///
+/// # Example
+///
+/// ```
+/// # use afrim_config::{Config, FileSystem};
+/// # use std::{error, path::Path, string::String};
+/// #
+/// # // Implements a custom filesystem.
+/// # struct File {
+/// #     source: String,
+/// # }
+/// #
+/// # impl File {
+/// #     pub fn new(source: String) -> Self {
+/// #         Self { source }
+/// #     }
+/// # }
+/// #
+/// # impl FileSystem for File {
+/// #     fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>> {
+/// #         Ok(self.source.to_string())
+/// #     }
+/// # }
+/// #
+/// # // Sets the config file.
+/// # let config_file = File::new(r#"
+/// [core]
+/// buffer_size = 32
+/// auto_capitalize = false
+/// page_size = 10
+/// auto_commit = true
+/// # "#.to_owned());
+/// #
+/// # // Loads the config file.
+/// # Config::from_filesystem(&Path::new("."), &config_file).unwrap();
+/// ```
 #[derive(Deserialize, Debug, Clone)]
 pub struct CoreConfig {
     /// The size of the memory (history).
@@ -95,7 +240,7 @@ impl Config {
         Self::from_filesystem(filepath, &StdFileSystem {})
     }
 
-    /// Load the configuration from a file in using a specified filesystem.
+    /// Loads the configuration from a file in using a specified filesystem.
     pub fn from_filesystem(
         filepath: &Path,
         fs: &impl FileSystem,
@@ -198,7 +343,7 @@ impl Config {
         Ok(config)
     }
 
-    /// Extract the data from the configuration.
+    /// Extracts the data from the configuration.
     pub fn extract_data(&self) -> IndexMap<String, String> {
         let empty = IndexMap::default();
 
@@ -216,13 +361,13 @@ impl Config {
             .collect()
     }
 
-    /// Extract the translators from the configuration.
+    /// Extracts the translators from the configuration.
     #[cfg(feature = "rhai")]
     pub fn extract_translators(&self) -> Result<IndexMap<String, AST>, Box<dyn error::Error>> {
         self.extract_translators_using_filesystem(&StdFileSystem {})
     }
 
-    /// Extract the translators from the configuration using the specified filesystem..
+    /// Extracts the translators from the configuration using the specified filesystem..
     #[cfg(feature = "rhai")]
     pub fn extract_translators_using_filesystem(
         &self,
@@ -263,7 +408,7 @@ impl Config {
             .collect()
     }
 
-    /// Extract the translation from the configuration.
+    /// Extracts the translation from the configuration.
     pub fn extract_translation(&self) -> IndexMap<String, Vec<String>> {
         let empty = IndexMap::new();
 
