@@ -534,6 +534,7 @@ mod tests {
         let conf = Config::from_filesystem(&filepath, &fs).unwrap();
 
         assert_eq!(conf.extract_data().keys().len(), 13);
+        #[cfg(feature = "rhai")]
         assert_eq!(conf.extract_translators().unwrap().keys().len(), 0);
         assert_eq!(conf.extract_translation().keys().len(), 0);
     }
