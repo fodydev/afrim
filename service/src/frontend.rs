@@ -1,29 +1,28 @@
+#![deny(missing_docs)]
 //! API to develop a frontend interface for the afrim.
 //!
 
-#![deny(missing_docs)]
-
 /// Trait that every afrim frontend should implement.
 pub trait Frontend {
-    /// Update the frontenfrontend d size.
+    /// Updates the frontend screen size.
     fn update_screen(&mut self, _screen: (u64, u64)) {}
-    /// Update the frontend position.
+    /// Updates the frontend position.
     fn update_position(&mut self, _position: (f64, f64)) {}
-    /// Set the current sequential code to display.
+    /// Sets the current sequential code to display.
     fn set_input(&mut self, _text: &str) {}
-    /// Set the maximun number of predicates to be display.
+    /// Sets the maximun number of predicates to be display.
     fn set_page_size(&mut self, _size: usize) {}
-    /// Add a predicate in the list of predicates.
+    /// Adds a predicate in the list of predicates.
     fn add_predicate(&mut self, _code: &str, _remaining_code: &str, _text: &str) {}
-    /// Refresh the display.
+    /// Refreshs the display.
     fn display(&self) {}
-    /// Clear the list of predicates.
+    /// Clears the list of predicates.
     fn clear_predicates(&mut self) {}
-    /// Select the previous predicate.
+    /// Selects the previous predicate.
     fn previous_predicate(&mut self) {}
-    /// Select the next predicate.
+    /// Selects the next predicate.
     fn next_predicate(&mut self) {}
-    /// Return the selected predicate.
+    /// Returns the selected predicate.
     fn get_selected_predicate(&self) -> Option<&(String, String, String)> {
         Option::None
     }
