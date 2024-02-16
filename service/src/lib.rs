@@ -9,7 +9,7 @@ use frontend::Frontend;
 use rdev::{self, EventType, Key as E_Key};
 use std::{error, rc::Rc, sync::mpsc, thread};
 
-/// Start the afrim.
+/// Starts the afrim.
 pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn error::Error>> {
     let memory = utils::build_map(
         config
