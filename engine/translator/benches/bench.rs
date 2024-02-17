@@ -23,8 +23,8 @@ pub fn translate(c: &mut Criterion) {
         "Abdeel",
     ];
     (0..100_000).for_each(|_| {
-        words.iter().for_each(|word| {
-            dictionary.insert(word.to_string(), vec![word.to_string()]);
+        words.into_iter().for_each(|word| {
+            dictionary.insert(word.to_owned(), vec![word.to_owned()]);
         });
     });
 
