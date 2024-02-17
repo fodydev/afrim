@@ -17,10 +17,11 @@ default = ["rhai", "strsim"]
 rhai = ["dep:rhai"]
 rhai-wasm = ["rhai", "rhai/wasm-bindgen"]
 strsim = ["dep:strsim"]
+serde = ["indexmap/serde", "rhai/serde"]
 
 [dependencies]
 rhai = { version = "1.17.0", optional = true, features = ["only_i32", "f32_float", "no_custom_syntax"] }
-indexmap = { version = "2.2.2", features = ["serde"] }
+indexmap = { version = "2.2.2" }
 strsim = { version = "0.10.0", optional = true }
 
 [dev-dependencies]
