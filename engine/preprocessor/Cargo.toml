@@ -14,7 +14,12 @@ authors = ["Brady Fomegne <fomegnemeudje@outlook.com>"]
 [features]
 default = []
 inhibit = []
+serde = ["dep:serde", "keyboard-types/serde"]
 
 [dependencies]
-keyboard-types = "0.7.0"
+keyboard-types = { version = "0.7.0", default-features = false }
 afrim-memory = { version = "0.3.2", path = "../../memory" }
+serde = { version = "1.0.197", features = ["derive"], optional = true }
+
+[dev-dependencies]
+keyboard-types = { version = "0.7.0", features = ["webdriver"] }
