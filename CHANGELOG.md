@@ -68,6 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Improve the pause/resume way via double pressing of CTRL key. [(#54)](https://github.com/pythonbrad/afrim/pull/54)
+
+### Removed
 - Drop function key F1-12 which was reserved for special purposes. [(#62)](https://github.com/pythonbrad/afrim/pull/62)
 
 ## [0.3.0] - 2023-06-02
