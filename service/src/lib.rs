@@ -4,7 +4,7 @@ pub mod frontend;
 pub use afrim_config::Config;
 use afrim_preprocessor::{utils, Command, Preprocessor};
 use afrim_translator::Translator;
-use enigo::{Enigo, KeyboardControllable};
+use enigo::{Enigo, Key, KeyboardControllable};
 use frontend::Frontend;
 use rdev::{self, EventType, Key as E_Key};
 use std::{error, rc::Rc, sync::mpsc, thread};
@@ -140,14 +140,11 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
                 Command::CommitText(text) => {
                     keyboard.key_sequence(&text);
                 }
-                Command::KeyPress(key) => {
-                    keyboard.key_down(convert::to_key(key));
+                Command::CleanDelete => {
+                    keyboard.key_up(Key::Backspace);
                 }
-                Command::KeyRelease(key) => {
-                    keyboard.key_up(convert::to_key(key));
-                }
-                Command::KeyClick(key) => {
-                    keyboard.key_click(convert::to_key(key));
+                Command::Delete => {
+                    keyboard.key_click(Key::Backspace);
                 }
                 Command::Pause => {
                     rdev::simulate(&EventType::KeyPress(E_Key::Pause)).unwrap();

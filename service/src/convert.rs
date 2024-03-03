@@ -4,7 +4,6 @@
 //!
 
 use afrim_preprocessor::{Key, KeyState, KeyboardEvent};
-use enigo::{self};
 use rdev::{self};
 
 /// Converts an rdev::Event into a KeyboardEvent.
@@ -43,13 +42,5 @@ pub fn from_key(key: rdev::Key) -> Key {
         rdev::Key::NumLock => Key::NumLock,
         rdev::Key::Insert => Key::Insert,
         _ => Default::default(),
-    }
-}
-
-/// Converts a Key into an enigo::Key.
-pub fn to_key(key: Key) -> enigo::Key {
-    match key {
-        Key::Backspace => enigo::Key::Backspace,
-        _ => unimplemented!(),
     }
 }
