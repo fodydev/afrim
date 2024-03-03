@@ -63,8 +63,8 @@
 //!     assert_eq!(command, expecteds.pop_front().unwrap());
 //! }
 //! ```
-//! **Note**: When dealing with non latin languages. The inhibit feature permit to remove as possible
-//! the non wanted characters (generally, latin characters).
+//! **Note**: When dealing with non latin languages. The `inhibit` feature allows for the removal of
+//! unwanted characters typically latin characters, as much as posssible.
 
 mod message;
 
