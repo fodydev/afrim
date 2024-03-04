@@ -33,6 +33,9 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          # To only cache runs from `master`
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: rustup component add llvm-tools-preview
 
       - name: Install grcov
