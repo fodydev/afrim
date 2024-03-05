@@ -18,7 +18,7 @@ serde = ["dep:serde", "keyboard-types/serde"]
 
 [dependencies]
 keyboard-types = { version = "0.7.0", default-features = false }
-afrim-memory = { version = "0.3.2", path = "../../memory" }
+afrim-memory = { version = "0.4.0", path = "../../memory" }
 serde = { version = "1.0.197", features = ["derive"], optional = true }
 
 [dev-dependencies]

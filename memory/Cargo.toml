@@ -1,6 +1,6 @@
 [package]
 name = "afrim-memory"
-version = "0.3.2"
+version = "0.4.0"
 edition = "2021"
 description = "Make the handle of sequential codes easier for an input method."
 keywords = ["ime", "memory", "data-structure"]
