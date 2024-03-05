@@ -5,6 +5,7 @@ Afrim ⌨️
   [![LICENSE](https://img.shields.io/crates/l/afrim.svg)](https://github.com/pythonbrad/afrim/blob/main/LICENSE)
   ![Rust](https://github.com/pythonbrad/afrim/workflows/Rust/badge.svg)
   [![docs.rs](https://docs.rs/afrim/badge.svg)](https://docs.rs/afrim)
+  [![dependency status](https://deps.rs/repo/github/pythonbrad/afrim/status.svg)](https://deps.rs/repo/github/pythonbrad/afrim)
   [![Coverage Status](https://coveralls.io/repos/github/pythonbrad/afrim/badge.svg?branch=main)](https://coveralls.io/github/pythonbrad/afrim?branch=main)
 
   Afrim is an input method for African languages. It is designed to protect the native language of various local dialects of Africa and is a universal phonetic-based input method platform.
