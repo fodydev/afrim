@@ -15,6 +15,7 @@
 //! * `rhai`: Enables the usage of rhai script files.
 //! * `rhai-wasm`: Like rhai, but wasm compatible.
 //! * `strsim`: Enables the text similarity algorithm for better predictions.
+//! * `serde`: Enables serde feature.
 //!
 //! # Example
 //!
