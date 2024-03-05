@@ -30,7 +30,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
-
+        with:
+          # To only cache runs from `master`
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - if: matrix.os == 'ubuntu-latest'
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
