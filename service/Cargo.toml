@@ -1,6 +1,6 @@
 [package]
 name = "afrim"
-version = "0.5.3"
+version = "0.5.4"
 edition = "2021"
 description = "Core library of the afrim input method."
 keywords = ["ime", "keyboard"]
