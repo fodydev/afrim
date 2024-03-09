@@ -32,7 +32,7 @@ Features
 ===
 
   - [ ] 🌐 Support for all sequential codification codes. 
-  - [ ] 🎨 Easy to use interface .
+  - [ ] 🎨 Easy to use CLI interface.
   - [ ] 📚 Customizable dictionary. 
   - [ ] 💻 Support for both desktop and web platform.
   - [ ] 🤖 Support for the Rhai scripting language.
@@ -84,6 +84,7 @@ Try it in the console
   🏢 Official:
   - [afrim-wish](https://github.com/pythonbrad/afrim-wish): Frontend for desktop environment.
   - [afrim-web](https://github.com/pythonbrad/afrim-web): Frontend for web environment.
+  - [afrim-keyboard](https://github.com/pythonbrad/afrim-keyboard): Frontend for android environment.
 
   🧑🏿‍🤝‍🧑🏿 Community:
   - Feel free to propose your own.
