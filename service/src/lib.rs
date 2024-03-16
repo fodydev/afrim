@@ -101,7 +101,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
                 is_special_pressed = false;
 
                 if let Some((_code, _remaining_code, text)) = frontend.get_selected_predicate() {
-                    preprocessor.commit(text);
+                    preprocessor.commit(text.to_owned());
                     frontend.clear_predicates();
                 }
             }
@@ -121,7 +121,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
                         .for_each(|(code, remaining_code, texts, translated)| {
                             texts.iter().for_each(|text| {
                                 if auto_commit && *translated {
-                                    preprocessor.commit(text);
+                                    preprocessor.commit(text.to_owned());
                                 } else if !text.is_empty() {
                                     frontend.add_predicate(code, remaining_code, text);
                                 }

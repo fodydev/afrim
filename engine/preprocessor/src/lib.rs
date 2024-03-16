@@ -330,7 +330,7 @@ impl Preprocessor {
     ///     ..Default::default()
     /// });
     ///
-    /// preprocessor.commit("sī");
+    /// preprocessor.commit("sī".to_owned());
     ///
     /// // The generated commands.
     /// // The expected results without inhibit feature.
@@ -359,7 +359,7 @@ impl Preprocessor {
     ///     assert_eq!(command, expecteds.pop_front().unwrap());
     /// }
     /// ```
-    pub fn commit(&mut self, text: &str) {
+    pub fn commit(&mut self, text: String) {
         self.pause();
 
         while !self.cursor.is_empty() {
@@ -370,7 +370,7 @@ impl Preprocessor {
         }
         #[cfg(feature = "inhibit")]
         self.cursor.clear();
-        self.queue.push_back(Command::CommitText(text.to_owned()));
+        self.queue.push_back(Command::CommitText(text));
         self.resume();
         // We clear the buffer
         self.cursor.clear();
@@ -443,7 +443,7 @@ impl Preprocessor {
     /// let memory = Rc::new(text_buffer);
     ///
     /// let mut preprocessor = Preprocessor::new(memory, 8);
-    /// preprocessor.commit("hello");
+    /// preprocessor.commit("hello".to_owned());
     ///
     /// // The expected results.
     /// let mut expecteds = VecDeque::from(vec![
@@ -474,7 +474,7 @@ impl Preprocessor {
     /// let memory = Rc::new(text_buffer);
     ///
     /// let mut preprocessor = Preprocessor::new(memory, 8);
-    /// preprocessor.commit("hi");
+    /// preprocessor.commit("hi".to_owned());
     /// preprocessor.clear_queue();
     ///
     /// assert_eq!(preprocessor.pop_queue(), None);
@@ -552,7 +552,7 @@ mod tests {
             key: Character("a".to_owned()),
             ..Default::default()
         });
-        preprocessor.commit("word");
+        preprocessor.commit("word".to_owned());
 
         let mut expecteds = VecDeque::from(vec![
             Command::Pause,
