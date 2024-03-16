@@ -73,13 +73,11 @@ pub fn build_map(data: Vec<Vec<&str>>) -> Node {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
     #[test]
     fn test_load_data() {
         use crate::utils;
 
-        let data = fs::read_to_string("./data/sample.txt").unwrap();
+        let data = include_str!("../data/sample.txt");
 
         utils::load_data(&data)
             .iter()
@@ -93,7 +91,7 @@ mod tests {
         let data = vec![vec!["af11", "ɑ̀ɑ̀"], vec!["?.", "ʔ"]];
         utils::build_map(data);
 
-        let data = fs::read_to_string("./data/sample.txt").unwrap();
+        let data = include_str!("../data/sample.txt");
         let data = utils::load_data(&data);
 
         utils::build_map(data);

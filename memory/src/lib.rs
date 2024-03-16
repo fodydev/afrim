@@ -35,11 +35,9 @@
 //!
 //! ```no_run
 //! use afrim_memory::utils;
-//! use std::fs;
 //!
-//! // Import data from a file.
-//! let data = fs::read_to_string("./data/sample.txt")
-//!                   .expect("Failed to load the data file");
+//! // Import data from a string.
+//! let data = "a1 à\ne2 é";
 //! let data = utils::load_data(&data);
 //! let text_buffer = utils::build_map(data);
 //! ```
@@ -581,7 +579,7 @@ mod tests {
     #[test]
     fn test_cursor() {
         use crate::{utils, Cursor};
-        use std::{fs, rc::Rc};
+        use std::rc::Rc;
 
         macro_rules! hit {
             ( $cursor:ident $( $c:expr ),* ) => (
@@ -597,7 +595,7 @@ mod tests {
             };
         }
 
-        let data = fs::read_to_string("./data/sample.txt").unwrap();
+        let data = include_str!("../data/sample.txt");
         let root = utils::build_map(utils::load_data(&data));
 
         let mut cursor = Cursor::new(Rc::new(root), 8);
