@@ -129,7 +129,7 @@ impl FileSystem for StdFileSystem {
 /// hola = { values = ["hello"], alias = [] }
 /// dictionary = { path = "./dictionary.toml" }
 ///
-/// [translator]
+/// [translators]
 /// date = "./scripts/datetime/date.rhai"
 /// # "#.to_owned());
 ///
