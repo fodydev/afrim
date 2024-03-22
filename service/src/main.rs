@@ -19,13 +19,13 @@ fn main() {
     let frontend = frontend::Console::default();
 
     let conf = Config::from_file(&args.config_file).unwrap_or_else(|err| {
-        eprintln!("Problem parsing config file: {err}");
+        eprintln!("Problem with config file: {err:?}");
         process::exit(1);
     });
 
     if !args.check {
-        run(conf, frontend).unwrap_or_else(|e| {
-            eprintln!("Application error: {e}");
+        run(conf, frontend).unwrap_or_else(|err| {
+            eprintln!("Application error: {err:?}");
             process::exit(1);
         });
     }

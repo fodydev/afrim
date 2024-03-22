@@ -21,3 +21,4 @@ rhai = { version = "1.17.1", optional = true, features = ["only_i32", "f32_float
 indexmap = { version = "2.2.5", features = ["serde"] }
 serde = { version = "1.0.197", features = ["derive"] }
 toml = { version = "0.8.10", features = ["preserve_order"] }
+anyhow = "1.0.81"
