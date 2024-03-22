@@ -79,7 +79,7 @@ mod tests {
 
         let data = include_str!("../data/sample.txt");
 
-        utils::load_data(&data)
+        utils::load_data(data)
             .iter()
             .for_each(|pair| assert_eq!(pair.len(), 2));
     }
@@ -92,7 +92,7 @@ mod tests {
         utils::build_map(data);
 
         let data = include_str!("../data/sample.txt");
-        let data = utils::load_data(&data);
+        let data = utils::load_data(data);
 
         utils::build_map(data);
     }
