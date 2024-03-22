@@ -378,11 +378,7 @@ impl Config {
         fs: &impl FileSystem,
     ) -> Result<IndexMap<String, AST>> {
         let empty = IndexMap::default();
-        let mut engine = Engine::new();
-
-        // allow nesting up to 50 layers of expressions/statements
-        // at global level, but only 10 inside function
-        engine.set_max_expr_depths(25, 25);
+        let engine = Engine::new();
 
         self.translators
             .as_ref()

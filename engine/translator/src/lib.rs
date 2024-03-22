@@ -229,8 +229,6 @@ impl Translator {
     ///    }
     /// "#;
     /// let mut engine = Engine::new();
-    /// // confer: https://rhai.rs/book/safety/max-stmt-depth.html
-    /// engine.set_max_expr_depths(25, 25);
     /// let date_translator = engine.compile(date_translator).unwrap();
     ///
     /// // We build the translator.
