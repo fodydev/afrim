@@ -39,7 +39,7 @@
 //! }
 //!
 //! impl FileSystem for File {
-//!     fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>> {
+//!     fn read_to_string(&self, filepath: &Path) -> Result<String, std::io::Error> {
 //!         Ok(self.source.to_string())
 //!     }
 //! }
@@ -64,26 +64,26 @@
 //! );
 //! ```
 
+use anyhow::{anyhow, Context, Result};
 use indexmap::IndexMap;
 #[cfg(feature = "rhai")]
 use rhai::{Engine, AST};
 use serde::Deserialize;
-use std::result::Result;
-use std::{error, fs, path::Path};
+use std::{fs, path::Path};
 use toml::{self};
 
 /// Trait to customize the filesystem.
 pub trait FileSystem {
     /// Alternative to the fs::read_to_string.
-    fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>>;
+    fn read_to_string(&self, filepath: &Path) -> Result<String, std::io::Error>;
 }
 
 // Representation of the std::fs.
 struct StdFileSystem;
 
 impl FileSystem for StdFileSystem {
-    fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>> {
-        Ok(fs::read_to_string(filepath)?)
+    fn read_to_string(&self, filepath: &Path) -> Result<String, std::io::Error> {
+        fs::read_to_string(filepath)
     }
 }
 
@@ -107,7 +107,7 @@ impl FileSystem for StdFileSystem {
 /// # }
 /// #
 /// # impl FileSystem for File {
-/// #     fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>> {
+/// #     fn read_to_string(&self, filepath: &Path) -> Result<String, std::io::Error> {
 /// #         Ok(self.source.to_string())
 /// #     }
 /// # }
@@ -166,7 +166,7 @@ pub struct Config {
 /// # }
 /// #
 /// # impl FileSystem for File {
-/// #     fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn error::Error>> {
+/// #     fn read_to_string(&self, filepath: &Path) -> Result<String, std::io::Error> {
 /// #         Ok(self.source.to_string())
 /// #     }
 /// # }
@@ -236,21 +236,17 @@ macro_rules! insert_with_auto_capitalize {
 
 impl Config {
     /// Load the configuration from a file.
-    pub fn from_file(filepath: &Path) -> Result<Self, Box<dyn error::Error>> {
+    pub fn from_file(filepath: &Path) -> Result<Self> {
         Self::from_filesystem(filepath, &StdFileSystem {})
     }
 
     /// Loads the configuration from a file in using a specified filesystem.
-    pub fn from_filesystem(
-        filepath: &Path,
-        fs: &impl FileSystem,
-    ) -> Result<Self, Box<dyn error::Error>> {
+    pub fn from_filesystem(filepath: &Path, fs: &impl FileSystem) -> Result<Self> {
         let content = fs
             .read_to_string(filepath)
-            .map_err(|err| format!("Couldn't open file `{filepath:?}`.\nCaused by:\n\t{err}."))?;
-        let mut config: Self = toml::from_str(&content).map_err(|err| {
-            format!("Failed to parse configuration file `{filepath:?}`.\nCaused by:\n\t{err}")
-        })?;
+            .with_context(|| format!("Couldn't open file {filepath:?}."))?;
+        let mut config: Self = toml::from_str(&content)
+            .with_context(|| format!("Failed to parse configuration file {filepath:?}."))?;
         let config_path = filepath.parent().unwrap();
         let auto_capitalize = config
             .core
@@ -261,8 +257,11 @@ impl Config {
         // Data
         let mut data = IndexMap::new();
 
-        config.data.unwrap_or_default().iter().try_for_each(
-            |(key, value)| -> Result<(), Box<dyn error::Error>> {
+        config
+            .data
+            .unwrap_or_default()
+            .iter()
+            .try_for_each(|(key, value)| -> Result<()> {
                 match value {
                     Data::File(DataFile { path }) => {
                         let filepath = config_path.join(path);
@@ -277,11 +276,11 @@ impl Config {
                             insert_with_auto_capitalize!(data, auto_capitalize, key, value);
                         });
                     }
-                    _ => Err(format!("Invalid script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed in the data table."))?,
+                    _ => Err(anyhow!("{value:?} not allowed in the data table."))
+                        .with_context(|| format!("Invalid configuration file {filepath:?}."))?,
                 };
                 Ok(())
-            },
-        )?;
+            })?;
         config.data = Some(data);
 
         // Translators
@@ -290,7 +289,7 @@ impl Config {
             let mut translators = IndexMap::new();
 
             config.translators.unwrap_or_default().iter().try_for_each(
-                |(key, value)| -> Result<(), Box<dyn error::Error>> {
+                |(key, value)| -> Result<()> {
                     match value {
                         Data::File(DataFile { path }) => {
                             let filepath = config_path.join(path);
@@ -298,10 +297,15 @@ impl Config {
                             translators.extend(conf.translators.unwrap_or_default());
                         }
                         Data::Simple(value) => {
-                            let filepath = config_path.join(value.clone()).to_str().unwrap().to_string();
+                            let filepath = config_path
+                                .join(value.clone())
+                                .to_str()
+                                .unwrap()
+                                .to_string();
                             translators.insert(key.to_owned(), Data::Simple(filepath));
                         }
-                        _ => Err(format!("Invalid script file `{filepath:?}`.\nCaused by:\n\t{value:?} not allowed in the translator table."))?,
+                        _ => Err(anyhow!("{value:?} not allowed in the translator table"))
+                            .with_context(|| format!("Invalid configuration file {filepath:?}."))?,
                     };
                     Ok(())
                 },
@@ -313,7 +317,7 @@ impl Config {
         let mut translation = IndexMap::new();
 
         config.translation.unwrap_or_default().iter().try_for_each(
-            |(key, value)| -> Result<(), Box<dyn error::Error>> {
+            |(key, value)| -> Result<()> {
                 match value {
                     Data::File(DataFile { path }) => {
                         let filepath = config_path.join(path);
@@ -363,7 +367,7 @@ impl Config {
 
     /// Extracts the translators from the configuration.
     #[cfg(feature = "rhai")]
-    pub fn extract_translators(&self) -> Result<IndexMap<String, AST>, Box<dyn error::Error>> {
+    pub fn extract_translators(&self) -> Result<IndexMap<String, AST>> {
         self.extract_translators_using_filesystem(&StdFileSystem {})
     }
 
@@ -372,7 +376,7 @@ impl Config {
     pub fn extract_translators_using_filesystem(
         &self,
         fs: &impl FileSystem,
-    ) -> Result<IndexMap<String, AST>, Box<dyn error::Error>> {
+    ) -> Result<IndexMap<String, AST>> {
         let empty = IndexMap::default();
         let mut engine = Engine::new();
 
@@ -394,12 +398,12 @@ impl Config {
                     let file_path = Path::new(&file_path);
                     let parent = file_path.parent().unwrap().to_str().unwrap();
                     let header = format!(r#"const DIR = {parent:?};"#);
-                    let body = fs.read_to_string(file_path)?;
-                    let ast = engine.compile(body).map_err(|err| {
-                        format!(
-                            "Failed to parse script file `{file_path:?}`.\nCaused by:\n\t{err}."
-                        )
-                    })?;
+                    let body = fs
+                        .read_to_string(file_path)
+                        .with_context(|| format!("Couldn't open script file {file_path:?}."))?;
+                    let ast = engine
+                        .compile(body)
+                        .with_context(|| format!("Failed to parse script file {file_path:?}."))?;
                     let ast = engine.compile(header).unwrap().merge(&ast);
 
                     Ok((name.to_owned(), ast))
@@ -512,13 +516,13 @@ mod tests {
     #[test]
     fn from_filesystem() {
         use crate::FileSystem;
-        use std::{error::Error, fs};
+        use std::fs;
 
         #[derive(Default)]
         struct FilterFileSystem;
 
         impl FileSystem for FilterFileSystem {
-            fn read_to_string(&self, filepath: &Path) -> Result<String, Box<dyn Error>> {
+            fn read_to_string(&self, filepath: &Path) -> Result<String, std::io::Error> {
                 let file_stem = filepath.file_stem().unwrap();
 
                 Ok(if file_stem == "data_sample" {

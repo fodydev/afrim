@@ -30,6 +30,7 @@ afrim-config = { version = "0.4.4", path = "../config", default-features = false
 afrim-preprocessor = { version = "0.6.0", path = "../engine/preprocessor", default-features = false }
 afrim-translator = { version = "0.1.4", path = "../engine/translator", default-features = false }
 rdev = "0.5.3"
+anyhow = "1.0.81"
 
 [dev-dependencies]
 rstk = "0.3.0"

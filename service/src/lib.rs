@@ -4,13 +4,14 @@ pub mod frontend;
 pub use afrim_config::Config;
 use afrim_preprocessor::{utils, Command, Preprocessor};
 use afrim_translator::Translator;
+use anyhow::{Context, Result};
 use enigo::{Enigo, Key, KeyboardControllable};
 use frontend::Frontend;
 use rdev::{self, EventType, Key as E_Key};
-use std::{error, rc::Rc, sync::mpsc, thread};
+use std::{rc::Rc, sync::mpsc, thread};
 
 /// Starts the afrim.
-pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn error::Error>> {
+pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
     let memory = utils::build_map(
         config
             .extract_data()
@@ -37,7 +38,8 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<(), Box<dyn er
     let mut translator = Translator::new(config.extract_translation(), auto_commit);
     #[cfg(feature = "rhai")]
     config
-        .extract_translators()?
+        .extract_translators()
+        .context("Failed to load translators.")?
         .into_iter()
         .for_each(|(name, ast)| translator.register(name, ast));
 
