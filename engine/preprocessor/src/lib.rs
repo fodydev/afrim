@@ -628,7 +628,7 @@ mod tests {
         use std::rc::Rc;
 
         let data = include_str!("../data/sample.txt");
-        let data = utils::load_data(&data);
+        let data = utils::load_data(data);
         let memory = utils::build_map(data);
         let mut preprocessor = Preprocessor::new(Rc::new(memory), 64);
 

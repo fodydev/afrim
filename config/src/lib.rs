@@ -531,7 +531,7 @@ mod tests {
 
         let fs = FilterFileSystem {};
         let filepath = Path::new("./data/data_sample.toml");
-        let conf = Config::from_filesystem(&filepath, &fs).unwrap();
+        let conf = Config::from_filesystem(filepath, &fs).unwrap();
 
         assert_eq!(conf.extract_data().keys().len(), 13);
         #[cfg(feature = "rhai")]

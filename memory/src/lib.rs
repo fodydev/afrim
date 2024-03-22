@@ -38,7 +38,7 @@
 //!
 //! // Import data from a string.
 //! let data = "a1 à\ne2 é";
-//! let data = utils::load_data(&data);
+//! let data = utils::load_data(data);
 //! let text_buffer = utils::build_map(data);
 //! ```
 //!
@@ -596,7 +596,7 @@ mod tests {
         }
 
         let data = include_str!("../data/sample.txt");
-        let root = utils::build_map(utils::load_data(&data));
+        let root = utils::build_map(utils::load_data(data));
 
         let mut cursor = Cursor::new(Rc::new(root), 8);
 
