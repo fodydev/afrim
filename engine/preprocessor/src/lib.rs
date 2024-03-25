@@ -136,6 +136,8 @@ impl Preprocessor {
 
             true
         } else {
+            self.cursor.resume();
+
             false
         }
     }
@@ -229,7 +231,6 @@ impl Preprocessor {
     ///
     /// // Verification.
     /// while let Some(command) = preprocessor.pop_queue() {
-    ///     dbg!(command.clone());
     ///     assert_eq!(command, expecteds.pop_front().unwrap());
     /// }
     /// ```
