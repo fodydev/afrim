@@ -454,6 +454,38 @@ impl Cursor {
         })
     }
 
+    /// Resumes at the current sequence.
+    ///
+    /// By removing the end marker of the current sequence, this method allows the cursor
+    /// to continue using it as an ongoing sequence.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use afrim_memory::{Cursor, Node};
+    /// use std::rc::Rc;
+    ///
+    /// let text_buffer = Node::default();
+    /// text_buffer.insert(vec!['c', '_'], "ç".to_owned());
+    /// let memory = Rc::new(text_buffer);
+    ///
+    /// let mut cursor = Cursor::new(memory, 8);
+    /// cursor.hit('c');
+    /// cursor.hit('c');
+    /// cursor.undo();
+    /// assert_eq!(cursor.to_sequence(), vec!['\0', 'c', '\0']);
+    ///
+    /// // We want the next hit to reuse this sequence.
+    /// cursor.resume();
+    /// assert_eq!(cursor.to_sequence(), vec!['\0', 'c']);
+    /// assert_eq!(cursor.hit('_'), Some("ç".to_owned()).to_owned());
+    /// ```
+    pub fn resume(&mut self) {
+        if let Some(true) = self.buffer.iter().last().map(|node| node.is_root()) {
+            self.buffer.pop_back();
+        }
+    }
+
     /// Returns the current state of the cursor.
     ///
     /// Permits to know the current position in the memory and also the last hit.
@@ -610,7 +642,15 @@ mod tests {
         undo!(cursor 1);
         assert_eq!(cursor.to_sequence(), vec!['\0', '2', 'i', 'a']);
 
+        // Cursor::resume
+        hit!(cursor 'x');
+        assert_eq!(cursor.to_sequence(), vec!['\0', '2', 'i', 'a', '\0', 'x']);
         undo!(cursor 1);
+        cursor.resume();
+        hit!(cursor 'f');
+        assert_eq!(cursor.to_sequence(), vec!['\0', '2', 'i', 'a', 'f']);
+
+        undo!(cursor 2);
         cursor.hit('e');
         assert_eq!(cursor.to_sequence(), vec!['\0', '2', 'i', 'e']);
 
