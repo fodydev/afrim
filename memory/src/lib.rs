@@ -167,19 +167,12 @@ impl Node {
     /// assert_eq!(node.unwrap().take(), Some("ṫ".to_owned()));
     /// ```
     pub fn insert(&self, sequence: Vec<char>, value: String) {
-        if let Some(character) = sequence.clone().first() {
-            let new_node = Rc::new(Self::new(*character, self.depth + 1));
-
-            self.children
-                .borrow()
-                .get(character)
-                .unwrap_or(&new_node)
-                .insert(sequence.into_iter().skip(1).collect(), value);
-
+        if let Some(character) = sequence.first() {
             self.children
                 .borrow_mut()
                 .entry(*character)
-                .or_insert(new_node);
+                .or_insert_with(|| Rc::new(Self::new(*character, self.depth + 1)))
+                .insert(sequence.into_iter().skip(1).collect(), value);
         } else {
             *self.value.borrow_mut() = Some(value);
         };
