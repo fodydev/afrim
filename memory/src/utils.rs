@@ -64,7 +64,7 @@ pub fn load_data(data: &str) -> Vec<Vec<&str>> {
 pub fn build_map(data: Vec<Vec<&str>>) -> Node {
     let root = Node::default();
 
-    data.iter().for_each(|e| {
+    data.iter().filter(|e| e.len() == 2).for_each(|e| {
         root.insert(e[0].chars().collect(), e[1].to_owned());
     });
 
@@ -88,7 +88,7 @@ mod tests {
     fn test_build_map() {
         use crate::utils;
 
-        let data = vec![vec!["af11", "ɑ̀ɑ̀"], vec!["?.", "ʔ"]];
+        let data = vec![vec!["af11", "ɑ̀ɑ̀"], vec!["?.", "ʔ"], vec![], vec!["c/"]];
         utils::build_map(data);
 
         let data = include_str!("../data/sample.txt");
