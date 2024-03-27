@@ -473,7 +473,12 @@ impl Cursor {
     /// assert_eq!(cursor.hit('_'), Some("ç".to_owned()).to_owned());
     /// ```
     pub fn resume(&mut self) {
-        if let Some(true) = self.buffer.iter().last().map(|node| node.is_root()) {
+        if self
+            .buffer
+            .iter()
+            .last()
+            .map_or(false, |node| node.is_root())
+        {
             self.buffer.pop_back();
         }
     }
