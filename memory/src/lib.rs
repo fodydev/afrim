@@ -382,15 +382,14 @@ impl Cursor {
             .buffer
             .iter()
             .last()
-            .unwrap_or(&Rc::new(Node::default()))
-            .goto(character)
+            .and_then(|node| node.goto(character))
             .or_else(|| {
                 // We end the current sequence
                 self.insert(Rc::new(Node::default()));
                 // and start a new one
                 self.root.goto(character)
             })
-            .unwrap_or(Rc::new(Node::new(character, 0)));
+            .unwrap_or_else(|| Rc::new(Node::new(character, 0)));
 
         let out = node.take();
         self.insert(node);
