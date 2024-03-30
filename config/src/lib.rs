@@ -298,7 +298,7 @@ impl Config {
                         }
                         Data::Simple(value) => {
                             let filepath = config_path
-                                .join(value.clone())
+                                .join(value.to_owned())
                                 .to_str()
                                 .unwrap()
                                 .to_string();
@@ -325,7 +325,7 @@ impl Config {
                         translation.extend(conf.translation.unwrap_or_default());
                     }
                     Data::Simple(_) | Data::Multi(_) => {
-                        translation.insert(key.to_owned(), value.clone());
+                        translation.insert(key.to_owned(), value.to_owned());
                     }
                     Data::Detailed(DetailedData { value, alias }) => {
                         alias.iter().chain([key.to_owned()].iter()).for_each(|e| {
@@ -334,7 +334,7 @@ impl Config {
                     }
                     Data::MoreDetailed(MoreDetailedData { values, alias }) => {
                         alias.iter().chain([key.to_owned()].iter()).for_each(|key| {
-                            translation.insert(key.to_owned(), Data::Multi(values.clone()));
+                            translation.insert(key.to_owned(), Data::Multi(values.to_owned()));
                         });
                     }
                 };
