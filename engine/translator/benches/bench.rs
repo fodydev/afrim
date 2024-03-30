@@ -35,10 +35,15 @@ pub fn translate(c: &mut Criterion) {
     #[cfg(feature = "rhai")]
     {
         let engine = Engine::new();
-        let script = engine
+        let script_a = engine
             .compile("fn translate(input) { [input, \"\", input, false] }")
             .unwrap();
-        translator.register("give_back".to_owned(), script);
+        let script_b = engine
+            .compile("fn translate(input) { [input, \"\", input.len().to_string(), false] }")
+            .unwrap();
+
+        translator.register("give_back".to_owned(), script_a);
+        translator.register("to_length".to_owned(), script_b);
     }
 
     // Generates candidates for testing.
