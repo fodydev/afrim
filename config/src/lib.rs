@@ -298,7 +298,7 @@ impl Config {
                         }
                         Data::Simple(value) => {
                             let filepath = config_path
-                                .join(value.to_owned())
+                                .join(value)
                                 .to_str()
                                 .unwrap()
                                 .to_string();
