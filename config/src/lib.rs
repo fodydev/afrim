@@ -297,11 +297,7 @@ impl Config {
                             translators.extend(conf.translators.unwrap_or_default());
                         }
                         Data::Simple(value) => {
-                            let filepath = config_path
-                                .join(value)
-                                .to_str()
-                                .unwrap()
-                                .to_string();
+                            let filepath = config_path.join(value).to_str().unwrap().to_string();
                             translators.insert(key.to_owned(), Data::Simple(filepath));
                         }
                         _ => Err(anyhow!("{value:?} not allowed in the translator table"))
