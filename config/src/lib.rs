@@ -288,8 +288,11 @@ impl Config {
         {
             let mut translators = IndexMap::new();
 
-            config.translators.unwrap_or_default().iter().try_for_each(
-                |(key, value)| -> Result<()> {
+            config
+                .translators
+                .unwrap_or_default()
+                .into_iter()
+                .try_for_each(|(key, value)| -> Result<()> {
                     match value {
                         Data::File(DataFile { path }) => {
                             let filepath = config_path.join(path);
@@ -298,22 +301,24 @@ impl Config {
                         }
                         Data::Simple(value) => {
                             let filepath = config_path.join(value).to_str().unwrap().to_string();
-                            translators.insert(key.to_owned(), Data::Simple(filepath));
+                            translators.insert(key, Data::Simple(filepath));
                         }
                         _ => Err(anyhow!("{value:?} not allowed in the translator table"))
                             .with_context(|| format!("Invalid configuration file {filepath:?}."))?,
                     };
                     Ok(())
-                },
-            )?;
+                })?;
             config.translators = Some(translators);
         }
 
         // Translation
         let mut translation = IndexMap::new();
 
-        config.translation.unwrap_or_default().iter().try_for_each(
-            |(key, value)| -> Result<()> {
+        config
+            .translation
+            .unwrap_or_default()
+            .into_iter()
+            .try_for_each(|(key, value)| -> Result<()> {
                 match value {
                     Data::File(DataFile { path }) => {
                         let filepath = config_path.join(path);
@@ -321,22 +326,21 @@ impl Config {
                         translation.extend(conf.translation.unwrap_or_default());
                     }
                     Data::Simple(_) | Data::Multi(_) => {
-                        translation.insert(key.to_owned(), value.to_owned());
+                        translation.insert(key, value);
                     }
                     Data::Detailed(DetailedData { value, alias }) => {
-                        alias.iter().chain([key.to_owned()].iter()).for_each(|e| {
+                        alias.iter().chain([key].iter()).for_each(|e| {
                             translation.insert(e.to_owned(), Data::Simple(value.to_owned()));
                         });
                     }
                     Data::MoreDetailed(MoreDetailedData { values, alias }) => {
-                        alias.iter().chain([key.to_owned()].iter()).for_each(|key| {
+                        alias.iter().chain([key].iter()).for_each(|key| {
                             translation.insert(key.to_owned(), Data::Multi(values.to_owned()));
                         });
                     }
                 };
                 Ok(())
-            },
-        )?;
+            })?;
 
         config.translation = Some(translation);
 
