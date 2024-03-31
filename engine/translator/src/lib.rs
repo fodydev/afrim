@@ -358,21 +358,24 @@ impl Translator {
         #[cfg(feature = "rhai")]
         let predicates =
             predicates.chain(self.translators.iter().filter_map(|(_name, translator)| {
-                let data = engine
+                let mut data = engine
                     .call_fn::<Array>(&mut scope, translator, "translate", (input.to_owned(),))
                     .unwrap_or_default();
 
                 (data.len() == 4).then(|| {
-                    let code = data[0].clone().into_string().unwrap();
-                    let remaining_code = data[1].clone().into_string().unwrap();
-                    let texts = data[2]
-                        .clone()
-                        .into_array()
-                        .unwrap_or(vec![data[2].clone()])
-                        .iter()
-                        .map(|e| e.clone().into_string().unwrap())
+                    let code = data.remove(0).into_string().unwrap();
+                    let remaining_code = data.remove(0).into_string().unwrap();
+                    let texts = data.remove(0);
+                    let texts = if texts.is_array() {
+                        texts.into_array().unwrap()
+                    } else {
+                        vec![texts]
+                    };
+                    let texts = texts
+                        .into_iter()
+                        .map(|e| e.into_string().unwrap())
                         .collect();
-                    let translated = data[3].clone().as_bool().unwrap();
+                    let translated = data.remove(0).as_bool().unwrap();
 
                     (1.0, (code, remaining_code, texts, translated))
                 })
