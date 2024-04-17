@@ -12,6 +12,11 @@ use std::{rc::Rc, sync::mpsc, thread};
 
 /// Starts the afrim.
 pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
+    // State.
+    let mut is_ctrl_released = true;
+    let mut idle = false;
+
+    // Configuration of the afrim.
     let memory = utils::build_map(
         config
             .extract_data()
@@ -43,71 +48,59 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
         .into_iter()
         .for_each(|(name, ast)| translator.register(name, ast));
 
-    let mut is_special_pressed = false;
-
     frontend.set_page_size(page_size);
     frontend.update_screen(rdev::display_size().unwrap());
 
     let (tx, rx) = mpsc::channel();
     thread::spawn(move || {
-        let mut idle = false;
-        let mut is_ctrl_released = false;
-
         rdev::listen(move |event| {
-            idle = match event.event_type {
-                EventType::KeyPress(E_Key::Pause) => true,
-                EventType::KeyRelease(E_Key::Pause) => false,
-                EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => {
-                    is_ctrl_released = false;
-                    idle
-                }
-                EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight)
-                    if is_ctrl_released =>
-                {
-                    !idle
-                }
-                EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) => {
-                    is_ctrl_released = true;
-                    idle
-                }
-                _ => idle,
-            };
-            if !idle {
-                tx.send(event)
-                    .unwrap_or_else(|e| eprintln!("Could not send event {:?}", e));
-            }
+            tx.send(event)
+                .unwrap_or_else(|e| eprintln!("Could not send event {:?}", e));
         })
         .expect("Could not listen");
     });
 
     for event in rx.iter() {
         match event.event_type {
-            EventType::MouseMove { x, y } => {
-                frontend.update_position((x, y));
+            // Handling of idle state.
+            EventType::KeyPress(E_Key::Pause) => {
+                idle = true;
             }
-            EventType::KeyPress(E_Key::ControlLeft) => {
-                is_special_pressed = true;
+            EventType::KeyRelease(E_Key::Pause) => {
+                idle = false;
             }
-            EventType::KeyRelease(E_Key::ControlLeft) => {
-                is_special_pressed = false;
+            EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => {
+                is_ctrl_released = false;
             }
-            EventType::KeyRelease(E_Key::ShiftRight) if is_special_pressed => {
+            EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) if is_ctrl_released => {
+                idle = !idle;
+            }
+            EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) => {
+                is_ctrl_released = true;
+            }
+            _ if idle => (),
+            // Handling of special functions.
+            EventType::KeyRelease(E_Key::ShiftRight) if !is_ctrl_released => {
                 frontend.next_predicate()
             }
-            EventType::KeyRelease(E_Key::ShiftLeft) if is_special_pressed => {
+            EventType::KeyRelease(E_Key::ShiftLeft) if !is_ctrl_released => {
                 frontend.previous_predicate()
             }
-            EventType::KeyRelease(E_Key::Space) if is_special_pressed => {
+            EventType::KeyRelease(E_Key::Space) if !is_ctrl_released => {
                 rdev::simulate(&EventType::KeyRelease(E_Key::ControlLeft))
                     .expect("We couldn't cancel the special function key");
-                is_special_pressed = false;
 
                 if let Some((_code, _remaining_code, text)) = frontend.get_selected_predicate() {
                     preprocessor.commit(text.to_owned());
                     frontend.clear_predicates();
                 }
             }
-            _ if is_special_pressed => (),
+            _ if !is_ctrl_released => (),
+            // GUI events.
+            EventType::MouseMove { x, y } => {
+                frontend.update_position((x, y));
+            }
+            // Process events.
             _ => {
                 let (changed, _committed) = preprocessor.process(convert::from_event(event));
 
