@@ -48,8 +48,8 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
         .into_iter()
         .for_each(|(name, ast)| translator.register(name, ast));
 
-    frontend.set_page_size(page_size);
-    frontend.update_screen(rdev::display_size().unwrap());
+    frontend.set_max_predicates(page_size);
+    frontend.set_screen_size(rdev::display_size().unwrap());
 
     let (tx, rx) = mpsc::channel();
     thread::spawn(move || {
@@ -81,10 +81,10 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
             _ if idle => (),
             // Handling of special functions.
             EventType::KeyRelease(E_Key::ShiftRight) if !is_ctrl_released => {
-                frontend.next_predicate()
+                frontend.select_next_predicate()
             }
             EventType::KeyRelease(E_Key::ShiftLeft) if !is_ctrl_released => {
-                frontend.previous_predicate()
+                frontend.select_previous_predicate()
             }
             EventType::KeyRelease(E_Key::Space) if !is_ctrl_released => {
                 rdev::simulate(&EventType::KeyRelease(E_Key::ControlLeft))
@@ -98,13 +98,13 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
                             .unwrap_or(&String::default())
                             .to_owned(),
                     );
-                    frontend.clear_predicates();
+                    frontend.clear_all_predicates();
                 }
             }
             _ if !is_ctrl_released => (),
             // GUI events.
             EventType::MouseMove { x, y } => {
-                frontend.update_position((x, y));
+                frontend.set_position((x, y));
             }
             // Process events.
             _ => {
@@ -113,7 +113,7 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
                 if changed {
                     let input = preprocessor.get_input();
 
-                    frontend.clear_predicates();
+                    frontend.clear_all_predicates();
 
                     translator
                         .translate(&input)
@@ -128,8 +128,8 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
                             }
                         });
 
-                    frontend.set_input(&input);
-                    frontend.display();
+                    frontend.set_input_text(&input);
+                    frontend.update_display();
                 }
             }
         }
