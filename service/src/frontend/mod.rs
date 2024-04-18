@@ -1,0 +1,46 @@
+#![deny(missing_docs)]
+//! API to develop a frontend interface for the afrim.
+//!
+
+mod console;
+mod message;
+
+pub use afrim_translator::Predicate;
+use anyhow::Result;
+pub use console::Console;
+pub use message::Command;
+use std::sync::mpsc::{Receiver, Sender};
+
+/// Trait that every afrim frontend should implement.
+pub trait Frontend {
+    /// Sets the tx/rx channels for the communication.
+    fn set_channel(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>);
+    /// Starts listening for commands.
+    fn listen(&mut self) -> Result<()>;
+}
+
+/// This frontend do nothing.
+pub struct None;
+
+impl Frontend for None {
+    fn set_channel(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>) {}
+    fn listen(&mut self) -> Result<()> {
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::frontend::Frontend;
+    use std::sync::mpsc;
+
+    #[test]
+    fn test_none() {
+        use crate::frontend::None;
+
+        let mut none = None;
+        let (tx, rx) = mpsc::channel();
+        none.set_channel(tx, rx);
+        assert!(none.listen().is_ok());
+    }
+}

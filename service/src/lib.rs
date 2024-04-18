@@ -2,16 +2,19 @@ mod convert;
 pub mod frontend;
 
 pub use afrim_config::Config;
-use afrim_preprocessor::{utils, Command, Preprocessor};
+use afrim_preprocessor::{utils, Command as EventCmd, Preprocessor};
 use afrim_translator::Translator;
 use anyhow::{Context, Result};
 use enigo::{Enigo, Key, KeyboardControllable};
-use frontend::Frontend;
+use frontend::{Command as GUICmd, Frontend};
 use rdev::{self, EventType, Key as E_Key};
 use std::{rc::Rc, sync::mpsc, thread};
 
 /// Starts the afrim.
-pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
+pub fn run(
+    config: Config,
+    mut frontend: impl Frontend + std::marker::Send + 'static,
+) -> Result<()> {
     // State.
     let mut is_ctrl_released = true;
     let mut idle = false;
@@ -48,32 +51,51 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
         .into_iter()
         .for_each(|(name, ast)| translator.register(name, ast));
 
-    frontend.set_max_predicates(page_size);
-    frontend.set_screen_size(rdev::display_size().unwrap());
+    // Configuration of the frontend.
+    let (frontend_tx1, frontend_rx1) = mpsc::channel();
+    let (frontend_tx2, frontend_rx2) = mpsc::channel();
 
-    let (tx, rx) = mpsc::channel();
+    frontend_tx1.send(GUICmd::PageSize(page_size))?;
+    let screen_size = rdev::display_size().unwrap();
+    frontend_tx1.send(GUICmd::ScreenSize(screen_size))?;
+
+    thread::spawn(move || {
+        frontend.set_channel(frontend_tx2, frontend_rx1);
+        frontend
+            .listen()
+            .context("Problem of handling GUI commands.")
+            .unwrap_or_else(|e| eprintln!("{:?}", e));
+    });
+
+    // Configuration of the event listener.
+    let (event_tx, event_rx) = mpsc::channel();
     thread::spawn(move || {
         rdev::listen(move |event| {
-            tx.send(event)
+            event_tx
+                .send(event)
                 .unwrap_or_else(|e| eprintln!("Could not send event {:?}", e));
         })
         .expect("Could not listen");
     });
 
-    for event in rx.iter() {
+    // We process event.
+    for event in event_rx.iter() {
         match event.event_type {
             // Handling of idle state.
             EventType::KeyPress(E_Key::Pause) => {
                 idle = true;
+                frontend_tx1.send(GUICmd::State(idle))?;
             }
             EventType::KeyRelease(E_Key::Pause) => {
                 idle = false;
+                frontend_tx1.send(GUICmd::State(idle))?;
             }
             EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => {
                 is_ctrl_released = false;
             }
             EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) if is_ctrl_released => {
                 idle = !idle;
+                frontend_tx1.send(GUICmd::State(idle))?;
             }
             EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) => {
                 is_ctrl_released = true;
@@ -81,16 +103,17 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
             _ if idle => (),
             // Handling of special functions.
             EventType::KeyRelease(E_Key::ShiftRight) if !is_ctrl_released => {
-                frontend.select_next_predicate()
+                frontend_tx1.send(GUICmd::SelectNextPredicate)?;
             }
             EventType::KeyRelease(E_Key::ShiftLeft) if !is_ctrl_released => {
-                frontend.select_previous_predicate()
+                frontend_tx1.send(GUICmd::SelectPreviousPredicate)?;
             }
             EventType::KeyRelease(E_Key::Space) if !is_ctrl_released => {
                 rdev::simulate(&EventType::KeyRelease(E_Key::ControlLeft))
                     .expect("We couldn't cancel the special function key");
 
-                if let Some(predicate) = frontend.get_selected_predicate() {
+                frontend_tx1.send(GUICmd::SelectedPredicate)?;
+                if let GUICmd::Predicate(predicate) = frontend_rx2.recv()? {
                     preprocessor.commit(
                         predicate
                             .texts
@@ -98,13 +121,13 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
                             .unwrap_or(&String::default())
                             .to_owned(),
                     );
-                    frontend.clear_all_predicates();
+                    frontend_tx1.send(GUICmd::Clear)?;
                 }
             }
             _ if !is_ctrl_released => (),
             // GUI events.
             EventType::MouseMove { x, y } => {
-                frontend.set_position((x, y));
+                frontend_tx1.send(GUICmd::Position((x, y)))?;
             }
             // Process events.
             _ => {
@@ -113,23 +136,25 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
                 if changed {
                     let input = preprocessor.get_input();
 
-                    frontend.clear_all_predicates();
+                    frontend_tx1.send(GUICmd::Clear)?;
 
                     translator
                         .translate(&input)
                         .into_iter()
                         .take(page_size * 2)
-                        .for_each(|predicate| {
+                        .try_for_each(|predicate| -> Result<()> {
                             if predicate.texts.is_empty() {
                             } else if auto_commit && predicate.can_commit {
                                 preprocessor.commit(predicate.texts[0].to_owned());
                             } else {
-                                frontend.add_predicate(predicate);
+                                frontend_tx1.send(GUICmd::Predicate(predicate))?;
                             }
-                        });
 
-                    frontend.set_input_text(&input);
-                    frontend.update_display();
+                            Ok(())
+                        })?;
+
+                    frontend_tx1.send(GUICmd::InputText(input))?;
+                    frontend_tx1.send(GUICmd::Update)?;
                 }
             }
         }
@@ -137,19 +162,19 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
         // Process preprocessor instructions
         while let Some(command) = preprocessor.pop_queue() {
             match command {
-                Command::CommitText(text) => {
+                EventCmd::CommitText(text) => {
                     keyboard.key_sequence(&text);
                 }
-                Command::CleanDelete => {
+                EventCmd::CleanDelete => {
                     keyboard.key_up(Key::Backspace);
                 }
-                Command::Delete => {
+                EventCmd::Delete => {
                     keyboard.key_click(Key::Backspace);
                 }
-                Command::Pause => {
+                EventCmd::Pause => {
                     rdev::simulate(&EventType::KeyPress(E_Key::Pause)).unwrap();
                 }
-                Command::Resume => {
+                EventCmd::Resume => {
                     rdev::simulate(&EventType::KeyRelease(E_Key::Pause)).unwrap();
                 }
             };
