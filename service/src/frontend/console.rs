@@ -13,12 +13,13 @@ pub struct Console {
     predicates: Vec<Predicate>,
     current_predicate_id: usize,
     input: String,
+    idle_state: bool,
     tx: Option<Sender<Command>>,
     rx: Option<Receiver<Command>>,
 }
 
 impl Frontend for Console {
-    fn set_channel(&mut self, tx: Sender<Command>, rx: Receiver<Command>) {
+    fn init(&mut self, tx: Sender<Command>, rx: Receiver<Command>) {
         self.tx = Some(tx);
         self.rx = Some(rx);
     }
@@ -27,6 +28,8 @@ impl Frontend for Console {
         if self.tx.as_ref().and(self.rx.as_ref()).is_none() {
             return Err(anyhow!("you should config the channel first!"));
         }
+
+        let tx = self.tx.clone().unwrap();
 
         loop {
             let command = self.rx.as_ref().unwrap().recv()?;
@@ -40,15 +43,38 @@ impl Frontend for Console {
                 Command::SelectPreviousPredicate => self.select_previous_predicate(),
                 Command::SelectNextPredicate => self.select_next_predicate(),
                 Command::SelectedPredicate => {
-                    let tx = self.tx.as_ref().unwrap();
-
                     if let Some(predicate) = self.get_selected_predicate() {
                         tx.send(Command::Predicate(predicate.to_owned()))?;
                     } else {
                         tx.send(Command::NoPredicate)?;
                     }
                 }
-                Command::End => return Ok(()),
+                Command::NOP => {
+                    match self.input.as_str() {
+                        // `_state_` is reserved to test the idle state from the console frontend,
+                        // since there is no way to toggle it.
+                        "_state_" if !self.idle_state => {
+                            tx.send(Command::State(true))?;
+                        }
+                        "_state_" if self.idle_state => {
+                            tx.send(Command::State(false))?;
+                            self.input = String::default();
+                        }
+                        "_exit_" => {
+                            tx.send(Command::End)?;
+
+                            return Ok(());
+                        }
+                        _ => {
+                            tx.send(Command::NOP)?;
+                        }
+                    };
+                }
+                Command::End => {
+                    tx.send(Command::End)?;
+
+                    return Ok(());
+                }
                 _ => (),
             }
         }
@@ -93,7 +119,7 @@ impl Console {
         self.current_predicate_id = 0;
         self.input = String::default();
     }
-=
+
     fn set_max_predicates(&mut self, size: usize) {
         self.page_size = size;
         self.predicates = Vec::with_capacity(size);
@@ -140,7 +166,9 @@ impl Console {
     }
 
     fn set_state(&mut self, state: bool) {
-        let state = if state { "resumed" } else { "paused" };
+        self.idle_state = state;
+        let state = if state { "paused" } else { "resumed" };
+
         println!("state: {state}");
     }
 }
@@ -151,16 +179,23 @@ mod tests {
     fn test_console() {
         use crate::frontend::{Command, Console, Frontend, Predicate};
         use std::sync::mpsc;
+        use std::thread;
 
         let mut console = Console::default();
+        assert!(console.listen().is_err());
         let (tx1, rx1) = mpsc::channel();
         let (tx2, rx2) = mpsc::channel();
-        assert!(console.listen().is_err());
-        console.set_channel(tx2, rx1);
+
+        let console_thread = thread::spawn(move || {
+            console.init(tx2, rx1);
+            console.listen().unwrap();
+        });
+
+        tx1.send(Command::NOP).unwrap();
+        assert_eq!(rx2.recv().unwrap(), Command::NOP);
 
         tx1.send(Command::PageSize(10)).unwrap();
         tx1.send(Command::InputText("he".to_owned())).unwrap();
-        tx1.send(Command::State(true)).unwrap();
         tx1.send(Command::Predicate(Predicate {
             code: "hell".to_owned(),
             remaining_code: "llo".to_owned(),
@@ -189,15 +224,10 @@ mod tests {
             can_commit: false,
         }))
         .unwrap();
-        tx1.send(Command::End).unwrap();
-        console.listen().unwrap();
-        assert_eq!(console.predicates.len(), 2);
 
         tx1.send(Command::Update).unwrap();
         tx1.send(Command::SelectPreviousPredicate).unwrap();
         tx1.send(Command::SelectedPredicate).unwrap();
-        tx1.send(Command::End).unwrap();
-        console.listen().unwrap();
         assert_eq!(
             rx2.recv().unwrap(),
             Command::Predicate(Predicate {
@@ -210,8 +240,6 @@ mod tests {
 
         tx1.send(Command::SelectNextPredicate).unwrap();
         tx1.send(Command::SelectedPredicate).unwrap();
-        tx1.send(Command::End).unwrap();
-        console.listen().unwrap();
         assert_eq!(
             rx2.recv().unwrap(),
             Command::Predicate(Predicate {
@@ -226,8 +254,48 @@ mod tests {
         tx1.send(Command::SelectPreviousPredicate).unwrap();
         tx1.send(Command::SelectNextPredicate).unwrap();
         tx1.send(Command::SelectedPredicate).unwrap();
-        tx1.send(Command::End).unwrap();
-        console.listen().unwrap();
         assert_eq!(rx2.recv().unwrap(), Command::NoPredicate);
+
+        // End of communication.
+        tx1.send(Command::InputText("_exit_".to_owned())).unwrap();
+        tx1.send(Command::NOP).unwrap();
+        assert_eq!(rx2.recv().unwrap(), Command::End);
+
+        // Wait the console to end properly.
+        console_thread.join().unwrap();
+        assert!(tx1.send(Command::NOP).is_err() && rx2.recv().is_err());
+    }
+
+    // Test to increase the coverage.
+    #[test]
+    fn test_console_optional() {
+        use crate::frontend::{Command, Console, Frontend};
+        use std::sync::mpsc;
+        use std::thread;
+
+        let mut console = Console::default();
+        let (tx1, rx1) = mpsc::channel();
+        let (tx2, rx2) = mpsc::channel();
+
+        let console_thread = thread::spawn(move || {
+            console.init(tx2, rx1);
+            console.listen().unwrap();
+        });
+
+        tx1.send(Command::InputText("_state_".to_owned())).unwrap();
+        tx1.send(Command::NOP).unwrap();
+        assert_eq!(rx2.recv().unwrap(), Command::State(true));
+        tx1.send(Command::State(true)).unwrap();
+        tx1.send(Command::NOP).unwrap();
+        assert_eq!(rx2.recv().unwrap(), Command::State(false));
+        tx1.send(Command::State(false)).unwrap();
+        tx1.send(Command::NOP).unwrap();
+        assert_eq!(rx2.recv().unwrap(), Command::NOP);
+
+        tx1.send(Command::End).unwrap();
+        assert_eq!(rx2.recv().unwrap(), Command::End);
+
+        // Wait the console to end properly.
+        console_thread.join().unwrap();
     }
 }

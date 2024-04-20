@@ -12,9 +12,13 @@ pub use message::Command;
 use std::sync::mpsc::{Receiver, Sender};
 
 /// Trait that every afrim frontend should implement.
+///
+/// Note that:
+/// - the backend can send multiple command at once.
+/// - the frontend should send only one command at once.
 pub trait Frontend {
-    /// Sets the tx/rx channels for the communication.
-    fn set_channel(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>);
+    /// Initialize the frontend for the communication.
+    fn init(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>);
     /// Starts listening for commands.
     fn listen(&mut self) -> Result<()>;
 }
@@ -23,7 +27,7 @@ pub trait Frontend {
 pub struct None;
 
 impl Frontend for None {
-    fn set_channel(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>) {}
+    fn init(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>) {}
     fn listen(&mut self) -> Result<()> {
         Ok(())
     }
@@ -40,7 +44,7 @@ mod tests {
 
         let mut none = None;
         let (tx, rx) = mpsc::channel();
-        none.set_channel(tx, rx);
+        none.init(tx, rx);
         assert!(none.listen().is_ok());
     }
 }

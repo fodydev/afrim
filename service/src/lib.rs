@@ -59,11 +59,11 @@ pub fn run(
     let screen_size = rdev::display_size().unwrap();
     frontend_tx1.send(GUICmd::ScreenSize(screen_size))?;
 
-    thread::spawn(move || {
-        frontend.set_channel(frontend_tx2, frontend_rx1);
+    let frontend_thread = thread::spawn(move || {
+        frontend.init(frontend_tx2, frontend_rx1);
         frontend
             .listen()
-            .context("Problem of handling GUI commands.")
+            .context("The frontend raise an unexpected error.")
             .unwrap_or_else(|e| eprintln!("{:?}", e));
     });
 
@@ -80,6 +80,20 @@ pub fn run(
 
     // We process event.
     for event in event_rx.iter() {
+        // Consult the frontend to know if there have some requests.
+        frontend_tx1.send(GUICmd::NOP)?;
+        match frontend_rx2.recv()? {
+            GUICmd::End => break,
+            GUICmd::State(state) => {
+                if state {
+                    rdev::simulate(&EventType::KeyPress(E_Key::Pause)).unwrap();
+                } else {
+                    rdev::simulate(&EventType::KeyRelease(E_Key::Pause)).unwrap();
+                }
+            }
+            _ => (),
+        }
+
         match event.event_type {
             // Handling of idle state.
             EventType::KeyPress(E_Key::Pause) => {
@@ -181,6 +195,9 @@ pub fn run(
         }
     }
 
+    // Wait the frontend to end properly.
+    frontend_thread.join().unwrap();
+
     Ok(())
 }
 
@@ -221,16 +238,6 @@ mod tests {
         };
     }
 
-    fn start_afrim() {
-        use std::path::Path;
-
-        let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
-
-        thread::spawn(move || {
-            run(test_config, Console::default()).unwrap();
-        });
-    }
-
     fn start_sandbox(start_point: &str) -> rstk::TkText {
         let root = rstk::trace_with("wish").unwrap();
         root.title("Afrim Test Environment");
@@ -251,15 +258,15 @@ mod tests {
         input_field
     }
 
-    #[test]
-    fn test_simple() {
+    fn end_sandbox() {
+        rstk::end_wish();
+    }
+
+    fn start_simulation() {
         let typing_speed_ms = Duration::from_millis(500);
 
         // To detect excessive backspace
         const LIMIT: &str = "bbb";
-
-        // Start the afrim
-        start_afrim();
 
         // Start the sandbox
         let textfield = start_sandbox(LIMIT);
@@ -349,5 +356,42 @@ mod tests {
         // between the translator and the processor
         input!(KeyV KeyU KeyU KeyE, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohealthvʉe"));
+
+        // Test the idle state from the frontend.
+        input!(Escape Num8 KeyS KeyT KeyQ KeyT KeyE Num8, typing_speed_ms);
+        input!(Escape, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(Minus, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+        input!(KeyS KeyT KeyA KeyT KeyE, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(Minus, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+
+        // End the test
+        input!(Escape Num8 KeyE KeyX KeyI KeyT Num8, typing_speed_ms);
+        input!(Escape, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(Minus, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+        input!(KeyE KeyX KeyI KeyT, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(Minus, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+
+        end_sandbox();
+    }
+
+    #[test]
+    fn test_afrim() {
+        use std::path::Path;
+
+        let simulation_thread = thread::spawn(start_simulation);
+
+        let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
+        assert!(run(test_config, Console::default()).is_ok());
+
+        // Wait the simulation to end properly.
+        simulation_thread.join().unwrap();
     }
 }
