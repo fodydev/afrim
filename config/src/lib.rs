@@ -1,7 +1,7 @@
 #![deny(missing_docs)]
 //! Library to manage the configuration of the afrim input method.
 //!
-//! It's based on the top of the [`toml`](toml) crate.
+//! It's based on the top of the [`toml`] crate.
 //!
 //! # Example
 //!
@@ -19,7 +19,7 @@
 //! ```
 //!
 //! In case that you want control the filesystem (reading of file), you can use the
-//! [`Config::from_filesystem`](crate::Config::from_filesystem) method.
+//! [`Config::from_filesystem`] method.
 //!
 //! # Example
 //!

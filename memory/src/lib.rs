@@ -229,7 +229,7 @@ impl Node {
 
     /// Returns true is the node is at the initial depth.
     ///
-    /// Useful when dealing with the [`Cursor`](crate::Cursor).
+    /// Useful when dealing with the [`Cursor`].
     /// Will permit to know the beginning and the end of a sequence.
     ///
     /// # Example
