@@ -151,6 +151,7 @@ use strsim::{self};
 
 /// Struct representing the predicate.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Predicate {
     /// The predicate code.
     pub code: String,
