@@ -19,9 +19,11 @@ pub struct Console {
 }
 
 impl Frontend for Console {
-    fn init(&mut self, tx: Sender<Command>, rx: Receiver<Command>) {
+    fn init(&mut self, tx: Sender<Command>, rx: Receiver<Command>) -> Result<()> {
         self.tx = Some(tx);
         self.rx = Some(rx);
+
+        Ok(())
     }
 
     fn listen(&mut self) -> Result<()> {
@@ -187,7 +189,7 @@ mod tests {
         let (tx2, rx2) = mpsc::channel();
 
         let console_thread = thread::spawn(move || {
-            console.init(tx2, rx1);
+            assert!(console.init(tx2, rx1).is_ok());
             console.listen().unwrap();
         });
 

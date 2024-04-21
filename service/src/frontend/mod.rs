@@ -18,7 +18,7 @@ use std::sync::mpsc::{Receiver, Sender};
 /// - the frontend should send only one command at once.
 pub trait Frontend {
     /// Initialize the frontend for the communication.
-    fn init(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>);
+    fn init(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>) -> Result<()>;
     /// Starts listening for commands.
     fn listen(&mut self) -> Result<()>;
 }
@@ -27,7 +27,9 @@ pub trait Frontend {
 pub struct None;
 
 impl Frontend for None {
-    fn init(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>) {}
+    fn init(&mut self, _tx: Sender<Command>, _rx: Receiver<Command>) -> Result<()> {
+        Ok(())
+    }
     fn listen(&mut self) -> Result<()> {
         Ok(())
     }
@@ -44,7 +46,7 @@ mod tests {
 
         let mut none = None;
         let (tx, rx) = mpsc::channel();
-        none.init(tx, rx);
+        assert!(none.init(tx, rx).is_ok());
         assert!(none.listen().is_ok());
     }
 }

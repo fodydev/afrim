@@ -60,11 +60,14 @@ pub fn run(
     frontend_tx1.send(GUICmd::ScreenSize(screen_size))?;
 
     let frontend_thread = thread::spawn(move || {
-        frontend.init(frontend_tx2, frontend_rx1);
+        frontend
+            .init(frontend_tx2, frontend_rx1)
+            .context("Failure to initialize the frontend.")
+            .unwrap();
         frontend
             .listen()
             .context("The frontend raise an unexpected error.")
-            .unwrap_or_else(|e| eprintln!("{:?}", e));
+            .unwrap();
     });
 
     // Configuration of the event listener.
