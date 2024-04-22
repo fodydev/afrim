@@ -10,10 +10,6 @@ Afrim ⌨️
 
   Afrim is an input method for African languages. It is designed to protect the native language of various local dialects of Africa and is a universal phonetic-based input method platform.
 
-License
----
-  [MIT](LICENSE) license.
-
 History
 ---
 AFRIM is the abbreviation of *AFRICA IME* or *Africa Input Method Engine*.
@@ -88,6 +84,11 @@ Try it in the console
 
   🧑🏿‍🤝‍🧑🏿 Community:
   - Feel free to propose your own.
+
+Licence
+===
+
+All the code in this repository is released under the Mozilla Public License v2.0, for more information take a look at the [LICENSE](LICENSE) file.
 
 Contributing
 ===
