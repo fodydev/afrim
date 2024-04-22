@@ -23,9 +23,9 @@ jobs:
         - os: ubuntu-latest
           headless: Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         - os: macos-latest
-          extra: -- --skip test_simple
+          extra: -- --skip test_afrim
         - os: windows-latest
-          extra: -- --skip test_simple
+          extra: -- --skip test_afrim
 
     steps:
       - uses: actions/checkout@v3
