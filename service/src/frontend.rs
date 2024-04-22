@@ -2,6 +2,8 @@
 //! API to develop a frontend interface for the afrim.
 //!
 
+pub use afrim_translator::Predicate;
+
 /// Trait that every afrim frontend should implement.
 pub trait Frontend {
     /// Updates the frontend screen size.
@@ -13,7 +15,7 @@ pub trait Frontend {
     /// Sets the maximun number of predicates to be display.
     fn set_page_size(&mut self, _size: usize) {}
     /// Adds a predicate in the list of predicates.
-    fn add_predicate(&mut self, _code: &str, _remaining_code: &str, _text: &str) {}
+    fn add_predicate(&mut self, _predicate: Predicate) {}
     /// Refreshs the display.
     fn display(&self) {}
     /// Clears the list of predicates.
@@ -23,7 +25,7 @@ pub trait Frontend {
     /// Selects the next predicate.
     fn next_predicate(&mut self) {}
     /// Returns the selected predicate.
-    fn get_selected_predicate(&self) -> Option<&(String, String, String)> {
+    fn get_selected_predicate(&self) -> Option<&Predicate> {
         Option::None
     }
 }
@@ -37,7 +39,7 @@ impl Frontend for None {}
 #[derive(Default)]
 pub struct Console {
     page_size: usize,
-    predicates: Vec<(String, String, String)>,
+    predicates: Vec<Predicate>,
     current_predicate_id: usize,
     input: String,
 }
@@ -66,17 +68,19 @@ impl Frontend for Console {
                 .chain(self.predicates.iter().enumerate())
                 .skip(self.current_predicate_id)
                 .take(page_size)
-                .map(|(id, (_code, remaining_code, text))| format!(
-                    "{}{}. {} ~{}\t ",
-                    if id == self.current_predicate_id {
-                        "*"
-                    } else {
-                        ""
-                    },
-                    id + 1,
-                    text,
-                    remaining_code
-                ))
+                .map(|(id, predicate)| {
+                    format!(
+                        "{}{}. {} ~{}\t ",
+                        if id == self.current_predicate_id {
+                            "*"
+                        } else {
+                            ""
+                        },
+                        id + 1,
+                        predicate.texts[0],
+                        predicate.remaining_code
+                    )
+                })
                 .collect::<Vec<_>>()
                 .join("\t")
         );
@@ -87,9 +91,17 @@ impl Frontend for Console {
         self.current_predicate_id = 0;
     }
 
-    fn add_predicate(&mut self, code: &str, remaining_code: &str, text: &str) {
-        self.predicates
-            .push((code.to_owned(), remaining_code.to_owned(), text.to_owned()));
+    fn add_predicate(&mut self, predicate: Predicate) {
+        predicate
+            .texts
+            .iter()
+            .filter(|text| !text.is_empty())
+            .for_each(|text| {
+                let mut predicate = predicate.clone();
+                predicate.texts = vec![text.to_owned()];
+
+                self.predicates.push(predicate);
+            });
     }
 
     fn previous_predicate(&mut self) {
@@ -111,7 +123,7 @@ impl Frontend for Console {
         self.display();
     }
 
-    fn get_selected_predicate(&self) -> Option<&(String, String, String)> {
+    fn get_selected_predicate(&self) -> Option<&Predicate> {
         self.predicates.get(self.current_predicate_id)
     }
 }
@@ -120,6 +132,7 @@ impl Frontend for Console {
 mod tests {
     #[test]
     fn test_none() {
+        use crate::frontend::Predicate;
         use crate::frontend::{Frontend, None};
 
         let mut none = None;
@@ -128,7 +141,7 @@ mod tests {
         none.update_position((64.0, 64.0));
         none.set_input("input");
         none.set_page_size(10);
-        none.add_predicate("hey", "y", "hello");
+        none.add_predicate(Predicate::default());
         none.display();
         none.clear_predicates();
         none.previous_predicate();
@@ -138,7 +151,7 @@ mod tests {
 
     #[test]
     fn test_console() {
-        use crate::frontend::{Console, Frontend};
+        use crate::frontend::{Console, Frontend, Predicate};
 
         let mut console = Console::default();
         console.set_page_size(10);
@@ -146,19 +159,51 @@ mod tests {
         console.update_position((0.0, 0.0));
         console.set_input("he");
 
-        console.add_predicate("hell", "llo", "hello");
-        console.add_predicate("helip", "lip", "helicopter");
-        console.add_predicate("heal", "al", "health");
+        console.add_predicate(Predicate {
+            code: "hell".to_owned(),
+            remaining_code: "llo".to_owned(),
+            texts: vec!["hello".to_owned()],
+            can_commit: false,
+        });
+        console.add_predicate(Predicate {
+            code: "helip".to_owned(),
+            remaining_code: "lip".to_owned(),
+            texts: vec![],
+            can_commit: false,
+        });
+        console.add_predicate(Predicate {
+            code: "helio".to_owned(),
+            remaining_code: "s".to_owned(),
+            texts: vec!["".to_owned()],
+            can_commit: false,
+        });
+        console.add_predicate(Predicate {
+            code: "heal".to_owned(),
+            remaining_code: "al".to_owned(),
+            texts: vec!["health".to_owned()],
+            can_commit: false,
+        });
+        assert_eq!(console.predicates.len(), 2);
         console.display();
         console.previous_predicate();
         assert_eq!(
             console.get_selected_predicate(),
-            Some(&("heal".to_owned(), "al".to_owned(), "health".to_owned()))
+            Some(&Predicate {
+                code: "heal".to_owned(),
+                remaining_code: "al".to_owned(),
+                texts: vec!["health".to_owned()],
+                can_commit: false
+            })
         );
         console.next_predicate();
         assert_eq!(
             console.get_selected_predicate(),
-            Some(&("hell".to_owned(), "llo".to_owned(), "hello".to_owned()))
+            Some(&Predicate {
+                code: "hell".to_owned(),
+                remaining_code: "llo".to_owned(),
+                texts: vec!["hello".to_owned()],
+                can_commit: false
+            })
         );
 
         console.clear_predicates();

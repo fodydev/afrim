@@ -20,7 +20,7 @@
 //! # Example
 //!
 //! ```
-//! use afrim_translator::Translator;
+//! use afrim_translator::{Predicate, Translator};
 //! use indexmap::IndexMap;
 //!
 //! // Prepares the dictionary.
@@ -35,19 +35,19 @@
 //! assert_eq!(
 //!     translator.translate("jump"),
 //!     vec![
-//!         (
-//!             "jump".to_owned(),
-//!             "".to_owned(),
-//!             vec!["sauter".to_owned()],
-//!             true
-//!         ),
+//!         Predicate {
+//!             code: "jump".to_owned(),
+//!             remaining_code: "".to_owned(),
+//!             texts: vec!["sauter".to_owned()],
+//!             can_commit: true
+//!         },
 //!         // Auto-completion.
-//!         (
-//!             "jumper".to_owned(),
-//!             "er".to_owned(),
-//!             vec!["sauteur".to_owned()],
-//!             false
-//!         )
+//!         Predicate {
+//!             code: "jumper".to_owned(),
+//!             remaining_code: "er".to_owned(),
+//!             texts: vec!["sauteur".to_owned()],
+//!             can_commit: false
+//!         }
 //!     ]
 //! );
 //! ```
@@ -55,7 +55,7 @@
 //! # Example with the strsim feature
 //!
 //! ```
-//! use afrim_translator::Translator;
+//! use afrim_translator::{Predicate, Translator};
 //! use indexmap::IndexMap;
 //!
 //! // Prepares the dictionary.
@@ -70,12 +70,12 @@
 //! #[cfg(feature = "strsim")]
 //! assert_eq!(
 //!     translator.translate("junp"),
-//!     vec![(
-//!         "jump".to_owned(),
-//!         "".to_owned(),
-//!         vec!["sauter".to_owned()],
-//!         false
-//!     )]
+//!     vec![Predicate {
+//!         code: "jump".to_owned(),
+//!         remaining_code: "".to_owned(),
+//!         texts: vec!["sauter".to_owned()],
+//!         can_commit: false
+//!     }]
 //! );
 //! ```
 //!
@@ -84,7 +84,7 @@
 //! ```
 //! #[cfg(feature = "rhai")]
 //! use afrim_translator::Engine;
-//! use afrim_translator::Translator;
+//! use afrim_translator::{Translator, Predicate};
 //! use indexmap::IndexMap;
 //!
 //! // Prepares the dictionary.
@@ -115,27 +115,27 @@
 //! assert_eq!(
 //!     translator.translate("jump"),
 //!     vec![
-//!         (
-//!             "jump".to_owned(),
-//!             "".to_owned(),
-//!             vec!["sauter".to_owned()],
-//!             true
-//!         ),
+//!         Predicate {
+//!             code: "jump".to_owned(),
+//!             remaining_code: "".to_owned(),
+//!             texts: vec!["sauter".to_owned()],
+//!             can_commit: true
+//!         },
 //!         #[cfg(feature = "rhai")]
 //!         // Programmable translation.
-//!         (
-//!             "jump".to_owned(),
-//!             "".to_owned(),
-//!             vec!["\n".to_owned()],
-//!             false
-//!         ),
+//!         Predicate {
+//!             code: "jump".to_owned(),
+//!             remaining_code: "".to_owned(),
+//!             texts: vec!["\n".to_owned()],
+//!             can_commit: false
+//!         },
 //!         // Auto-completion.
-//!         (
-//!             "jumper".to_owned(),
-//!             "er".to_owned(),
-//!             vec!["sauteur".to_owned()],
-//!             false
-//!         )
+//!         Predicate {
+//!             code: "jumper".to_owned(),
+//!             remaining_code: "er".to_owned(),
+//!             texts: vec!["sauteur".to_owned()],
+//!             can_commit: false
+//!         }
 //!     ]
 //! );
 //! ```
@@ -149,7 +149,19 @@ use std::cmp::Ordering;
 #[cfg(feature = "strsim")]
 use strsim::{self};
 
-type P = (String, String, Vec<String>, bool);
+/// Struct representing the predicate.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Predicate {
+    /// The predicate code.
+    pub code: String,
+    /// The remaining code to match the predicate.
+    pub remaining_code: String,
+    /// The resulting predicate possible outputs.
+    pub texts: Vec<String>,
+    /// Whether the predicate can be commit.
+    pub can_commit: bool,
+}
 
 /// Core structure of the translator.
 pub struct Translator {
@@ -189,7 +201,7 @@ impl Translator {
     /// # Example
     ///
     /// ```
-    /// use afrim_translator::{Engine, Translator};
+    /// use afrim_translator::{Engine, Predicate, Translator};
     /// use indexmap::IndexMap;
     ///
     /// // We prepare the script.
@@ -240,8 +252,12 @@ impl Translator {
     /// assert_eq!(
     ///     translator.translate("09/02/2024"),
     ///     vec![
-    ///         ("09/02/2024".to_owned(), "".to_owned(),
-    ///         vec!["9, Feb 2024".to_owned()], true)
+    ///         Predicate {
+    ///             code: "09/02/2024".to_owned(),
+    ///             remaining_code: "".to_owned(),
+    ///             texts: vec!["9, Feb 2024".to_owned()],
+    ///             can_commit: true
+    ///         }
     ///     ]
     /// );
     /// ```
@@ -254,7 +270,7 @@ impl Translator {
     ///
     /// # Example
     /// ```
-    /// use afrim_translator::{Engine, Translator};
+    /// use afrim_translator::{Engine, Predicate, Translator};
     /// use indexmap::IndexMap;
     ///
     /// // We prepare the script.
@@ -266,7 +282,17 @@ impl Translator {
     ///
     /// // We register the erase translator.
     /// translator.register("erase".to_owned(), erase_translator);
-    /// assert_eq!(translator.translate("hello"), vec![("hello".to_owned(), "".to_owned(), vec![], true)]);
+    /// assert_eq!(
+    ///     translator.translate("hello"),
+    ///     vec![
+    ///         Predicate {
+    ///             code: "hello".to_owned(),
+    ///             remaining_code: "".to_owned(),
+    ///             texts: vec![],
+    ///             can_commit: true
+    ///         }
+    ///     ]
+    /// );
     ///
     /// // We unregister the erase translator.
     /// translator.unregister("erase");
@@ -282,7 +308,7 @@ impl Translator {
     ///
     /// ```
     /// use indexmap::IndexMap;
-    /// use afrim_translator::Translator;
+    /// use afrim_translator::{Predicate, Translator};
     ///
     /// // We prepares the dictionary.
     /// let mut dictionary = IndexMap::new();
@@ -294,37 +320,39 @@ impl Translator {
     /// assert_eq!(
     ///     translator.translate("sal"),
     ///     vec![
-    ///         (
-    ///             "salut!".to_owned(), "ut!".to_owned(),
-    ///             vec!["hello!".to_owned(), "hi!".to_owned()],
-    ///             false
-    ///         ),
-    ///         (
-    ///             "salade".to_owned(), "ade".to_owned(),
-    ///             vec!["vegetable".to_owned()],
-    ///             false
-    ///         )
+    ///         Predicate {
+    ///             code: "salut!".to_owned(),
+    ///             remaining_code: "ut!".to_owned(),
+    ///             texts: vec!["hello!".to_owned(), "hi!".to_owned()],
+    ///             can_commit: false
+    ///         },
+    ///         Predicate {
+    ///             code: "salade".to_owned(),
+    ///             remaining_code: "ade".to_owned(),
+    ///             texts: vec!["vegetable".to_owned()],
+    ///             can_commit: false
+    ///         }
     ///     ]
     /// )
     /// ```
-    pub fn translate(&self, input: &str) -> Vec<P> {
+    pub fn translate(&self, input: &str) -> Vec<Predicate> {
         #[cfg(feature = "rhai")]
         let mut scope = Scope::new();
         #[cfg(feature = "rhai")]
         let engine = Engine::new();
-        let predicates = self.dictionary.iter().filter_map(|(key, value)| {
+        let predicates = self.dictionary.iter().filter_map(|(key, values)| {
             if input.len() < 2 || input.len() > key.len() || key[0..1] != input[0..1] {
                 return None;
             };
 
             let predicate = (key == input).then_some((
                 1.0,
-                (
-                    key.to_owned(),
-                    "".to_owned(),
-                    value.to_owned(),
-                    self.auto_commit,
-                ),
+                Predicate {
+                    code: key.to_owned(),
+                    remaining_code: "".to_owned(),
+                    texts: values.to_owned(),
+                    can_commit: self.auto_commit,
+                },
             ));
             #[cfg(feature = "strsim")]
             let predicate = predicate.or_else(|| {
@@ -336,7 +364,12 @@ impl Translator {
                     (confidence > 0.7).then(|| {
                         (
                             confidence,
-                            (key.to_owned(), "".to_owned(), value.to_owned(), false),
+                            Predicate {
+                                code: key.to_owned(),
+                                remaining_code: "".to_owned(),
+                                texts: values.to_owned(),
+                                can_commit: false,
+                            },
                         )
                     })
                 } else {
@@ -346,12 +379,12 @@ impl Translator {
             predicate.or_else(|| {
                 key.starts_with(input).then_some((
                     0.5,
-                    (
-                        key.to_owned(),
-                        key.chars().skip(input.len()).collect(),
-                        value.to_owned(),
-                        false,
-                    ),
+                    Predicate {
+                        code: key.to_owned(),
+                        remaining_code: key.chars().skip(input.len()).collect(),
+                        texts: values.to_owned(),
+                        can_commit: false,
+                    },
                 ))
             })
         });
@@ -365,22 +398,30 @@ impl Translator {
                 (data.len() == 4).then(|| {
                     let code = data.remove(0).into_string().unwrap();
                     let remaining_code = data.remove(0).into_string().unwrap();
-                    let texts = data.remove(0);
-                    let texts = if texts.is_array() {
-                        texts.into_array().unwrap()
+                    let value = data.remove(0);
+                    let values = if value.is_array() {
+                        value.into_array().unwrap()
                     } else {
-                        vec![texts]
+                        vec![value]
                     };
-                    let texts = texts
+                    let values = values
                         .into_iter()
                         .map(|e| e.into_string().unwrap())
                         .collect();
                     let translated = data.remove(0).as_bool().unwrap();
 
-                    (1.0, (code, remaining_code, texts, translated))
+                    (
+                        1.0,
+                        Predicate {
+                            code,
+                            remaining_code,
+                            texts: values,
+                            can_commit: translated,
+                        },
+                    )
                 })
             }));
-        let mut predicates = predicates.collect::<Vec<(f64, P)>>();
+        let mut predicates = predicates.collect::<Vec<(f64, Predicate)>>();
 
         // from the best to the worst
         predicates.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
@@ -398,7 +439,7 @@ mod tests {
     fn test_translate() {
         #[cfg(feature = "rhai")]
         use crate::Engine;
-        use crate::Translator;
+        use crate::{Predicate, Translator};
         use indexmap::IndexMap;
 
         // We build the translation
@@ -436,31 +477,31 @@ mod tests {
         #[cfg(feature = "rhai")]
         assert_eq!(
             translator.translate("hi"),
-            vec![(
-                "hi".to_owned(),
-                "".to_owned(),
-                vec!["hello".to_owned()],
-                true
-            )]
+            vec![Predicate {
+                code: "hi".to_owned(),
+                remaining_code: "".to_owned(),
+                texts: vec!["hello".to_owned()],
+                can_commit: true
+            }]
         );
         assert_eq!(
             translator.translate("ha"),
-            vec![(
-                "halo".to_owned(),
-                "lo".to_owned(),
-                vec!["hello".to_owned()],
-                false
-            )]
+            vec![Predicate {
+                code: "halo".to_owned(),
+                remaining_code: "lo".to_owned(),
+                texts: vec!["hello".to_owned()],
+                can_commit: false
+            }]
         );
         #[cfg(feature = "strsim")]
         assert_eq!(
             translator.translate("helo"),
-            vec![(
-                "halo".to_owned(),
-                "".to_owned(),
-                vec!["hello".to_owned()],
-                false
-            )]
+            vec![Predicate {
+                code: "halo".to_owned(),
+                remaining_code: "".to_owned(),
+                texts: vec!["hello".to_owned()],
+                can_commit: false
+            }]
         );
     }
 }

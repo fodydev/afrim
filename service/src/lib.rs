@@ -90,8 +90,14 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
                 rdev::simulate(&EventType::KeyRelease(E_Key::ControlLeft))
                     .expect("We couldn't cancel the special function key");
 
-                if let Some((_code, _remaining_code, text)) = frontend.get_selected_predicate() {
-                    preprocessor.commit(text.to_owned());
+                if let Some(predicate) = frontend.get_selected_predicate() {
+                    preprocessor.commit(
+                        predicate
+                            .texts
+                            .first()
+                            .unwrap_or(&String::default())
+                            .to_owned(),
+                    );
                     frontend.clear_predicates();
                 }
             }
@@ -111,16 +117,15 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
 
                     translator
                         .translate(&input)
-                        .iter()
+                        .into_iter()
                         .take(page_size * 2)
-                        .for_each(|(code, remaining_code, texts, translated)| {
-                            texts.iter().for_each(|text| {
-                                if auto_commit && *translated {
-                                    preprocessor.commit(text.to_owned());
-                                } else if !text.is_empty() {
-                                    frontend.add_predicate(code, remaining_code, text);
-                                }
-                            });
+                        .for_each(|predicate| {
+                            if predicate.texts.is_empty() {
+                            } else if auto_commit && predicate.can_commit {
+                                preprocessor.commit(predicate.texts[0].to_owned());
+                            } else {
+                                frontend.add_predicate(predicate);
+                            }
                         });
 
                     frontend.set_input(&input);
