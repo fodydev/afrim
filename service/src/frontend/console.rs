@@ -280,7 +280,7 @@ mod tests {
         let (tx2, rx2) = mpsc::channel();
 
         let console_thread = thread::spawn(move || {
-            console.init(tx2, rx1);
+            console.init(tx2, rx1).unwrap();
             console.listen().unwrap();
         });
 
