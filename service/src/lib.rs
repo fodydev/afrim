@@ -2,16 +2,19 @@ mod convert;
 pub mod frontend;
 
 pub use afrim_config::Config;
-use afrim_preprocessor::{utils, Command, Preprocessor};
+use afrim_preprocessor::{utils, Command as EventCmd, Preprocessor};
 use afrim_translator::Translator;
 use anyhow::{Context, Result};
 use enigo::{Enigo, Key, KeyboardControllable};
-use frontend::Frontend;
+use frontend::{Command as GUICmd, Frontend};
 use rdev::{self, EventType, Key as E_Key};
 use std::{rc::Rc, sync::mpsc, thread};
 
 /// Starts the afrim.
-pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
+pub fn run(
+    config: Config,
+    mut frontend: impl Frontend + std::marker::Send + 'static,
+) -> Result<()> {
     // State.
     let mut is_ctrl_released = true;
     let mut idle = false;
@@ -48,32 +51,68 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
         .into_iter()
         .for_each(|(name, ast)| translator.register(name, ast));
 
-    frontend.set_page_size(page_size);
-    frontend.update_screen(rdev::display_size().unwrap());
+    // Configuration of the frontend.
+    let (frontend_tx1, frontend_rx1) = mpsc::channel();
+    let (frontend_tx2, frontend_rx2) = mpsc::channel();
 
-    let (tx, rx) = mpsc::channel();
+    frontend_tx1.send(GUICmd::PageSize(page_size))?;
+    let screen_size = rdev::display_size().unwrap();
+    frontend_tx1.send(GUICmd::ScreenSize(screen_size))?;
+
+    let frontend_thread = thread::spawn(move || {
+        frontend
+            .init(frontend_tx2, frontend_rx1)
+            .context("Failure to initialize the frontend.")
+            .unwrap();
+        frontend
+            .listen()
+            .context("The frontend raise an unexpected error.")
+            .unwrap();
+    });
+
+    // Configuration of the event listener.
+    let (event_tx, event_rx) = mpsc::channel();
     thread::spawn(move || {
         rdev::listen(move |event| {
-            tx.send(event)
+            event_tx
+                .send(event)
                 .unwrap_or_else(|e| eprintln!("Could not send event {:?}", e));
         })
         .expect("Could not listen");
     });
 
-    for event in rx.iter() {
+    // We process event.
+    for event in event_rx.iter() {
+        // Consult the frontend to know if there have some requests.
+        frontend_tx1.send(GUICmd::NOP)?;
+        match frontend_rx2.recv()? {
+            GUICmd::End => break,
+            GUICmd::State(state) => {
+                if state {
+                    rdev::simulate(&EventType::KeyPress(E_Key::Pause)).unwrap();
+                } else {
+                    rdev::simulate(&EventType::KeyRelease(E_Key::Pause)).unwrap();
+                }
+            }
+            _ => (),
+        }
+
         match event.event_type {
             // Handling of idle state.
             EventType::KeyPress(E_Key::Pause) => {
                 idle = true;
+                frontend_tx1.send(GUICmd::State(idle))?;
             }
             EventType::KeyRelease(E_Key::Pause) => {
                 idle = false;
+                frontend_tx1.send(GUICmd::State(idle))?;
             }
             EventType::KeyPress(E_Key::ControlLeft | E_Key::ControlRight) => {
                 is_ctrl_released = false;
             }
             EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) if is_ctrl_released => {
                 idle = !idle;
+                frontend_tx1.send(GUICmd::State(idle))?;
             }
             EventType::KeyRelease(E_Key::ControlLeft | E_Key::ControlRight) => {
                 is_ctrl_released = true;
@@ -81,16 +120,17 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
             _ if idle => (),
             // Handling of special functions.
             EventType::KeyRelease(E_Key::ShiftRight) if !is_ctrl_released => {
-                frontend.next_predicate()
+                frontend_tx1.send(GUICmd::SelectNextPredicate)?;
             }
             EventType::KeyRelease(E_Key::ShiftLeft) if !is_ctrl_released => {
-                frontend.previous_predicate()
+                frontend_tx1.send(GUICmd::SelectPreviousPredicate)?;
             }
             EventType::KeyRelease(E_Key::Space) if !is_ctrl_released => {
                 rdev::simulate(&EventType::KeyRelease(E_Key::ControlLeft))
                     .expect("We couldn't cancel the special function key");
 
-                if let Some(predicate) = frontend.get_selected_predicate() {
+                frontend_tx1.send(GUICmd::SelectedPredicate)?;
+                if let GUICmd::Predicate(predicate) = frontend_rx2.recv()? {
                     preprocessor.commit(
                         predicate
                             .texts
@@ -98,13 +138,13 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
                             .unwrap_or(&String::default())
                             .to_owned(),
                     );
-                    frontend.clear_predicates();
+                    frontend_tx1.send(GUICmd::Clear)?;
                 }
             }
             _ if !is_ctrl_released => (),
             // GUI events.
             EventType::MouseMove { x, y } => {
-                frontend.update_position((x, y));
+                frontend_tx1.send(GUICmd::Position((x, y)))?;
             }
             // Process events.
             _ => {
@@ -113,23 +153,25 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
                 if changed {
                     let input = preprocessor.get_input();
 
-                    frontend.clear_predicates();
+                    frontend_tx1.send(GUICmd::Clear)?;
 
                     translator
                         .translate(&input)
                         .into_iter()
                         .take(page_size * 2)
-                        .for_each(|predicate| {
+                        .try_for_each(|predicate| -> Result<()> {
                             if predicate.texts.is_empty() {
                             } else if auto_commit && predicate.can_commit {
                                 preprocessor.commit(predicate.texts[0].to_owned());
                             } else {
-                                frontend.add_predicate(predicate);
+                                frontend_tx1.send(GUICmd::Predicate(predicate))?;
                             }
-                        });
 
-                    frontend.set_input(&input);
-                    frontend.display();
+                            Ok(())
+                        })?;
+
+                    frontend_tx1.send(GUICmd::InputText(input))?;
+                    frontend_tx1.send(GUICmd::Update)?;
                 }
             }
         }
@@ -137,24 +179,27 @@ pub fn run(config: Config, mut frontend: impl Frontend) -> Result<()> {
         // Process preprocessor instructions
         while let Some(command) = preprocessor.pop_queue() {
             match command {
-                Command::CommitText(text) => {
+                EventCmd::CommitText(text) => {
                     keyboard.key_sequence(&text);
                 }
-                Command::CleanDelete => {
+                EventCmd::CleanDelete => {
                     keyboard.key_up(Key::Backspace);
                 }
-                Command::Delete => {
+                EventCmd::Delete => {
                     keyboard.key_click(Key::Backspace);
                 }
-                Command::Pause => {
+                EventCmd::Pause => {
                     rdev::simulate(&EventType::KeyPress(E_Key::Pause)).unwrap();
                 }
-                Command::Resume => {
+                EventCmd::Resume => {
                     rdev::simulate(&EventType::KeyRelease(E_Key::Pause)).unwrap();
                 }
             };
         }
     }
+
+    // Wait the frontend to end properly.
+    frontend_thread.join().unwrap();
 
     Ok(())
 }
@@ -196,16 +241,6 @@ mod tests {
         };
     }
 
-    fn start_afrim() {
-        use std::path::Path;
-
-        let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
-
-        thread::spawn(move || {
-            run(test_config, Console::default()).unwrap();
-        });
-    }
-
     fn start_sandbox(start_point: &str) -> rstk::TkText {
         let root = rstk::trace_with("wish").unwrap();
         root.title("Afrim Test Environment");
@@ -226,15 +261,15 @@ mod tests {
         input_field
     }
 
-    #[test]
-    fn test_simple() {
+    fn end_sandbox() {
+        rstk::end_wish();
+    }
+
+    fn start_simulation() {
         let typing_speed_ms = Duration::from_millis(500);
 
         // To detect excessive backspace
         const LIMIT: &str = "bbb";
-
-        // Start the afrim
-        start_afrim();
 
         // Start the sandbox
         let textfield = start_sandbox(LIMIT);
@@ -324,5 +359,42 @@ mod tests {
         // between the translator and the processor
         input!(KeyV KeyU KeyU KeyE, typing_speed_ms);
         output!(textfield, format!("{LIMIT}uuɑαⱭⱭɑɑhihellohealthvʉe"));
+
+        // Test the idle state from the frontend.
+        input!(Escape Num8 KeyS KeyT KeyQ KeyT KeyE Num8, typing_speed_ms);
+        input!(Escape, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(Minus, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+        input!(KeyS KeyT KeyA KeyT KeyE, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(Minus, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+
+        // End the test
+        input!(Escape Num8 KeyE KeyX KeyI KeyT Num8, typing_speed_ms);
+        input!(Escape, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(Minus, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+        input!(KeyE KeyX KeyI KeyT, typing_speed_ms);
+        rdev::simulate(&KeyPress(ShiftLeft)).unwrap();
+        input!(Minus, typing_speed_ms);
+        rdev::simulate(&KeyRelease(ShiftLeft)).unwrap();
+
+        end_sandbox();
+    }
+
+    #[test]
+    fn test_afrim() {
+        use std::path::Path;
+
+        let simulation_thread = thread::spawn(start_simulation);
+
+        let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
+        assert!(run(test_config, Console::default()).is_ok());
+
+        // Wait the simulation to end properly.
+        simulation_thread.join().unwrap();
     }
 }
