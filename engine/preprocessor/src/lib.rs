@@ -85,8 +85,8 @@ impl Preprocessor {
     /// Initializes a new preprocessor.
     ///
     /// The preprocessor needs a memory to operate. You have two options to build this memory.
-    /// - Use the [`afrim-memory`](afrim_memory) crate.
-    /// - Use the [`utils`](crate::utils) module.
+    /// - Use the [`afrim-memory`] crate.
+    /// - Use the [`utils`] module.
     /// It also needs you set the capacity of his cursor. We recommend to set a capacity equal
     /// or greater than N times the maximun sequence length that you want to handle.
     /// Where N is the number of sequences that you want track in the cursor.
