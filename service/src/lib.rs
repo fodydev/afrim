@@ -83,20 +83,6 @@ pub fn run(
 
     // We process event.
     for event in event_rx.iter() {
-        // Consult the frontend to know if there have some requests.
-        frontend_tx1.send(GUICmd::NOP)?;
-        match frontend_rx2.recv()? {
-            GUICmd::End => break,
-            GUICmd::State(state) => {
-                if state {
-                    rdev::simulate(&EventType::KeyPress(E_Key::Pause)).unwrap();
-                } else {
-                    rdev::simulate(&EventType::KeyRelease(E_Key::Pause)).unwrap();
-                }
-            }
-            _ => (),
-        }
-
         match event.event_type {
             // Handling of idle state.
             EventType::KeyPress(E_Key::Pause) => {
@@ -195,6 +181,17 @@ pub fn run(
                     rdev::simulate(&EventType::KeyRelease(E_Key::Pause)).unwrap();
                 }
             };
+        }
+
+        // Consult the frontend to know if there have some requests.
+        frontend_tx1.send(GUICmd::NOP)?;
+        match frontend_rx2.recv()? {
+            GUICmd::End => break,
+            GUICmd::State(state) => {
+                idle = state;
+                frontend_tx1.send(GUICmd::State(idle))?;
+            }
+            _ => (),
         }
     }
 
