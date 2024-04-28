@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Resume an ended sequence. [(#211)](https://github.com/pythonbrad/afrim/pull/211) & [(#213)](https://github.com/pythonbrad/afrim/pull/213)
+
+### Changed
+
+- (lib) Improved the frontend API. [(#230)](https://github.com/pythonbrad/afrim/pull/230)
+- (lib) Simplify the handling of predicates. [(#229)](https://github.com/pythonbrad/afrim/pull/229)
+- (lib) Removed useless allocation. [(#212)](https://github.com/pythonbrad/afrim/pull/212) & [(#214)](https://github.com/pythonbrad/afrim/pull/214) & [(#217)](https://github.com/pythonbrad/afrim/pull/217) & [(#218)](https://github.com/pythonbrad/afrim/pull/218)
+- (lib) Increased performance of the translator. [(#204)](https://github.com/pythonbrad/afrim/pull/204)
+- (lib) Improve error handling. [(#203)](https://github.com/pythonbrad/afrim/pull/203)
+
+### Fix
+- (lib) Ignore unpaired data when loading the dataset. [(#215)](https://github.com/pythonbrad/afrim/pull/215)
+
+## [0.5.4] - 2024-03-05
+
+### Added
+
 - (lib) Added the serialization/deserialization feature. [(#179)](https://github.com/pythonbrad/afrim/pull/179) & [(#181)](https://github.com/pythonbrad/afrim/pull/181)
 
 ### Changed
