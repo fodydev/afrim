@@ -5,9 +5,9 @@ edition = "2021"
 description = "Core library of the afrim input method."
 keywords = ["ime", "keyboard"]
 categories = ["accessibility"]
+readme = "../README.md"
 repository.workspace = true
 license.workspace = true
-readme.workspace = true
 authors.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

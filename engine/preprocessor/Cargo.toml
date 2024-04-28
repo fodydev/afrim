@@ -5,9 +5,9 @@ edition = "2021"
 description = "A preprocessor to process keyboard events for an input method."
 keywords = ["ime", "processor", "keyboard"]
 categories = ["hardware-support"]
+readme = "README.md"
 repository.workspace = true
 license.workspace = true
-readme.workspace = true
 authors.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
