@@ -10,6 +10,18 @@ Afrim ⌨️
 
   Afrim is an input method for African languages. It is designed to protect the native language of various local dialects of Africa and is a universal phonetic-based input method platform.
 
+Table of Contents
+---
+
+* [History](#history)
+* [Features](#features)
+* [Installation](#installation)
+* [Datasets](#-dataset)
+* [Frontends](#-frontends)
+* [License](#licence)
+* [Contributing](#contributing)
+* [FAQ](./FAQ.md)
+
 History
 ---
 AFRIM is the abbreviation of *AFRICA IME* or *Africa Input Method Engine*.
