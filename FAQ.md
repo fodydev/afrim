@@ -4,23 +4,23 @@ Frequently Asked Questions
 What is Afrim?
 ---
 
-Afrim is an input method engine (IME) to type any languagues who can be represented using a sequential code.
+Afrim is an input method engine (IME) to type any languagues that can be represented using a sequential code.
 
-Afrim is also a library / tool to implement IME.
+Afrim is also a library/tool to implement IME.
 
-**Disclaimer**: Afrim isn't a writing system. Instead, it use existing writing systems to operate.
+**Disclaimer**: Afrim is not a writing system. Instead, it uses existing writing systems to operate.
 
 How Afrim works?
 ---
 
-Using the transliteration, Afrim transforms what you type (in english character) to your native language.
+Using the transliteration, Afrim transforms what you type (in English character) to your native language.
 
 - Eg. Afrim -> እፍሪም (Amharic input method)
 - Eg. Pookai2t peu2nze22 n*kut -> Pookɛ́t pә́nzéé ŋkut (Bamun input method)
 
-Technically, each character of the target language can be represented by a sequencial code (sequence of characters).
+Technically, each character of the target language can be represented by a sequential code (sequence of characters).
 
-**Example**
+**Example:**
 ```
 A -> እ
 f -> ፍ
@@ -39,28 +39,31 @@ Both are based on the phonetic representation of what you want to type and the d
 
 **Advantages**
 
-- **Ease of Use**: For people familiar with the Latin alphabet, the phonetic input method is more intuitive and accessible than memorizing the language specific keyboard layout.
+- **Ease of use**: For people familiar with the Latin alphabet, the phonetic input method is more intuitive and accessible than memorizing the language specific keyboard layout.
 
 - **Efficiency**: It allows for faster typing because users can rely on the phonetic sounds they are familiar with, rather than hunting for specific characters on a specialized keyboard.
 
-**NB**: If your language don't offer this writing system, feel free to propose your own to the community. Confer [afrim-data].
+**Note**: If your language don't offer this writing system, feel free to propose your own to the community.
+ Confer [afrim-data].
 
 Which problems Afrim wants to solve?
 ---
 
-Current IMEs, allows a user to type in his own dialect. But, be able to type, is not the alone issue that a person can encountered.
+Current IMEs, allows users to type in their own dialects. But, be able to type, is not the only challenge that a person can encountered.
 
 - Typo
 
-For a person who is still learning the language, it's easy to make errors. Eg: `አፍሪም (afrim)` means `Shameful` while `ዐፍሪም (Afrim)` means `Aphraim`.
+For a person who is still learning the language, it's easy to make mistakes.
+ Eg: `አፍሪም (afrim)` means `Shameful` while `ዐፍሪም (Afrim)` means `Aphraim`.
 
 - Stress
 
-Imagine that you have to type this number `99` in nufi language ` ncɔ̀ vʉ̀'ʉ̄ mɑ̀ mʉ̄vʉ̀'ʉ̄'`. Or type this number `1234567890` in geez `፲፪፼፴፬፻፶፮፼፸፰፻፺`. The easy way is to use the hard code format.
+Imagine that you have to type this number `99` in nufi language ` ncɔ̀ vʉ̀'ʉ̄ mɑ̀ mʉ̄vʉ̀'ʉ̄'`.
+ Or type this number `1234567890` in geez `፲፪፼፴፬፻፶፮፼፸፰፻፺`. The easiest way is to use the hard-coded format.
 
 - Memoryless
 
-For a person who don't master the language, he can forget how to type a particular word.
+For a person who don't master the language, it's easy to forget how to type a particular word.
 
 What Afrim brings?
 ---
@@ -71,22 +74,24 @@ Afrim assists you while you are typing.
 
 **Autocorrection**
 
-Afrim permits you to fix error while typing.
+Afrim permits you to correct error as you type.
 
 **Date and number translator**
 
-Do you want to type `፼፳፫፻፵፭፼፷፯፻፹፱፼፻፳፫` in geez? Just type `1234567890123` and Afrim will suggest you the equivalents in geez.
+Do you want to type `፼፳፫፻፵፭፼፷፯፻፹፱፼፻፳፫` in geez? Just type `1234567890123` and Afrim will suggests the equivalents in geez.
 
 Why not propose a solution that is language specific?
 ---
 
-We can have input method specific for each language, but at the end, we will be reinventing the road. Think about the similarity between writing systems (not the alphabet but the working principle).
+We can have input method specific for each language, but at the end, we will be reinventing the road.
+ Think about the similarity between writing systems (not the alphabet but the working principle).
 
-Afrim don't want to be the alone solution, but want to make accessible the IME technology to everyone.
+Afrim doesn't aim to be the alone solution, but seeks to make accessible the IME technology to everyone.
 
 To accomplish it, Afrim has been designed to be open source, modular, well documented (source code) and not language specific.
 
-You can use Afrim as a library or tool to implement your own IME. Confer [afrim-memory], [afrim-preprocessor], [afrim-translator], [afrim-data].
+You can use Afrim as a library or tool to implement your own IME.
+ Confer [afrim-memory], [afrim-preprocessor], [afrim-translator], [afrim-data].
 
 How does this compare to IBus or Fcitx?
 ---
@@ -103,7 +108,8 @@ By example, if you want Afrim acts as a geez IME or swahili IME or ewondo IME, .
 Is this being done in collaboration with the linguistics faculties of African universities?
 ---
 
-No, Afrim is a tool and not a writing system. His dataset is provided by the community and/or official sources. And we will make sure that the original author of the dataset is credited.
+No, Afrim is a tool and not a writing system. Its datasets are provided by the community and/or official sources.
+ And we will make sure that the original author of the dataset is credited.
 
 [afrim-memory]: memory/
 [afrim-preprocessor]: engine/preprocessor/
