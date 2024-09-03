@@ -18,9 +18,9 @@ Table of Contents
 * [Installation](#installation)
 * [Datasets](#-dataset)
 * [Frontends](#-frontends)
+* [FAQ](#-faq)
 * [License](#licence)
 * [Contributing](#contributing)
-* [FAQ](./FAQ.md)
 
 History
 ---
@@ -96,6 +96,11 @@ Try it in the console
 
   🧑🏿‍🤝‍🧑🏿 Community:
   - Feel free to propose your own.
+
+❔ FAQ
+===
+
+Looking for answers? Check out our [FAQ](./FAQ.md) to find helpful information and solutions to common questions.
 
 Licence
 ===
