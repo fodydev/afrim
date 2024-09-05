@@ -8,12 +8,11 @@ Afrim ⌨️
   [![dependency status](https://deps.rs/repo/github/pythonbrad/afrim/status.svg)](https://deps.rs/repo/github/pythonbrad/afrim)
   [![Coverage Status](https://coveralls.io/repos/github/pythonbrad/afrim/badge.svg?branch=main)](https://coveralls.io/github/pythonbrad/afrim?branch=main)
 
-  Afrim is an input method for African languages. It is designed to protect the native language of various local dialects of Africa and is a universal phonetic-based input method platform.
+  Afrim is an input method designed to protect the native language of various local dialects and is a universal phonetic-based input method platform.
 
 Table of Contents
 ---
 
-* [History](#history)
 * [Features](#features)
 * [Installation](#installation)
 * [Datasets](#-dataset)
@@ -21,20 +20,6 @@ Table of Contents
 * [FAQ](#-faq)
 * [License](#licence)
 * [Contributing](#contributing)
-
-History
----
-AFRIM is the abbreviation of *AFRICA IME* or *Africa Input Method Engine*.
-
-From the beginning, AFRIM was written as a remake of [Clafrica IME](https://github.com/H-Theking/clafrica), and named *clafrica*.
-
-Then, we created an input method library with some improvements inspired from [RIME](https://github.com/rime). We renamed it to *Afrim Input Method Engine*.
-
-Later, it supports Amharic and Geez and other african phonetic input method, and we want support all african phonetic Input Method.
-
-Inspired from [librime](https://github.com/rime/librime), we want AFRIM aka *Afrim Input Method Engine* to be the top IME for african languages.
-
-For more details on the project name, confer the issue https://github.com/pythonbrad/afrim/issues/107.
 
 Features
 ===
