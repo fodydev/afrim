@@ -10,6 +10,15 @@ Afrim is also a library/tool to implement IME.
 
 **Disclaimer**: Afrim is not a writing system. Instead, it uses existing writing systems to operate.
 
+What means Afrim?
+---
+
+"afrim" who is the transliteration of the Amharic word "እፍሪም," meaning shameful.
+
+"Shameful" symbolizes embracing vulnerability and self-awareness, turning mistakes into opportunities for growth and transformation.
+
+**Note**: Whether you use "afrim" or "Afrim," it doesn't matter. 
+
 How Afrim works?
 ---
 
