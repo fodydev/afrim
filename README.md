@@ -21,6 +21,7 @@ Table of Contents
 * [FAQ](#-faq)
 * [License](#licence)
 * [Contributing](#contributing)
+* [Sponsorship](#sponsorship)
 
 History
 ---
@@ -108,3 +109,14 @@ Contributing
 ===
 
   If you would like to contribute to this project, please fork the repository and submit a pull request with your changes. 
+
+Sponsorship
+===
+
+If you like this project, please star and share our repositories. If you feel generous, a small donation will be greatly appreciated.
+
+### Our sponsors
+
+<a href="https://www.kasahorow.com">
+    <img src="https://www.kasahorow.com/kasahorow_com.png" width="238">
+</a>
