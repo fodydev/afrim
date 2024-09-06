@@ -204,8 +204,8 @@ pub fn run(
 #[cfg(test)]
 mod tests {
     use crate::{frontend::Console, run, Config};
-    use rdev::{self, Button, EventType::*, Key::*};
     use afrish::{self, TkPackLayout};
+    use rdev::{self, Button, EventType::*, Key::*};
     use std::{thread, time::Duration};
 
     macro_rules! input {
