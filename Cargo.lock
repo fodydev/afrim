@@ -9,11 +9,11 @@ dependencies = [
  "afrim-config",
  "afrim-preprocessor",
  "afrim-translator",
+ "afrish",
  "anyhow",
  "clap",
  "enigo",
  "rdev",
- "rstk",
  "serde",
 ]
 
@@ -51,6 +51,11 @@ dependencies = [
  "serde",
  "strsim",
 ]
+
+[[package]]
+name = "afrish"
+version = "0.1.0"
+source = "git+https://github.com/fodydev/afrish?rev=e8c4fa2#e8c4fa2b2a0de717962d49d26fa0800000ff6c5d"
 
 [[package]]
 name = "ahash"
@@ -820,15 +825,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "rstk"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0add4be2e35c9cfa903a4683e2a00f69004f90a76597a260e3266f36dc2d2807"
-dependencies = [
- "once_cell",
 ]
 
 [[package]]

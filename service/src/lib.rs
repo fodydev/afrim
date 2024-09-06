@@ -205,7 +205,7 @@ pub fn run(
 mod tests {
     use crate::{frontend::Console, run, Config};
     use rdev::{self, Button, EventType::*, Key::*};
-    use rstk::{self, TkPackLayout};
+    use afrish::{self, TkPackLayout};
     use std::{thread, time::Duration};
 
     macro_rules! input {
@@ -238,28 +238,23 @@ mod tests {
         };
     }
 
-    fn start_sandbox(start_point: &str) -> rstk::TkText {
-        let root = rstk::trace_with("wish").unwrap();
+    fn start_sandbox(start_point: &str) -> afrish::TkText {
+        let root = afrish::trace_with("wish").unwrap();
         root.title("Afrim Test Environment");
 
-        let input_field = rstk::make_text(&root);
+        let input_field = afrish::make_text(&root);
         input_field.width(50);
         input_field.height(12);
         input_field.pack().layout();
         root.geometry(200, 200, 0, 0);
         input_field.insert((1, 1), start_point);
-        rstk::tell_wish(
-            r#"
-            chan configure stdout -encoding utf-8;
-            wm protocol . WM_DELETE_WINDOW {destroy .};
-        "#,
-        );
+        afrish::tell_wish("wm protocol . WM_DELETE_WINDOW {destroy .};");
         thread::sleep(Duration::from_secs(1));
         input_field
     }
 
     fn end_sandbox() {
-        rstk::end_wish();
+        afrish::end_wish();
     }
 
     fn start_simulation() {
