@@ -10,7 +10,7 @@ default-members = ["service"]
 resolver = "2"
 
 [workspace.package]
-repository = "https://github.com/pythonbrad/afrim"
+repository = "https://github.com/fodydev/afrim"
 license = "MPL-2.0"
 authors = ["Brady Fomegne <brady.fomegne@outlook.com>"]
 
