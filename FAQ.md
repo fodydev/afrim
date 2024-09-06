@@ -123,4 +123,4 @@ No, Afrim is a tool and not a writing system. Its datasets are provided by the c
 [afrim-memory]: memory/
 [afrim-preprocessor]: engine/preprocessor/
 [afrim-translator]: engine/translator/
-[afrim-data]: https://github.com/pythonbrad/afrim-data/
+[afrim-data]: https://github.com/fodydev/afrim-data/
