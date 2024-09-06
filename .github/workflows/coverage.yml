@@ -16,7 +16,7 @@ jobs:
     env:
       DISPLAY: ':99'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: libxtst-dev libevdev-dev libxdo-dev
@@ -39,11 +39,7 @@ jobs:
       - run: rustup component add llvm-tools-preview
 
       - name: Install grcov
-        uses: actions-rs/install@v0.1
-        with:
-          crate: grcov
-          version: latest
-          use-tool-cache: true
+        run: cargo install grcov
 
       - name: build
         env:
