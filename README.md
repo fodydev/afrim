@@ -13,6 +13,7 @@ Afrim ⌨️
 Table of Contents
 ---
 
+* [History](#history)
 * [Features](#features)
 * [Installation](#installation)
 * [Datasets](#-dataset)
@@ -20,6 +21,17 @@ Table of Contents
 * [FAQ](#-faq)
 * [License](#licence)
 * [Contributing](#contributing)
+
+History
+---
+
+From the beginning, AFRIM was written as a remake of [Clafrica IME](https://github.com/H-Theking/clafrica), and named *clafrica*.
+
+Then, we created an input method library with some improvements inspired from [RIME](https://github.com/rime). Later, it supports Amharic, Geez and other african phonetic input method. We renamed it to *Afrim Input Method Engine*.
+
+Inspired from [librime](https://github.com/rime/librime), we want AFRIM aka *Afrim Input Method Engine*, not only as an IME, but also as a tool/library to implement IME no matter the target language.
+
+For more details on the project name, confer the issue https://github.com/pythonbrad/afrim/issues/107.
 
 Features
 ===
