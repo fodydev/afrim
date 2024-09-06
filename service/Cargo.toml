@@ -35,4 +35,4 @@ anyhow = "1.0.81"
 serde = { version = "1.0.197", optional = true }
 
 [dev-dependencies]
-rstk = "0.3.0"
+afrish = { version = "0.1.0", default-features = false, git = "https://github.com/fodydev/afrish", rev = "e8c4fa2" }
