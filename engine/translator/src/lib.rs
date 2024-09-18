@@ -341,7 +341,7 @@ impl Translator {
         #[cfg(feature = "rhai")]
         let engine = Engine::new();
         let predicates = self.dictionary.iter().filter_map(|(key, values)| {
-            if input.len() < 2 || input.len() > key.len() || key[0..1] != input[0..1] {
+            if input.chars().count() < 2 || input.len() > key.len() || key[0..1] != input[0..1] {
                 return None;
             };
 
@@ -452,6 +452,8 @@ mod tests {
         #[cfg(feature = "rhai")]
         let mut translator = Translator::new(dictionary, true);
 
+        // Test the filtering
+        translator.translate("ù");
         //
         #[cfg(feature = "rhai")]
         {
