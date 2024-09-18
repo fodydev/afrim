@@ -452,7 +452,7 @@ mod tests {
         #[cfg(feature = "rhai")]
         let mut translator = Translator::new(dictionary, true);
 
-        // 
+        // Test the filtering
         translator.translate("ù");
         //
         #[cfg(feature = "rhai")]
