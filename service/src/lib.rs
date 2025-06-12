@@ -269,7 +269,7 @@ mod tests {
         let textfield = start_sandbox(LIMIT);
 
         // Send the ready signal.
-        signal.send(());
+        signal.send(()).unwrap();
 
         rdev::simulate(&MouseMove { x: 100.0, y: 100.0 }).unwrap();
         thread::sleep(typing_speed_ms);
