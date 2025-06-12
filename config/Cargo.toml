@@ -1,6 +1,6 @@
 [package]
 name = "afrim-config"
-version = "0.4.5"
+version = "0.4.6"
 edition = "2021"
 description = "Handle the configuration of the afrim input method."
 keywords = ["ime", "config"]
@@ -17,8 +17,8 @@ rhai = ["dep:rhai"]
 rhai-wasm = ["rhai", "rhai/wasm-bindgen"]
 
 [dependencies]
-rhai = { version = "1.17.1", optional = true, features = ["only_i32", "no_float", "no_closure", "unchecked", "no_position", "no_custom_syntax"] }
-indexmap = { version = "2.2.6", features = ["serde"] }
-serde = { version = "1.0.197", features = ["derive"] }
-toml = { version = "0.8.12", features = ["preserve_order"] }
-anyhow = "1.0.81"
+rhai = { version = "=1.22.1", optional = true, features = ["only_i32", "no_float", "no_closure", "unchecked", "no_position", "no_custom_syntax"] }
+indexmap = { version = "2.9.0", features = ["serde"] }
+serde = { version = "1.0.219", features = ["derive"] }
+toml = { version = "0.8.23", features = ["preserve_order"] }
+anyhow = "1.0.98"

@@ -1,9 +1,14 @@
+#![allow(unused_imports, dead_code)]
+
 #[cfg(feature = "rhai")]
 use afrim_translator::Engine;
 use afrim_translator::Translator;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+#[cfg(not(target_arch = "wasm32"))]
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use indexmap::IndexMap;
+use std::hint::black_box;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn translate(c: &mut Criterion) {
     // Generates the dataset.
     let mut dictionary = IndexMap::new();
@@ -71,6 +76,13 @@ pub fn translate(c: &mut Criterion) {
     group.finish();
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 criterion_group!(benches, translate);
 
+#[cfg(not(target_arch = "wasm32"))]
 criterion_main!(benches);
+
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    panic!("Can't run benchmarks on wasm32");
+}
