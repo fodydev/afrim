@@ -13,7 +13,7 @@ authors.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
-doc = false
+doc = true
 name = "afrim"
 path = "./src/main.rs"
 

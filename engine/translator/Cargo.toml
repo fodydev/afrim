@@ -20,12 +20,12 @@ strsim = ["dep:strsim"]
 serde = ["indexmap/serde", "rhai?/serde", "dep:serde"]
 
 [dependencies]
-rhai = { version = "1.22.2", optional = true, features = ["only_i32", "no_float", "no_closure", "unchecked", "no_position", "no_custom_syntax"] }
+rhai = { version = "=1.22.1", optional = true, features = ["only_i32", "no_float", "no_closure", "unchecked", "no_position", "no_custom_syntax"] }
 indexmap = { version = "2.9.0" }
 strsim = { version = "0.11.1", optional = true }
 serde = { version = "1.0.219", optional = true }
 
-[dev-dependencies]
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion = "0.6.0"
 
 [[bench]]
