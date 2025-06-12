@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2025-06-12
+
 ### Changed
 
 - (lib) Updated dependencies. [(#267)](https://github.com/fodydev/afrim/pull/267)
