@@ -6,9 +6,9 @@
 //!
 //! # Notes
 //! - sequence: A sequential code corresponding to a character.
-//!     Eg. af1 = "ɑ̀"
+//!   Eg. af1 = "ɑ̀"
 //! - input: The user input (or a set of sequences).
-//!     Eg. ngaf7 nkwe2e2 ka7meru7n
+//!   Eg. ngaf7 nkwe2e2 ka7meru7n
 //! - text buffer: The memory where our text data will be stored.
 //! - node: A node in the text buffer.
 //!
@@ -366,10 +366,10 @@ impl Cursor {
     ///
     /// **Note**:
     /// - The `\0` at the index 0, marks the beginning of a new sequence and the end of a
-    /// old. It also represents the root node.
+    ///   old. It also represents the root node.
     /// - A character don't necessary need to be in the text buffer. The cursor will create a
-    /// tempory node to represent it in his internal memory. All characters not present in the text
-    /// buffer will be at the same depth that the root node.
+    ///   tempory node to represent it in his internal memory. All characters not present in the text
+    ///   buffer will be at the same depth that the root node.
     pub fn hit(&mut self, character: char) -> Option<String> {
         let node = self
             .buffer
@@ -473,12 +473,7 @@ impl Cursor {
     /// assert_eq!(cursor.hit('_'), Some("ç".to_owned()).to_owned());
     /// ```
     pub fn resume(&mut self) {
-        if self
-            .buffer
-            .iter()
-            .last()
-            .map_or(false, |node| node.is_root())
-        {
+        if self.buffer.iter().last().is_some_and(|node| node.is_root()) {
             self.buffer.pop_back();
         }
     }
@@ -577,7 +572,7 @@ impl Cursor {
     /// assert!(!cursor.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
-        return self.buffer.iter().filter(|c| c.key != '\0').count() == 0;
+        self.buffer.iter().filter(|c| c.key != '\0').count() == 0
     }
 }
 

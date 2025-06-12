@@ -1,8 +1,9 @@
 #[cfg(feature = "rhai")]
 use afrim_translator::Engine;
 use afrim_translator::Translator;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use indexmap::IndexMap;
+use std::hint::black_box;
 
 pub fn translate(c: &mut Criterion) {
     // Generates the dataset.

@@ -5,7 +5,7 @@ pub use afrim_config::Config;
 use afrim_preprocessor::{utils, Command as EventCmd, Preprocessor};
 use afrim_translator::Translator;
 use anyhow::{Context, Result};
-use enigo::{Enigo, Key, KeyboardControllable};
+use enigo::{Direction, Enigo, Key, Keyboard};
 use frontend::{Command as GUICmd, Frontend};
 use rdev::{self, EventType, Key as E_Key};
 use std::{rc::Rc, sync::mpsc, thread};
@@ -38,7 +38,7 @@ pub fn run(
             )
         })
         .unwrap_or((32, false, 10));
-    let mut keyboard = Enigo::new();
+    let mut keyboard = Enigo::new(&Default::default()).unwrap();
     let mut preprocessor = Preprocessor::new(Rc::new(memory), buffer_size);
     #[cfg(not(feature = "rhai"))]
     let translator = Translator::new(config.extract_translation(), auto_commit);
@@ -166,13 +166,13 @@ pub fn run(
         while let Some(command) = preprocessor.pop_queue() {
             match command {
                 EventCmd::CommitText(text) => {
-                    keyboard.key_sequence(&text);
+                    keyboard.text(&text).unwrap();
                 }
                 EventCmd::CleanDelete => {
-                    keyboard.key_up(Key::Backspace);
+                    keyboard.key(Key::Backspace, Direction::Release).unwrap();
                 }
                 EventCmd::Delete => {
-                    keyboard.key_click(Key::Backspace);
+                    keyboard.key(Key::Backspace, Direction::Click).unwrap();
                 }
                 EventCmd::Pause => {
                     rdev::simulate(&EventType::KeyPress(E_Key::Pause)).unwrap();
@@ -206,6 +206,7 @@ mod tests {
     use crate::{frontend::Console, run, Config};
     use afrish::{self, TkPackLayout};
     use rdev::{self, Button, EventType::*, Key::*};
+    use std::sync::mpsc::{self, Sender};
     use std::{thread, time::Duration};
 
     macro_rules! input {
@@ -243,13 +244,14 @@ mod tests {
         root.title("Afrim Test Environment");
 
         let input_field = afrish::make_text(&root);
-        input_field.width(50);
-        input_field.height(12);
+        input_field.width(500);
+        input_field.height(120);
         input_field.pack().layout();
-        root.geometry(200, 200, 0, 0);
         input_field.insert((1, 1), start_point);
+        root.position(0, 0);
         afrish::tell_wish("wm protocol . WM_DELETE_WINDOW {destroy .};");
         thread::sleep(Duration::from_secs(1));
+
         input_field
     }
 
@@ -257,7 +259,7 @@ mod tests {
         afrish::end_wish();
     }
 
-    fn start_simulation() {
+    fn start_simulation(signal: Sender<()>) {
         let typing_speed_ms = Duration::from_millis(500);
 
         // To detect excessive backspace
@@ -265,6 +267,9 @@ mod tests {
 
         // Start the sandbox
         let textfield = start_sandbox(LIMIT);
+
+        // Send the ready signal.
+        signal.send(());
 
         rdev::simulate(&MouseMove { x: 100.0, y: 100.0 }).unwrap();
         thread::sleep(typing_speed_ms);
@@ -381,7 +386,13 @@ mod tests {
     fn test_afrim() {
         use std::path::Path;
 
-        let simulation_thread = thread::spawn(start_simulation);
+        let (tx, rx) = mpsc::channel();
+
+        // TODO: handle simulation errors.
+        let simulation_thread = thread::spawn(move || start_simulation(tx));
+
+        // Wait the ready signal.
+        rx.recv().unwrap();
 
         let test_config = Config::from_file(Path::new("./data/test.toml")).unwrap();
         assert!(run(test_config, Console::default()).is_ok());

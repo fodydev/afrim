@@ -3,7 +3,7 @@
 //! generic keyboard events and vice versa.
 //!
 
-use afrim_preprocessor::{Key, KeyState, KeyboardEvent};
+use afrim_preprocessor::{Key, KeyState, KeyboardEvent, NamedKey::*};
 use rdev::{self};
 
 /// Converts an rdev::Event into a KeyboardEvent.
@@ -29,18 +29,18 @@ pub fn from_event(event: rdev::Event) -> KeyboardEvent {
 /// Converts an rdev::Key into a Key.
 pub fn from_key(key: rdev::Key) -> Key {
     match key {
-        rdev::Key::Alt => Key::Alt,
-        rdev::Key::AltGr => Key::AltGraph,
-        rdev::Key::Backspace => Key::Backspace,
-        rdev::Key::CapsLock => Key::CapsLock,
-        rdev::Key::ControlLeft => Key::Control,
-        rdev::Key::ControlRight => Key::Control,
-        rdev::Key::ShiftLeft => Key::Shift,
-        rdev::Key::ShiftRight => Key::Shift,
-        rdev::Key::ScrollLock => Key::ScrollLock,
-        rdev::Key::Pause => Key::Pause,
-        rdev::Key::NumLock => Key::NumLock,
-        rdev::Key::Insert => Key::Insert,
+        rdev::Key::Alt => Key::Named(Alt),
+        rdev::Key::AltGr => Key::Named(AltGraph),
+        rdev::Key::Backspace => Key::Named(Backspace),
+        rdev::Key::CapsLock => Key::Named(CapsLock),
+        rdev::Key::ControlLeft => Key::Named(Control),
+        rdev::Key::ControlRight => Key::Named(Control),
+        rdev::Key::ShiftLeft => Key::Named(Shift),
+        rdev::Key::ShiftRight => Key::Named(Shift),
+        rdev::Key::ScrollLock => Key::Named(ScrollLock),
+        rdev::Key::Pause => Key::Named(Pause),
+        rdev::Key::NumLock => Key::Named(NumLock),
+        rdev::Key::Insert => Key::Named(Insert),
         _ => Default::default(),
     }
 }

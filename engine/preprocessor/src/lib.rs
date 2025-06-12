@@ -11,7 +11,6 @@
 //! use afrim_preprocessor::{utils, Command, Preprocessor};
 //! use keyboard_types::{
 //!     webdriver::{self, Event},
-//!     Key::*,
 //! };
 //! use std::{collections::VecDeque, rc::Rc};
 //!
@@ -71,7 +70,7 @@ mod message;
 pub use crate::message::Command;
 pub use afrim_memory::utils;
 use afrim_memory::{Cursor, Node};
-pub use keyboard_types::{Key, KeyState, KeyboardEvent};
+pub use keyboard_types::{Key, KeyState, KeyboardEvent, NamedKey};
 use std::{collections::VecDeque, rc::Rc};
 
 /// The main structure of the preprocessor.
@@ -87,6 +86,7 @@ impl Preprocessor {
     /// The preprocessor needs a memory to operate. You have two options to build this memory.
     /// - Use the [`afrim-memory`] crate.
     /// - Use the [`utils`] module.
+    ///
     /// It also needs you set the capacity of his cursor. We recommend to set a capacity equal
     /// or greater than N times the maximun sequence length that you want to handle.
     /// Where N is the number of sequences that you want track in the cursor.
@@ -169,7 +169,7 @@ impl Preprocessor {
     ///
     /// ```
     /// use afrim_preprocessor::{Command, Preprocessor, utils};
-    /// use keyboard_types::{Key::*, KeyboardEvent};
+    /// use keyboard_types::{Key::Character, KeyboardEvent};
     /// use std::{collections::VecDeque, rc::Rc};
     ///
     /// // We prepare the memory.
@@ -238,7 +238,7 @@ impl Preprocessor {
         let (mut changed, mut committed) = (false, false);
 
         match (event.state, event.key) {
-            (KeyState::Down, Key::Backspace) => {
+            (KeyState::Down, Key::Named(NamedKey::Backspace)) => {
                 #[cfg(not(feature = "inhibit"))]
                 {
                     self.pause();
@@ -292,7 +292,7 @@ impl Preprocessor {
                 self.resume();
                 changed = true;
             }
-            (KeyState::Down, Key::Shift | Key::CapsLock) => (),
+            (KeyState::Down, Key::Named(NamedKey::Shift) | Key::Named(NamedKey::CapsLock)) => (),
             (KeyState::Down, _) => {
                 self.cursor.clear();
                 changed = true;
@@ -314,7 +314,7 @@ impl Preprocessor {
     ///
     /// ```
     /// use afrim_preprocessor::{Command, Preprocessor, utils};
-    /// use keyboard_types::{Key::*, KeyboardEvent};
+    /// use keyboard_types::{Key::Character, KeyboardEvent};
     /// use std::{collections::VecDeque, rc::Rc};
     ///
     /// // We prepare the memory.
@@ -397,7 +397,7 @@ impl Preprocessor {
     ///
     /// ```
     /// use afrim_preprocessor::{Command, Preprocessor, utils};
-    /// use keyboard_types::{Key::*, webdriver::{self, Event}};
+    /// use keyboard_types::webdriver::{self, Event};
     /// use std::{collections::VecDeque, rc::Rc};
     ///
     /// // We prepare the memory.
@@ -493,6 +493,7 @@ mod tests {
     use keyboard_types::{
         webdriver::{self, Event},
         Key::*,
+        NamedKey,
     };
     use std::collections::VecDeque;
 
@@ -585,7 +586,7 @@ mod tests {
         let memory = utils::build_map(data);
         let mut preprocessor = Preprocessor::new(Rc::new(memory), 8);
         let backspace_event = KeyboardEvent {
-            key: Backspace,
+            key: Named(NamedKey::Backspace),
             ..Default::default()
         };
 
