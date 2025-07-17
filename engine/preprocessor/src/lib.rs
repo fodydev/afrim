@@ -483,6 +483,12 @@ impl Preprocessor {
     pub fn clear_queue(&mut self) {
         self.queue.clear();
     }
+
+    /// Clears the cursor, resetting its internal buffer to an empty state.
+    /// This does not affect the root node of the cursor.
+    pub fn clear_cursor(&mut self) {
+        self.cursor.clear();
+    }    
 }
 
 #[cfg(test)]
@@ -491,11 +497,39 @@ mod tests {
     use crate::utils;
     use crate::Preprocessor;
     use keyboard_types::{
+        Code,
+        KeyboardEvent,
+        Modifiers,
+        KeyState,
         webdriver::{self, Event},
         Key::*,
         NamedKey,
+        Location
     };
+    use super::*;
     use std::collections::VecDeque;
+
+    /// Tests that `clear_cursor` resets the cursor's buffer to an empty state.
+    #[test]
+    fn test_clear_cursor(){
+        use std::rc::Rc;
+
+        let data = utils::load_data("ccced ç\ncc ç");
+        let memory = utils::build_map(data);
+        let mut preprocessor = Preprocessor::new(Rc::new(memory), 8);
+        preprocessor.process(KeyboardEvent {
+            state: KeyState::Down,
+            key: Key::Character("a".to_string()),
+            code: Code::KeyA,
+            location: Location::Standard,
+            modifiers: Modifiers::empty(),
+            repeat: false,
+            is_composing: false,
+        });
+        assert!(!preprocessor.cursor.is_empty(), "Cursor should not be empty after processing");
+        preprocessor.clear_cursor();
+        assert!(preprocessor.cursor.is_empty(),  "Cursor should be empty after clear_cursor");
+    }
 
     #[test]
     fn test_process() {
