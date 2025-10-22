@@ -1,6 +1,6 @@
 [package]
 name = "afrim-preprocessor"
-version = "0.6.2"
+version = "0.6.3"
 edition = "2021"
 description = "A preprocessor to process keyboard events for an input method."
 keywords = ["ime", "processor", "keyboard"]
@@ -17,9 +17,9 @@ inhibit = []
 serde = ["dep:serde", "keyboard-types/serde"]
 
 [dependencies]
-keyboard-types = { version = "0.8.0", default-features = false }
+keyboard-types = { version = "0.8.3", default-features = false }
 afrim-memory = { version = "0.4.2", path = "../../memory" }
-serde = { version = "1.0.219", features = ["derive"], optional = true }
+serde = { version = "1.0.228", features = ["derive"], optional = true }
 
 [dev-dependencies]
-keyboard-types = { version = "0.8.0", features = ["webdriver"] }
+keyboard-types = { version = "0.8.3", features = ["webdriver"] }
