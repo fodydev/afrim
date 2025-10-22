@@ -1,6 +1,6 @@
 [package]
 name = "afrim"
-version = "0.6.1"
+version = "0.6.2"
 edition = "2021"
 description = "Core library of the afrim input method."
 keywords = ["ime", "keyboard"]
@@ -25,14 +25,14 @@ inhibit = ["afrim-preprocessor/inhibit"]
 serde = ["dep:serde", "afrim-translator/serde"]
 
 [dependencies]
-clap = { version = "4.5.40", features = ["derive"] }
-enigo = "0.5.0"
+clap = { version = "4.5.50", features = ["derive"] }
+enigo = "0.6.1"
 afrim-config = { version = "0.4.6", path = "../config", default-features = false }
 afrim-preprocessor = { version = "0.6.2", path = "../engine/preprocessor", default-features = false }
 afrim-translator = { version = "0.2.2", path = "../engine/translator", default-features = false }
 rdev = "0.5.3"
-anyhow = "1.0.98"
-serde = { version = "1.0.219", optional = true }
+anyhow = "1.0.100"
+serde = { version = "1.0.228", optional = true }
 
 [dev-dependencies]
 afrish = { version = "0.1.0", default-features = false, git = "https://github.com/fodydev/afrish", rev = "e8c4fa2" }
