@@ -22,10 +22,10 @@ jobs:
         include:
         - os: ubuntu-latest
           headless: Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-        - os: macos-latest
-          extra: -- --skip test_afrim
+        # - os: macos-latest
+        #   extra: -- --skip test_afrim
         - os: windows-latest
-          extra: -- --skip test_afrim
+          # extra: -- --skip test_afrim
 
     steps:
       - uses: actions/checkout@v4
@@ -70,6 +70,10 @@ jobs:
         run: |
           cargo test --no-run -p afrim-preprocessor --all-features --verbose
           cargo test --no-run -p afrim --all-features --verbose
+
+      - if: matrix.os == 'windows-latest'
+        name: Install Tcl/Tk (wish) via Chocolatey
+        run: choco install magicsplat-tcl-tk -y
 
       - name: Run tests (minimal)
         run: |
