@@ -168,6 +168,8 @@ pub struct Translator {
     dictionary: IndexMap<String, Vec<String>>,
     #[cfg(feature = "rhai")]
     translators: IndexMap<String, AST>,
+    #[cfg(feature = "rhai")]
+    engine: Engine,
     auto_commit: bool,
 }
 
@@ -189,6 +191,8 @@ impl Translator {
             auto_commit,
             #[cfg(feature = "rhai")]
             translators: IndexMap::default(),
+            #[cfg(feature = "rhai")]
+            engine: Engine::new(),
         }
     }
 
@@ -336,62 +340,86 @@ impl Translator {
     /// )
     /// ```
     pub fn translate(&self, input: &str) -> Vec<Predicate> {
+        // Short-circuit after the 2nd char rather than scanning the whole string
+        // with .chars().count() -> O(1) vs O(n).
+        {
+            let mut ch = input.chars();
+            if ch.next().is_none() || ch.next().is_none() {
+                return vec![];
+            }
+        }
+
+        // Cache both values once; they are reused on every loop iteration.
+        let input_len = input.len();
+        // We confirmed at least 2 chars exist above.
+        let input_first_char = input.chars().next().unwrap();
+
         #[cfg(feature = "rhai")]
         let mut scope = Scope::new();
-        #[cfg(feature = "rhai")]
-        let engine = Engine::new();
+
         let predicates = self.dictionary.iter().filter_map(|(key, values)| {
-            if input.chars().count() < 2 || input.len() > key.len() || key[0..1] != input[0..1] {
+            let key_len = key.len();
+
+            if input_len > key_len || !key.starts_with(input_first_char) {
                 return None;
-            };
+            }
 
-            let predicate = (key == input).then_some((
-                1.0,
-                Predicate {
-                    code: key.to_owned(),
-                    remaining_code: "".to_owned(),
-                    texts: values.to_owned(),
-                    can_commit: self.auto_commit,
-                },
-            ));
+            // 1. Exact match
+            if key == input {
+                return Some((
+                    1.0_f64,
+                    Predicate {
+                        code: key.to_owned(),
+                        remaining_code: String::new(),
+                        texts: values.to_owned(),
+                        can_commit: self.auto_commit,
+                    },
+                ));
+            }
+
+            // 2. Fuzzy correction via strsim (same byte-length)
             #[cfg(feature = "strsim")]
-            let predicate = predicate.or_else(|| {
-                if key.len() == input.len() {
-                    let confidence = strsim::hamming(key.as_ref(), input)
-                        .map(|n| 1.0 - (n as f64 / key.len() as f64))
-                        .unwrap_or(0.0);
+            if key_len == input_len {
+                let confidence = strsim::hamming(key.as_ref(), input)
+                    .map(|n| 1.0 - (n as f64 / key_len as f64))
+                    .unwrap_or(0.0);
 
-                    (confidence > 0.7).then(|| {
-                        (
-                            confidence,
-                            Predicate {
-                                code: key.to_owned(),
-                                remaining_code: "".to_owned(),
-                                texts: values.to_owned(),
-                                can_commit: false,
-                            },
-                        )
-                    })
-                } else {
-                    None
+                if confidence > 0.7 {
+                    return Some((
+                        confidence,
+                        Predicate {
+                            code: key.to_owned(),
+                            remaining_code: String::new(),
+                            texts: values.to_owned(),
+                            can_commit: false,
+                        },
+                    ));
                 }
-            });
-            predicate.or_else(|| {
-                key.starts_with(input).then_some((
+            }
+
+            // 3. Prefix completion
+            if key.starts_with(input) {
+                return Some((
                     0.5,
                     Predicate {
                         code: key.to_owned(),
-                        remaining_code: key.chars().skip(input.len()).collect(),
+                        // `starts_with` guarantees `input_len` is a valid UTF-8 char
+                        // boundary in `key`, so the byte slice is correct and O(1).
+                        remaining_code: key[input_len..].to_owned(),
                         texts: values.to_owned(),
                         can_commit: false,
                     },
-                ))
-            })
+                ));
+            }
+
+            None
         });
+
         #[cfg(feature = "rhai")]
         let predicates =
             predicates.chain(self.translators.iter().filter_map(|(_name, translator)| {
-                let mut data = engine
+                let mut data = self
+                    .engine
                     .call_fn::<Array>(&mut scope, translator, "translate", (input.to_owned(),))
                     .unwrap_or_default();
 
@@ -411,7 +439,7 @@ impl Translator {
                     let translated = data.remove(0).as_bool().unwrap();
 
                     (
-                        1.0,
+                        1.0_f64,
                         Predicate {
                             code,
                             remaining_code,
@@ -421,10 +449,13 @@ impl Translator {
                     )
                 })
             }));
-        let mut predicates = predicates.collect::<Vec<(f64, Predicate)>>();
 
-        // from the best to the worst
-        predicates.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
+        let mut predicates: Vec<(f64, Predicate)> = predicates.collect();
+
+        // `sort_unstable_by` avoids the auxiliary allocation that the stable
+        // sort needs for its merge passes; equal-confidence predicates may be
+        // reordered, but their relative priority is identical so it's safe.
+        predicates.sort_unstable_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
 
         predicates
             .into_iter()
