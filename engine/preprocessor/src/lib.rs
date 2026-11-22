@@ -190,8 +190,17 @@ impl Preprocessor {
     pub fn process(&mut self, event: KeyboardEvent) -> (bool, bool) {
         let (mut changed, mut committed) = (false, false);
 
-        match (event.state, event.key) {
-            (KeyState::Down, Key::Named(NamedKey::Backspace)) => {
+        // Extract the first character once, only for a character key.
+        let character = match &event.key {
+            Key::Character(character) => character
+                .chars()
+                .next()
+                .filter(|c| c.is_alphanumeric() || c.is_ascii_punctuation()),
+            _ => None,
+        };
+
+        match (event.state, event.key, character) {
+            (KeyState::Down, Key::Named(NamedKey::Backspace), _) => {
                 {
                     self.pause();
                     committed = self.rollback();
@@ -199,15 +208,7 @@ impl Preprocessor {
                 }
                 changed = true;
             }
-            (KeyState::Down, Key::Character(character))
-                if character
-                    .chars()
-                    .next()
-                    .map(|e| e.is_alphanumeric() || e.is_ascii_punctuation())
-                    .unwrap_or(false) =>
-            {
-                let character = character.chars().next().unwrap();
-
+            (KeyState::Down, Key::Character(_), Some(character)) => {
                 if let Some(_in) = self.cursor.hit(character) {
                     self.pause();
                     let mut prev_cursor = self.cursor.clone();
@@ -231,8 +232,8 @@ impl Preprocessor {
 
                 changed = true;
             }
-            (KeyState::Down, Key::Named(NamedKey::Shift) | Key::Named(NamedKey::CapsLock)) => (),
-            (KeyState::Down, _) => {
+            (KeyState::Down, Key::Named(NamedKey::Shift) | Key::Named(NamedKey::CapsLock), _) => (),
+            (KeyState::Down, ..) => {
                 self.cursor.clear();
                 changed = true;
             }

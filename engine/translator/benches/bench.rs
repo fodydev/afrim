@@ -27,10 +27,16 @@ pub fn translate(c: &mut Criterion) {
         "Aebdaiel",
         "Abdeel",
     ];
-    (0..100_000).for_each(|_| {
+    // Unique keys, otherwise the IndexMap dedups them into only 13 entries.
+    (0..10_000).for_each(|i| {
         words.into_iter().for_each(|word| {
-            dictionary.insert(word.to_owned(), vec![word.to_owned()]);
+            dictionary.insert(format!("{word}{i}"), vec![word.to_owned()]);
         });
+    });
+    // Keys starting with other letters, as in a real dictionary.
+    (0..100_000).for_each(|i| {
+        let first = char::from(b'b' + (i % 25) as u8);
+        dictionary.insert(format!("{first}word{i}"), vec![i.to_string()]);
     });
 
     // Initializes the translator.
