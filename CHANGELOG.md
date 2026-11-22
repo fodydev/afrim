@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [0.7.1] - 2026-11-22
+
+### Improved
+
+- (lib) Improved the performance of the memory, translator and preprocessor modules. [(#301)](https://github.com/fodydev/afrim/pull/301)
+
 ## [0.7.0] - 2026-07-07
 
 ### Changed
