@@ -167,15 +167,29 @@ impl Node {
     /// assert_eq!(node.unwrap().take(), Some("ṫ".to_owned()));
     /// ```
     pub fn insert(&self, sequence: Vec<char>, value: String) {
-        if let Some(character) = sequence.first() {
+        let mut sequence = sequence.into_iter();
+
+        let Some(character) = sequence.next() else {
+            *self.value.borrow_mut() = Some(value);
+            return;
+        };
+
+        // Walks iteratively through the tree, creating the missing nodes on the way.
+        let mut node = self.child_or_insert(character);
+        for character in sequence {
+            node = node.child_or_insert(character);
+        }
+        *node.value.borrow_mut() = Some(value);
+    }
+
+    // Returns the child holding this character, creating it if needed.
+    fn child_or_insert(&self, character: char) -> Rc<Self> {
+        Rc::clone(
             self.children
                 .borrow_mut()
-                .entry(*character)
-                .or_insert_with(|| Rc::new(Self::new(*character, self.depth + 1)))
-                .insert(sequence.into_iter().skip(1).collect(), value);
-        } else {
-            *self.value.borrow_mut() = Some(value);
-        };
+                .entry(character)
+                .or_insert_with(|| Rc::new(Self::new(character, self.depth + 1))),
+        )
     }
 
     /// Moves from the current node to his child.
@@ -297,7 +311,10 @@ impl Node {
 #[derive(Clone)]
 pub struct Cursor {
     buffer: VecDeque<Rc<Node>>,
+    capacity: usize,
     root: Rc<Node>,
+    // Shared node marking the end of a sequence (avoids an allocation per sequence).
+    end_marker: Rc<Node>,
 }
 
 impl fmt::Debug for Cursor {
@@ -333,7 +350,9 @@ impl Cursor {
     pub fn new(root: Rc<Node>, capacity: usize) -> Self {
         Self {
             buffer: VecDeque::with_capacity(capacity),
+            capacity,
             root,
+            end_marker: Rc::new(Node::default()),
         }
     }
 
@@ -373,12 +392,11 @@ impl Cursor {
     pub fn hit(&mut self, character: char) -> Option<String> {
         let node = self
             .buffer
-            .iter()
-            .last()
+            .back()
             .and_then(|node| node.goto(character))
             .or_else(|| {
                 // We end the current sequence
-                self.insert(Rc::new(Node::default()));
+                self.insert(Rc::clone(&self.end_marker));
                 // and start a new one
                 self.root.goto(character)
             })
@@ -391,7 +409,9 @@ impl Cursor {
     }
 
     fn insert(&mut self, node: Rc<Node>) {
-        if self.buffer.len() == self.buffer.capacity() {
+        // The buffer is bounded by the requested capacity, not by the
+        // (possibly larger) allocated capacity of the VecDeque.
+        if self.buffer.len() >= self.capacity {
             self.buffer.pop_front();
         }
         self.buffer.push_back(node);
@@ -435,15 +455,14 @@ impl Cursor {
     /// before each new sequence. You can considere it as a delimiter between two sequences. But if
     /// you want clear or verify if the buffer is empty, you can use [Cursor::clear](crate::Cursor::clear) or [Cursor::is_empty](crate::Cursor::is_empty).
     pub fn undo(&mut self) -> Option<String> {
-        let node = self.buffer.pop_back();
-
-        node.and_then(|node| {
-            if node.key == '\0' {
-                self.undo()
-            } else {
-                node.take()
+        // Skips the sequence delimiters.
+        while let Some(node) = self.buffer.pop_back() {
+            if node.key != '\0' {
+                return node.take();
             }
-        })
+        }
+
+        None
     }
 
     /// Resumes at the current sequence.
@@ -473,7 +492,7 @@ impl Cursor {
     /// assert_eq!(cursor.hit('_'), Some("ç".to_owned()).to_owned());
     /// ```
     pub fn resume(&mut self) {
-        if self.buffer.iter().last().is_some_and(|node| node.is_root()) {
+        if self.buffer.back().is_some_and(|node| node.is_root()) {
             self.buffer.pop_back();
         }
     }
@@ -500,8 +519,7 @@ impl Cursor {
     /// ```
     pub fn state(&self) -> (Option<String>, usize, char) {
         self.buffer
-            .iter()
-            .last()
+            .back()
             .map(|n| (n.take(), n.depth, n.key))
             .unwrap_or_default()
     }
@@ -572,7 +590,7 @@ impl Cursor {
     /// assert!(!cursor.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
-        self.buffer.iter().filter(|c| c.key != '\0').count() == 0
+        !self.buffer.iter().any(|node| node.key != '\0')
     }
 }
 

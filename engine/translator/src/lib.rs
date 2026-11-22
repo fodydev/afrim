@@ -144,7 +144,7 @@ pub use indexmap::IndexMap;
 use rhai::{Array, Scope};
 #[cfg(feature = "rhai")]
 pub use rhai::{Engine, AST};
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashMap};
 #[cfg(feature = "strsim")]
 use strsim::{self};
 
@@ -165,6 +165,10 @@ pub struct Predicate {
 /// Core structure of the translator.
 pub struct Translator {
     dictionary: IndexMap<String, Vec<String>>,
+    // Indices of the dictionary entries (in insertion order) grouped by their first character.
+    // Since every predicate must share the first character of the input, it avoids a full
+    // scan of the dictionary on each translation.
+    index: HashMap<char, Vec<usize>>,
     #[cfg(feature = "rhai")]
     translators: IndexMap<String, AST>,
     #[cfg(feature = "rhai")]
@@ -189,8 +193,16 @@ impl Translator {
         auto_commit: bool,
         min_confidence: f64,
     ) -> Self {
+        let mut index: HashMap<char, Vec<usize>> = HashMap::new();
+        for (i, key) in dictionary.keys().enumerate() {
+            if let Some(first_char) = key.chars().next() {
+                index.entry(first_char).or_default().push(i);
+            }
+        }
+
         Self {
             dictionary,
+            index,
             auto_commit,
             #[cfg(feature = "rhai")]
             translators: IndexMap::default(),
@@ -358,10 +370,17 @@ impl Translator {
         #[cfg(feature = "rhai")]
         let mut scope = Scope::new();
 
-        let predicates = self.dictionary.iter().filter_map(|(key, values)| {
+        let candidates = self
+            .index
+            .get(&input_first_char)
+            .map(Vec::as_slice)
+            .unwrap_or_default();
+
+        let predicates = candidates.iter().filter_map(|&i| {
+            let (key, values) = self.dictionary.get_index(i)?;
             let key_len = key.len();
 
-            if input_len > key_len || !key.starts_with(input_first_char) {
+            if input_len > key_len {
                 return None;
             }
 
@@ -453,10 +472,9 @@ impl Translator {
 
         let mut predicates: Vec<(f64, Predicate)> = predicates.collect();
 
-        // `sort_unstable_by` avoids the auxiliary allocation that the stable
-        // sort needs for its merge passes; equal-confidence predicates may be
-        // reordered, but their relative priority is identical so it's safe.
-        predicates.sort_unstable_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
+        // A stable sort is required: predicates with equal confidence must keep
+        // the dictionary (insertion) order, which is visible to the user.
+        predicates.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
 
         predicates
             .into_iter()
